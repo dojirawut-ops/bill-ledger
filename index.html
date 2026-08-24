@@ -701,34 +701,6 @@ for(let i=0;i<toCommit.length;i++){
   // บันทึกข้อมูลก่อน
   entries.push(newEntry);
   persistEntries();
-
-  // ค่อยอัปโหลดรูปภายหลัง
-  if(r._photoBlob){
-    try{
-      const path = `companies/${slug}/photos/${Date.now()}_${i}.jpg`;
-      const fileRef = storage.ref(path);
-
-      await Promise.race([
-        fileRef.put(r._photoBlob),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Upload timeout")), 10000)
-        )
-      ]);
-
-      const photoUrl = await Promise.race([
-        fileRef.getDownloadURL(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Get URL timeout")), 10000)
-        )
-      ]);
-
-      newEntry.photoUrl = photoUrl;
-      persistEntries();
-
-    }catch(err){
-      console.warn("อัปโหลดรูปไม่สำเร็จ แต่ข้อมูลบันทึกแล้ว", err);
-    }
-  }
 }
   persistEntries();
   const committedIds = new Set(toCommit.map(r=>r._id));
