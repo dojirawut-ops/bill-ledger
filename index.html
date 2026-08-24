@@ -674,11 +674,14 @@ document.getElementById("saveAllBtn").addEventListener("click", async ()=>{
     vendors = [...vendors, ...newlyLearned];
     persistVendors();
   }
-
+if(!firebaseReady){
+  showToast("กำลังโหลดข้อมูลเดิมจาก Firebase กรุณารอสักครู่แล้วกดบันทึกใหม่", "warn");
+  return;
+}
   const btn = document.getElementById("saveAllBtn");
   const originalBtnText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "⏳ กำลังบันทึก + อัปโหลดรูป...";
+  btn.textContent = "⏳ กำลังบันทึกข้อมูล...";
 
   const slug = companySlug(companyName);
   let startNo = entries.length;
@@ -700,7 +703,6 @@ for(let i=0;i<toCommit.length;i++){
 
   // บันทึกข้อมูลก่อน
   entries.push(newEntry);
-  persistEntries();
 }
   persistEntries();
   const committedIds = new Set(toCommit.map(r=>r._id));
