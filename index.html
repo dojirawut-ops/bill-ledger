@@ -451,10 +451,21 @@ function loadStorage(){
     document.getElementById("companyStatus").style.color = "var(--rust)";
   }
 }
-function persistEntries(){
-  if(!entriesRef) return;
-  try{ entriesRef.set(entries); }
-  catch(err){ storageOk=false; document.getElementById("storageWarn").classList.remove("hidden"); }
+async function persistEntries(){
+  if(!entriesRef){
+    console.error("entriesRef ยังไม่พร้อม");
+    showToast("ยังเชื่อมฐานข้อมูลรายการบิลไม่สำเร็จ", "warn");
+    return false;
+  }
+try{
+    await entriesRef.set(entries);
+    console.log("บันทึก entries สำเร็จ:", entries.length, "รายการ");
+    return true;
+  }catch(err){
+    console.error("Firebase entries write error:", err);
+    showToast("บันทึกรายการลง Firebase ไม่สำเร็จ: " + err.message, "warn");
+    return false;
+  }
 }
 function persistVendors(){
   if(!vendorsRef) return;
