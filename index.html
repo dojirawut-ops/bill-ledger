@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>สมุดบันทึกบิลรับซื้อ — แซว เอ็มโพเรียม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --paper:#F6F1E4; --ink:#1E2A22; --ledger:#2F5233; --ledger-line:#C9D6C2;
+    --rust:#B33C1B; --rust-dark:#8C2C10; --cream-card:#FFFDF8; --gold:#B08B2E;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;}
+  .display{font-family:'Fraunces','Noto Serif Thai',serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 16px 60px;}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:24px;}
+  .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);}
+  h1{font-size:30px;margin:4px 0 6px;color:var(--ledger);font-weight:600;}
+  .sub{font-size:14px;opacity:.7;margin:0;}
+  .stamp{width:56px;height:56px;border:2px solid var(--ledger);border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--ledger);transform:rotate(-6deg);flex-shrink:0;}
+  .card{background:var(--cream-card);border:1px solid var(--ledger-line);box-shadow:0 1px 0 rgba(47,82,51,.08);border-radius:14px;padding:20px;margin-bottom:20px;}
+  .warn-box{background:#FBEAE3;color:var(--rust-dark);border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start;}
+  .key-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  input[type=text],input[type=password],input[type=number]{background:#fff;border:1px solid var(--ledger-line);color:var(--ink);border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;}
+  input:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .btn{border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+  .btn-primary{background:var(--rust);color:#fff;}
+  .btn-primary:hover{background:var(--rust-dark);}
+  .btn-ghost{background:transparent;border:1px solid var(--ledger-line);color:var(--ledger);}
+  .btn-ghost:hover{background:rgba(47,82,51,.06);}
+  .dropzone{border:2px dashed var(--ledger-line);border-radius:10px;padding:28px 16px;text-align:center;}
+  .dz-title{font-family:'Fraunces',serif;font-size:18px;color:var(--ledger);margin:2px 0;}
+  .dz-sub{font-size:12px;opacity:.6;margin-bottom:12px;}
+  .dz-hint{font-size:11px;opacity:.5;margin-top:8px;}
+  label.filebtn{cursor:pointer;}
+  .processing-note{margin-top:12px;font-size:13px;color:var(--ledger);display:flex;align-items:center;gap:8px;}
+  .spin{animation:spin 1s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .staging-item{border-radius:10px;padding:12px;margin-bottom:10px;display:flex;gap:12px;}
+  .staging-item.processing,.staging-item.error{align-items:center;background:rgba(47,82,51,.05);}
+  .staging-item.error{background:#FBEAE3;}
+  .staging-item.done{background:rgba(47,82,51,.05);}
+  .staging-item.new-vendor{background:#FDF6E3;border:1px solid var(--gold);}
+  .thumb{width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;}
+  .thumb-sm{width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;}
+  .field-grid{flex:1;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+  @media(min-width:640px){.field-grid{grid-template-columns:repeat(4,1fr);}}
+  .field label{display:block;font-size:10px;letter-spacing:.05em;text-transform:uppercase;opacity:.6;margin-bottom:2px;}
+  .field input,.field select{width:100%;font-size:13px;}
+  .close-btn{background:none;border:none;cursor:pointer;opacity:.6;padding:4px;}
+  .close-btn:hover{opacity:1;}
+  .flag-note{font-size:12px;margin-top:6px;color:var(--gold);display:flex;gap:6px;align-items:center;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;color:var(--ledger);padding:6px 8px 6px 0;border-bottom:1px solid var(--ledger-line);}
+  tbody tr:nth-child(even){background:rgba(47,82,51,.04);}
+  tbody td{padding:6px 8px 6px 0;}
+  .num{text-align:right;}
+  .row-actions{display:flex;gap:4px;}
+  .row-actions button{background:none;border:none;cursor:pointer;opacity:.6;padding:2px;}
+  .row-actions button:hover{opacity:1;}
+  .edit-input{width:100%;font-size:12px;padding:3px 5px;}
+  tfoot td{padding-top:10px;font-weight:600;color:var(--ledger);}
+  .empty{text-align:center;padding:40px 0;opacity:.5;font-size:13px;}
+  footer{text-align:center;font-size:12px;opacity:.5;margin-top:24px;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border-radius:8px;padding:10px 18px;font-size:13px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:50;}
+  .hidden{display:none !important;}
+  .key-status{font-size:12px;opacity:.7;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">บริษัท แซว เอ็มโพเรียม จำกัด</div>
+      <h1 class="display">สมุดบันทึกบิลรับซื้อ</h1>
+      <p class="sub">ถ่ายรูปบิล ระบบอ่านและกรอกให้อัตโนมัติจากประวัติผู้ขาย ก่อนบันทึกลงทะเบียน</p>
+    </div>
+    <div class="stamp">🧾</div>
+  </header>
+
+  <!-- API key panel -->
+  <div class="card" id="keyCard">
+    <div class="key-row">
+      <strong style="color:var(--ledger);font-size:14px;">Anthropic API Key</strong>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." style="flex:1;min-width:200px;">
+      <button class="btn btn-ghost" id="toggleKeyBtn" type="button">👁</button>
+      <button class="btn btn-primary" id="saveKeyBtn" type="button">บันทึกคีย์</button>
+      <span class="key-status" id="keyStatus"></span>
+    </div>
+    <div style="font-size:11px;opacity:.55;margin-top:8px;">คีย์ถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น (localStorage) ไม่ถูกส่งไปที่ใดนอกจาก Anthropic API โดยตรง — ขอคีย์ได้ที่ <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--rust);">console.anthropic.com</a></div>
+  </div>
+
+  <div class="warn-box hidden" id="storageWarn">⚠️ เบราว์เซอร์นี้ไม่รองรับการเก็บข้อมูลถาวร รายการอาจหายเมื่อปิดหน้าต่าง — export Excel เก็บไว้บ่อย ๆ</div>
+
+  <!-- Upload zone -->
+  <div class="card">
+    <div class="dropzone" id="dropzone">
+      <div class="dz-title">ถ่ายรูปหรือเลือกไฟล์บิล</div>
+      <div class="dz-sub">รองรับสลิปโอนเงิน ใบเสร็จ ใบกำกับภาษี — ระบบจะอ่านทีละรูป</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
+        <label class="btn btn-primary filebtn" for="cameraInput">📷 ถ่ายรูปบิล</label>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+        <label class="btn btn-ghost filebtn" for="galleryInput">⬆ เลือกจากคลังภาพ (หลายรูปได้)</label>
+        <input type="file" id="galleryInput" accept="image/*" multiple class="hidden">
+      </div>
+      <div class="dz-hint">ลากรูปมาวางในกรอบนี้ได้เช่นกัน</div>
+    </div>
+    <div class="processing-note hidden" id="processingNote"><span class="spin">⏳</span> <span id="processingText"></span></div>
+  </div>
+
+  <!-- Staging area -->
+  <div class="card hidden" id="stagingCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">ตรวจสอบก่อนบันทึก (<span id="stagingCount">0</span>)</h2>
+      <button class="btn btn-primary" id="saveAllBtn">✓ บันทึกทั้งหมดเข้าทะเบียน</button>
+    </div>
+    <div id="stagingList"></div>
+  </div>
+
+  <!-- Ledger -->
+  <div class="card">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;">
+      <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">ทะเบียนที่บันทึกแล้ว (<span id="entryCount">0</span> รายการ)</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" id="exportBtn">⬇ Export Excel</button>
+        <button class="btn btn-ghost" id="clearBtn">↻ ล้างทั้งหมด</button>
+      </div>
+    </div>
+    <div id="ledgerWrap"></div>
+  </div>
+
+  <p style="font-size:12px;opacity:.5;text-align:center;">ข้อมูลถูกเก็บไว้ในเบราว์เซอร์นี้อย่างต่อเนื่อง กด Export Excel เพื่อดาวน์โหลดหรือรวมเข้ากับไฟล์บัญชีหลักได้ทุกเมื่อ</p>
+</div>
+<div id="toastHost"></div>
+
+<script>
+/* ---------------- Vendor master (จากประวัติจริง key02.69) ---------------- */
+const SEED_VENDORS = [
+  { code:"ณฐ-001", name:"ณัฐสรัญ สายมั่น", desc:"ค่าหมูสด", acct:"5110-01" },
+  { code:"ธน-001", name:"ธานี รัตนบริสุทธิ", desc:"ลูกชิ้นปลา", acct:"5110-01" },
+  { code:"ชค-001", name:"โชคชัย รัตนบริสุทธิ์", desc:"ค่าลูกชิ้นปลา", acct:"5110-01" },
+  { code:"รน-002", name:"เฮียโมทย์-เจ๊ณี", desc:"เส้นก๋วยเตี๋ยว", acct:"5110-01" },
+  { code:"จน-001", name:"เจนซ์เฟรซ จำกัด", desc:"ลูกชิ้นแคระ เหลือง ขาว หมูเกี๊ยว", acct:"5110-01" },
+  { code:"นร-001", name:"นรินทร์ คิดการ", desc:"ลูกชิ้นกุ้ง", acct:"5110-01" },
+  { code:"ภอ-001", name:"ภูมิสิทธิ์ สายโรจน์พันธ์", desc:"ค่าเส้น", acct:"5110-01" },
+  { code:"วร-001", name:"วรรณเจริญ ฟู้ด", desc:"ซื้อผัก", acct:"5110-01" },
+  { code:"วช-001", name:"วิชิดา วงศ์อ่อนดี", desc:"ซื้อวัตถุดิบ-อาหาร", acct:"5110-01" },
+  { code:"ดอ-001", name:"เดอะแคทเทอริ่ง จำกัด", desc:"ปลากะพงแล่ไม่ติดหนัง", acct:"5110-01" },
+  { code:"มก-001", name:"ร้านมังกรพลาสติก", desc:"เครื่องปรุง-อาหาร", acct:"5110-01" },
+  { code:"ปร-001", name:"ประไพ วิจิตรสุลักขณา", desc:"ซื้อวัตถุดิบ-อาหาร", acct:"5110-01" },
+  { code:"ปย-001", name:"ปิยะนุช", desc:"ซื้อมะนาว", acct:"5110-01" },
+  { code:"ออ-002", name:"บริษัท เอ็น แอล คอฟฟี่ เทรดดิ้ง จำกัด", desc:"ซื้อวัตถุดิบ-อาหาร", acct:"5110-01" },
+  { code:"ซพ-001", name:"ซีพี แอ็กตร้า จำกัด (มหาชน)", desc:"ซื้อวัตถุดิบ-เครื่องปรุง", acct:"5110-02" },
+  { code:"วร-002", name:"วรพันธ์ ศรีชู", desc:"ค่ารถส่งของ", acct:"5110-05" },
+  { code:"กร-003", name:"กรองกาญ นกดำ", desc:"ค่ารถส่งของ", acct:"5110-05" },
+  { code:"ธน-002", name:"ธนชาติ หมวกทอง", desc:"ค่ารถส่งของ", acct:"5110-05" },
+  { code:"บจ-001", name:"บางจากกรีนเนท", desc:"คชจ.ในการเดินทางและยานพาหนะ", acct:"5320-04" },
+  { code:"ปต-002", name:"ปิโตเลียมไทยคอร์ปอเรชั่น", desc:"คชจ.ในการเดินทางและยานพาหนะ", acct:"5320-04" },
+  { code:"ชป-001", name:"shopee online", desc:"ค่าวัสดุสิ้นเปลืองสำนักงาน", acct:"5320-02" },
+  { code:"คอ-002", name:"เคอีเอกซ์ เอ็กเพรส(ประเทศไทย) จำกัด", desc:"ค่าไปรษณีย์", acct:"5330-04" },
+  { code:"ทร-002", name:"ทรู อินเตอร์เน็ต คอร์ปอเรชั่น จำกัด", desc:"ค่าโทรศัพท์-อินเตอร์เน็ต", acct:"5330-01" },
+  { code:"กร-001", name:"กรมสรรพากร", desc:"ภ.พ.30", acct:"2137-00" },
+  { code:"กร-002", name:"กรมพัฒนาธุรกิจการค้า", desc:"ค่าใช้จ่ายเบ็ดเตล็ด", acct:"5370-05" },
+];
+const COMPANY_NAME = "บริษัท แซว เอ็มโพเรียม จำกัด";
+const STRIP_PREFIXES = ["บริษัท","บจก.","บจก","จำกัด (มหาชน)","จำกัด","ห้างหุ้นส่วนจำกัด","หจก.","ร้าน","นางสาว","น.ส.","นาง","นาย","คุณ"];
+
+function normalizeVendor(raw){
+  if(!raw) return "";
+  let s = String(raw).replace(/\u00a0/g," ").trim();
+  STRIP_PREFIXES.forEach(p=>{ s = s.split(p).join(" "); });
+  s = s.replace(/[().,]/g," ").replace(/\s+/g,"").toLowerCase();
+  return s;
+}
+function matchVendor(rawName, vendorList){
+  const norm = normalizeVendor(rawName);
+  if(!norm) return null;
+  let best=null, bestScore=0;
+  for(const v of vendorList){
+    const vNorm = normalizeVendor(v.name);
+    if(!vNorm) continue;
+    let score=0;
+    if(vNorm===norm) score=100;
+    else if(vNorm.includes(norm)||norm.includes(vNorm)) score = Math.min(vNorm.length,norm.length)/Math.max(vNorm.length,norm.length)*90;
+    else{
+      let i=0; while(i<vNorm.length && i<norm.length && vNorm[i]===norm[i]) i++;
+      if(i>=3) score = (i/Math.max(vNorm.length,norm.length))*60;
+    }
+    if(score>bestScore){bestScore=score;best=v;}
+  }
+  return bestScore>=45 ? best : null;
+}
+function fmtMoney(n){ const num=Number(n)||0; return num.toLocaleString("th-TH",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function todayThai(){ const d=new Date(); const dd=String(d.getDate()).padStart(2,"0"); const mm=String(d.getMonth()+1).padStart(2,"0"); return `${dd}/${mm}/${d.getFullYear()}`; }
+function isoToThaiDate(iso){ if(!iso) return ""; const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(iso); if(!m) return iso; return `${m[3]}/${m[2]}/${m[1]}`; }
+function toBase64(file){ return new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result.split(",")[1]); r.onerror=()=>reject(new Error("อ่านไฟล์ไม่สำเร็จ")); r.readAsDataURL(file); }); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+let uidCounter=0;
+function uid(){ uidCounter++; return Date.now()+"_"+uidCounter; }
+
+const EXTRACT_PROMPT = `คุณคือผู้ช่วยอ่านเอกสารบัญชีภาษาไทย (บิล/ใบเสร็จ/ใบกำกับภาษี/สลิปโอนเงินธนาคาร) ของ "${COMPANY_NAME}" ซึ่งเป็นผู้ซื้อ/ผู้จ่ายเงินเสมอ
+
+กติกาการอ่าน:
+- ถ้าเอกสารเป็น "สลิปโอนเงิน" (เช่น KBIZ, mobile banking) ให้ใช้ชื่อ "ผู้รับปลายทาง" (ช่อง ไปยัง/To) เป็น vendor_name ห้ามใช้ชื่อ ${COMPANY_NAME} ซึ่งเป็นต้นทางเสมอ และใช้เลขที่รายการ/เลขอ้างอิงเป็น bill_no ถ้ามี
+- ถ้าเป็นใบเสร็จ/ใบกำกับภาษี ให้ใช้ชื่อผู้ขาย/ผู้ออกเอกสาร (ไม่ใช่ชื่อลูกค้าซึ่งคือ ${COMPANY_NAME}) เป็น vendor_name และใช้เลขที่เอกสาร/เลขที่ใบกำกับภาษีเป็น bill_no
+- วันที่: แปลงเป็น ค.ศ. รูปแบบ YYYY-MM-DD เสมอ (ถ้าเอกสารเป็น พ.ศ. เช่น 69 หรือ 2569 ให้ลบ 543 ปี)
+- amount: ยอดเงินรวมสุทธิของเอกสาร (ตัวเลขล้วน ไม่มีคอมม่า)
+- ห้ามเดาหรือสร้างข้อมูลที่ไม่มีในภาพ ถ้าอ่านไม่ชัดหรือไม่มีข้อมูลให้ใส่ null
+- ถ้าภาพหนึ่งมีมากกว่า 1 เอกสารปนกัน ให้เลือกเอกสารที่ใหญ่/ชัดที่สุดเป็นหลัก และระบุ note
+
+ตอบกลับเป็น JSON เท่านั้น ห้ามมีข้อความอื่นใด ห้ามใช้ markdown fence ตามรูปแบบนี้เป๊ะ:
+{"vendor_name": string|null, "bill_no": string|null, "date": string|null, "amount": number|null, "doc_type": string, "confidence": "high"|"medium"|"low", "note": string|null}`;
+
+async function callClaudeVision(base64, mediaType, apiKey){
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key": apiKey,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body: JSON.stringify({
+      model:"claude-sonnet-4-6",
+      max_tokens:1000,
+      messages:[{ role:"user", content:[
+        { type:"image", source:{ type:"base64", media_type:mediaType, data:base64 } },
+        { type:"text", text:EXTRACT_PROMPT }
+      ]}]
+    })
+  });
+  const data = await response.json();
+  if(data.type==="error"){ throw new Error(data.error?.message || "เรียก API ไม่สำเร็จ (ตรวจสอบ API Key)"); }
+  const textBlock = (data.content||[]).find(b=>b.type==="text");
+  if(!textBlock) throw new Error("ไม่ได้รับข้อความตอบกลับจาก AI");
+  const cleaned = textBlock.text.replace(/```json|```/g,"").trim();
+  return JSON.parse(cleaned);
+}
+
+/* ---------------- State ---------------- */
+let vendors = SEED_VENDORS.slice();
+let entries = [];
+let apiKey = "";
+let storageOk = true;
+let processingCount = 0;
+
+function loadStorage(){
+  try{
+    const e = localStorage.getItem("bl_entries");
+    if(e) entries = JSON.parse(e);
+    const v = localStorage.getItem("bl_vendor_map");
+    if(v){
+      const learned = JSON.parse(v);
+      const byCode = {};
+      [...vendors, ...learned].forEach(x=>byCode[x.code]=x);
+      vendors = Object.values(byCode);
+    }
+    const k = localStorage.getItem("bl_api_key");
+    if(k) apiKey = k;
+  }catch(err){ storageOk = false; document.getElementById("storageWarn").classList.remove("hidden"); }
+}
+function persistEntries(){
+  try{ localStorage.setItem("bl_entries", JSON.stringify(entries)); }
+  catch(err){ storageOk=false; document.getElementById("storageWarn").classList.remove("hidden"); }
+}
+function persistVendors(){
+  const learnedOnly = vendors.filter(v=>!SEED_VENDORS.find(s=>s.code===v.code));
+  try{ localStorage.setItem("bl_vendor_map", JSON.stringify(learnedOnly)); }catch(err){}
+}
+
+function showToast(msg, kind){
+  const host = document.getElementById("toastHost");
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.style.background = kind==="warn" ? "#B33C1B" : "#2F5233";
+  el.textContent = msg;
+  host.appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+}
+
+/* ---------------- API key UI ---------------- */
+const apiKeyInput = document.getElementById("apiKeyInput");
+const keyStatus = document.getElementById("keyStatus");
+function refreshKeyStatus(){
+  keyStatus.textContent = apiKey ? "✓ ตั้งค่าแล้ว" : "ยังไม่ได้ตั้งค่า";
+  keyStatus.style.color = apiKey ? "var(--ledger)" : "var(--rust)";
+}
+document.getElementById("saveKeyBtn").addEventListener("click", ()=>{
+  apiKey = apiKeyInput.value.trim();
+  try{ localStorage.setItem("bl_api_key", apiKey); }catch(err){}
+  refreshKeyStatus();
+  showToast(apiKey ? "บันทึกคีย์แล้ว" : "ลบคีย์แล้ว");
+});
+document.getElementById("toggleKeyBtn").addEventListener("click", ()=>{
+  apiKeyInput.type = apiKeyInput.type==="password" ? "text" : "password";
+});
+
+/* ---------------- Upload handling ---------------- */
+const stagingCard = document.getElementById("stagingCard");
+const stagingList = document.getElementById("stagingList");
+const stagingCountEl = document.getElementById("stagingCount");
+const processingNote = document.getElementById("processingNote");
+const processingText = document.getElementById("processingText");
+
+let stagingRows = []; // {id, status, photoName, previewUrl, matched, ...}
+
+function updateProcessingNote(){
+  if(processingCount>0){
+    processingNote.classList.remove("hidden");
+    processingText.textContent = `กำลังอ่านบิล... เหลืออีก ${processingCount} รูป`;
+  } else {
+    processingNote.classList.add("hidden");
+  }
+}
+
+async function handleFiles(fileList){
+  const files = Array.from(fileList||[]).filter(f=>f.type.startsWith("image/"));
+  if(files.length===0) return;
+  if(!apiKey){
+    showToast("กรุณาใส่ Anthropic API Key ด้านบนก่อนใช้งาน", "warn");
+    return;
+  }
+  stagingCard.classList.remove("hidden");
+  for(const file of files){
+    processingCount++; updateProcessingNote();
+    const rowId = uid();
+    const previewUrl = URL.createObjectURL(file);
+    const row = { id: rowId, status:"processing", photoName:file.name, previewUrl };
+    stagingRows.push(row);
+    renderStagingRow(row);
+    try{
+      const base64 = await toBase64(file);
+      const mediaType = file.type || "image/jpeg";
+      const result = await callClaudeVision(base64, mediaType, apiKey);
+      const matched = matchVendor(result.vendor_name, vendors);
+      row.status = "done";
+      row.vendorRaw = result.vendor_name || "";
+      row.code = matched ? matched.code : "";
+      row.name = matched ? matched.name : (result.vendor_name || "");
+      row.billNo = result.bill_no || "";
+      row.desc = matched ? matched.desc : "";
+      row.acct = matched ? matched.acct : "";
+      row.date = isoToThaiDate(result.date) || todayThai();
+      row.amount = result.amount!=null ? Number(result.amount) : "";
+      row.transfer = result.amount!=null ? Number(result.amount) : "";
+      row.matched = !!matched;
+      row.note = result.note || "";
+    }catch(err){
+      row.status = "error";
+      row.error = err.message || "อ่านบิลไม่สำเร็จ";
+    }
+    processingCount--; updateProcessingNote();
+    renderStagingRow(row);
+  }
+  updateStagingCount();
+}
+
+function updateStagingCount(){
+  stagingCountEl.textContent = stagingRows.length;
+}
+
+function renderStagingRow(row){
+  let el = document.getElementById("stg-"+row.id);
+  if(!el){
+    el = document.createElement("div");
+    el.id = "stg-"+row.id;
+    stagingList.appendChild(el);
+  }
+  el.className = "staging-item " + row.status + (row.status==="done" && !row.matched ? " new-vendor" : "");
+
+  if(row.status==="processing"){
+    el.innerHTML = `<img class="thumb" src="${row.previewUrl}"><span class="spin">⏳</span><span style="font-size:13px;opacity:.7;">กำลังอ่าน ${esc(row.photoName)}...</span>`;
+    return;
+  }
+  if(row.status==="error"){
+    el.innerHTML = `<img class="thumb" src="${row.previewUrl}"><span style="flex:1;font-size:13px;color:var(--rust-dark);">อ่านไม่สำเร็จ: ${esc(row.error)}</span><button class="close-btn" data-remove="${row.id}">✕</button>`;
+    el.querySelector("[data-remove]").addEventListener("click", ()=>removeStagingRow(row.id));
+    return;
+  }
+  const vendorOptions = vendors.map(v=>`<option value="${esc(v.code)}" ${v.code===row.code?"selected":""}>${esc(v.code)} · ${esc(v.name)}</option>`).join("");
+  el.innerHTML = `
+    <img class="thumb" src="${row.previewUrl}">
+    <div class="field-grid">
+      <div class="field"><label>รหัส</label>
+        <select class="f-code">
+          <option value="${esc(row.code)}">${row.code ? esc(row.code) : "— เลือก/พิมพ์ใหม่ —"}</option>
+          ${vendorOptions}
+        </select>
+      </div>
+      <div class="field"><label>ชื่อผู้ขาย</label><input class="f-name" value="${esc(row.name)}"></div>
+      <div class="field"><label>เลขที่บิล</label><input class="f-billno" value="${esc(row.billNo)}"></div>
+      <div class="field"><label>วันที่</label><input class="f-date" value="${esc(row.date)}" placeholder="DD/MM/YYYY"></div>
+      <div class="field"><label>คำอธิบาย</label><input class="f-desc" value="${esc(row.desc)}"></div>
+      <div class="field"><label>ผังบัญชี</label><input class="f-acct" value="${esc(row.acct)}"></div>
+      <div class="field"><label>จำนวนเงิน</label><input class="f-amount mono" type="number" step="0.01" value="${row.amount}"></div>
+      <div class="field"><label>โอน</label><input class="f-transfer mono" type="number" step="0.01" value="${row.transfer}"></div>
+    </div>
+    <button class="close-btn" data-remove="${row.id}">✕</button>
+  `;
+  el.querySelector("[data-remove]").addEventListener("click", ()=>removeStagingRow(row.id));
+  const codeSel = el.querySelector(".f-code");
+  codeSel.addEventListener("change", (e)=>{
+    const v = vendors.find(x=>x.code===e.target.value);
+    if(v){
+      el.querySelector(".f-name").value = v.name;
+      el.querySelector(".f-desc").value = v.desc;
+      el.querySelector(".f-acct").value = v.acct;
+      row.matched = true;
+      el.classList.remove("new-vendor");
+    } else {
+      row.matched = false;
+    }
+  });
+  if(!row.matched){
+    const flagDiv = document.createElement("div");
+    flagDiv.className = "flag-note";
+    flagDiv.innerHTML = `⚠ ผู้ขายใหม่ ไม่พบในประวัติ — ตรวจสอบรหัส/คำอธิบาย/ผังบัญชีก่อนบันทึก (ระบบจะจำไว้ใช้ครั้งถัดไป)`;
+    el.appendChild(flagDiv);
+  }
+  if(row.note){
+    const noteDiv = document.createElement("div");
+    noteDiv.style.cssText = "font-size:11px;opacity:.6;margin-top:4px;";
+    noteDiv.textContent = "หมายเหตุจาก AI: " + row.note;
+    el.appendChild(noteDiv);
+  }
+}
+
+function removeStagingRow(id){
+  stagingRows = stagingRows.filter(r=>r.id!==id);
+  const el = document.getElementById("stg-"+id);
+  if(el) el.remove();
+  updateStagingCount();
+  if(stagingRows.length===0) stagingCard.classList.add("hidden");
+}
+
+document.getElementById("saveAllBtn").addEventListener("click", ()=>{
+  const readyRows = stagingRows.filter(r=>r.status==="done");
+  const toCommit = [];
+  const newlyLearned = [];
+  for(const row of readyRows){
+    const el = document.getElementById("stg-"+row.id);
+    if(!el) continue;
+    const code = el.querySelector(".f-code").value.trim();
+    const name = el.querySelector(".f-name").value.trim();
+    const billNo = el.querySelector(".f-billno").value.trim();
+    const date = el.querySelector(".f-date").value.trim();
+    const desc = el.querySelector(".f-desc").value.trim();
+    const acct = el.querySelector(".f-acct").value.trim();
+    const amount = parseFloat(el.querySelector(".f-amount").value) || 0;
+    const transferVal = el.querySelector(".f-transfer").value;
+    const transfer = transferVal==="" ? amount : (parseFloat(transferVal)||0);
+    if(!name || !amount){ continue; }
+    toCommit.push({ code, name, billNo, desc, date: date||todayThai(), acct, amount, transfer, _id: row.id });
+    if(code && !vendors.find(v=>v.code===code)){
+      newlyLearned.push({ code, name, desc, acct });
+    }
+  }
+  if(toCommit.length===0){
+    showToast("ยังไม่มีรายการที่พร้อมบันทึก (ต้องมีชื่อผู้ขายและจำนวนเงิน)", "warn");
+    return;
+  }
+  if(newlyLearned.length){
+    vendors = [...vendors, ...newlyLearned];
+    persistVendors();
+  }
+  let startNo = entries.length;
+  toCommit.forEach((r,i)=>{
+    entries.push({ no:startNo+i+1, code:r.code, name:r.name, billNo:r.billNo, desc:r.desc, date:r.date, acct:r.acct, amount:r.amount, transfer:r.transfer });
+  });
+  persistEntries();
+  const committedIds = new Set(toCommit.map(r=>r._id));
+  stagingRows = stagingRows.filter(r=>!committedIds.has(r.id));
+  committedIds.forEach(id=>{ const el=document.getElementById("stg-"+id); if(el) el.remove(); });
+  updateStagingCount();
+  if(stagingRows.length===0) stagingCard.classList.add("hidden");
+  renderLedger();
+  showToast(`บันทึกแล้ว ${toCommit.length} รายการ`);
+});
+
+/* ---------------- Ledger table ---------------- */
+const ledgerWrap = document.getElementById("ledgerWrap");
+const entryCountEl = document.getElementById("entryCount");
+
+function renderLedger(){
+  entryCountEl.textContent = entries.length;
+  if(entries.length===0){
+    ledgerWrap.innerHTML = `<div class="empty">ยังไม่มีรายการ — ถ่ายรูปบิลด้านบนเพื่อเริ่มบันทึก</div>`;
+    return;
+  }
+  const total = entries.reduce((s,e)=>s+(Number(e.amount)||0),0);
+  let rows = entries.map(e => `
+    <tr data-no="${e.no}">
+      <td class="mono">${e.no}</td>
+      <td class="mono">${esc(e.code)}</td>
+      <td>${esc(e.name)}</td>
+      <td>${esc(e.billNo)}</td>
+      <td>${esc(e.desc)}</td>
+      <td class="mono">${esc(e.date)}</td>
+      <td class="mono">${esc(e.acct)}</td>
+      <td class="mono num">${fmtMoney(e.amount)}</td>
+      <td class="mono num">${fmtMoney(e.transfer)}</td>
+      <td><div class="row-actions">
+        <button data-edit="${e.no}">✏️</button>
+        <button data-del="${e.no}">🗑</button>
+      </div></td>
+    </tr>
+  `).join("");
+  ledgerWrap.innerHTML = `
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>ลำดับ</th><th>รหัส</th><th>ชื่อ</th><th>เลขที่บิล</th><th>คำอธิบาย</th>
+        <th>วันที่</th><th>ผังบัญชี</th><th class="num">จำนวนเงิน</th><th class="num">โอน</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr>
+        <td colspan="7" style="text-align:right;">รวมทั้งหมด</td>
+        <td class="mono num">${fmtMoney(total)}</td>
+        <td colspan="2"></td>
+      </tr></tfoot>
+    </table>
+    </div>
+  `;
+  ledgerWrap.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const no = Number(btn.getAttribute("data-del"));
+      entries = entries.filter(e=>e.no!==no).map((e,i)=>({...e, no:i+1}));
+      persistEntries();
+      renderLedger();
+    });
+  });
+  ledgerWrap.querySelectorAll("[data-edit]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const no = Number(btn.getAttribute("data-edit"));
+      startEditRow(no);
+    });
+  });
+}
+
+function startEditRow(no){
+  const entry = entries.find(e=>e.no===no);
+  if(!entry) return;
+  const tr = ledgerWrap.querySelector(`tr[data-no="${no}"]`);
+  if(!tr) return;
+  tr.innerHTML = `
+    <td class="mono">${entry.no}</td>
+    <td><input class="edit-input ec-code" value="${esc(entry.code)}"></td>
+    <td><input class="edit-input ec-name" value="${esc(entry.name)}"></td>
+    <td><input class="edit-input ec-billno" value="${esc(entry.billNo)}"></td>
+    <td><input class="edit-input ec-desc" value="${esc(entry.desc)}"></td>
+    <td><input class="edit-input ec-date" value="${esc(entry.date)}"></td>
+    <td><input class="edit-input ec-acct" value="${esc(entry.acct)}"></td>
+    <td><input class="edit-input ec-amount" type="number" step="0.01" value="${entry.amount}"></td>
+    <td><input class="edit-input ec-transfer" type="number" step="0.01" value="${entry.transfer}"></td>
+    <td><div class="row-actions">
+      <button data-save="${no}">✓</button>
+      <button data-cancel="${no}">✕</button>
+    </div></td>
+  `;
+  tr.querySelector("[data-save]").addEventListener("click", ()=>{
+    entry.code = tr.querySelector(".ec-code").value.trim();
+    entry.name = tr.querySelector(".ec-name").value.trim();
+    entry.billNo = tr.querySelector(".ec-billno").value.trim();
+    entry.desc = tr.querySelector(".ec-desc").value.trim();
+    entry.date = tr.querySelector(".ec-date").value.trim();
+    entry.acct = tr.querySelector(".ec-acct").value.trim();
+    entry.amount = parseFloat(tr.querySelector(".ec-amount").value) || 0;
+    entry.transfer = parseFloat(tr.querySelector(".ec-transfer").value) || 0;
+    persistEntries();
+    renderLedger();
+  });
+  tr.querySelector("[data-cancel]").addEventListener("click", renderLedger);
+}
+
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  if(!confirm("ล้างรายการที่บันทึกไว้ทั้งหมด? ทำแล้วกู้คืนไม่ได้")) return;
+  entries = [];
+  persistEntries();
+  renderLedger();
+});
+
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  if(entries.length===0){ showToast("ยังไม่มีรายการให้ export", "warn"); return; }
+  const header = ["ลำดับ","รหัส","ชื่อ","เลขที่บิล","คำอธิบาย","วัน/เดือน/ปี","ผังบัญชี","จำนวนเงิน","โอน"];
+  const rows = entries.map(e=>[e.no,e.code,e.name,e.billNo,e.desc,e.date,e.acct,e.amount,e.transfer]);
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+  ws["!cols"] = [{wch:6},{wch:10},{wch:24},{wch:14},{wch:22},{wch:12},{wch:10},{wch:12},{wch:12}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "บันทึกรายวัน");
+  const stamp = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `บันทึกบิล_${stamp}.xlsx`);
+  showToast("ดาวน์โหลดไฟล์ Excel แล้ว");
+});
+
+/* ---------------- Wire up file inputs & init ---------------- */
+document.getElementById("cameraInput").addEventListener("change", (e)=>{ handleFiles(e.target.files); e.target.value=""; });
+document.getElementById("galleryInput").addEventListener("change", (e)=>{ handleFiles(e.target.files); e.target.value=""; });
+const dropzone = document.getElementById("dropzone");
+dropzone.addEventListener("dragover", e=>e.preventDefault());
+dropzone.addEventListener("drop", e=>{ e.preventDefault(); handleFiles(e.dataTransfer.files); });
+
+loadStorage();
+apiKeyInput.value = apiKey;
+refreshKeyStatus();
+renderLedger();
+</script>
+</body>
+</html>
