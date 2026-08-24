@@ -227,11 +227,14 @@ const SEED_VENDORS = [
 ];
 const SAEW_EMPORIUM_NAME = "บริษัท แซว เอ็มโพเรียม จำกัด";
 const STRIP_PREFIXES = ["บริษัท","บจก.","บจก","จำกัด (มหาชน)","จำกัด","ห้างหุ้นส่วนจำกัด","หจก.","ร้าน","นางสาว","น.ส.","นาง","นาย","คุณ"];
-
 function companySlug(name){
-  return String(name||"").trim().replace(/[.#$\[\]\/]/g, "_");
+  return String(name || "")
+    .normalize("NFC")
+    .replace(/\u00A0/g, " ")
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[.#$\[\]\/]/g, "_");
 }
-
 function normalizeVendor(raw){
   if(!raw) return "";
   let s = String(raw).replace(/\u00a0/g," ").trim();
