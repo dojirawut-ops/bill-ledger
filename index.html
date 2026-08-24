@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>สมุดบันทึกบิลรับซื้อ — แซว เอ็มโพเรียม</title>
+<title>สมุดบันทึกบิลซื้อ — เมอริท แอค แทกซ์</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -81,13 +81,28 @@
 <body>
 <div class="wrap">
   <header>
-    <div>
-      <div class="eyebrow">บริษัท แซว เอ็มโพเรียม จำกัด</div>
-      <h1 class="display">สมุดบันทึกบิลรับซื้อ</h1>
-      <p class="sub">ถ่ายรูปบิล ระบบอ่านและกรอกให้อัตโนมัติจากประวัติผู้ขาย ก่อนบันทึกลงทะเบียน</p>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAAACLz2ctAABIW0lEQVR42u2dd5gV1fnHP+fMzC3bCwtL3wWkWlAUsKBiL1hSTDExMTFFjUl+SSwximKPRmOM0RgTjTWJUWOjKSoo0nvvdVlgC9v3linn/P6Y2bu7sGCJwVXu+zw87O6dO3PmnO95+3lfobXWpClNnxHJ9BSkKQ3ANKUBmKY0pQGYpjQA05SmNADTlAZgmtKUBmCa0gBMU5rSAExTGoBpSlMagGlKAzBNaUoDME1pAB6alM5c+7TJTE+BDyvR8rNWAAgh0BqECGAXpE0K0fabAh2A0v/Jv1i0vyhNByCRTkj96LxOp2DXwUTu87nez5VpSnPAA4DLi8fQe2pgTyVebR2iphZRWYmqrcFpaka5jq+7WBZmZhZGfj66axEUFCLz8hFdCqGwEBnNaKffpOF4CHJAjQ5WXgccSrYDhEajKipRW7ag165BrFuPt3kzRvUeZFMjwnbAU0jlgdCgNQLRyh2FQGuBlhJMiTYtVE4WbpcijNISxKCBMHgwsl8pRtduiOD5omVsAFpwKEvsL7gI1mgd6GZC+AuvPNzNW1BLFqPnzEGuXo3cswcZdxBC+7qfBKQErRCKlG6HVgF4RABq/74aDVIgdPCzUmgPtKHQoShely7oYYORo0YhjhmB1b8/CBnolqQgfSjqjl94HVAH/9zK3ag5c1DT3sFYthyzvg6hNNI0AIkSHngapT2EFigzjMrMQGREISMKGRl44TCYBiAQroNIJhHNcYjH0PEYojmGdB2E1ghpIKRECIlWHtrVKEPg5WWjjhqOOPNM5OjRmF27IQ5h8fyFAKDWqtU8TSlbPl9x163FmzwZpr2NVV6OVBpM079OuWilUJaJLuqG6tMb1bcPsm8pom8vZM+eyOwcREYGWCEwDJDBc5QCzwXbQSfiqIYG9I4deGVlsHU7xtat6LJy2FOBYTtIDDClL8JdFyUkTu8ecNZZmOeeizFwUAqE4hDSHb8YAMTXz3wQ+sBzVq9EvfgSctq7GHW1GIYB0gDlopTCzcxED+yPOuoY5DHDMYcORRR2QZhWatHlf8FxtZtE19ThrF6FXrgYuWw5cuN6jIZmhCnBMNCe9lWCvBz0GWcgL/kq1tDDkYDWh4ZY/sIAUAd8wtu+Bfcf/0RMnIxV24A0TbShwXZxLRNv0ED0iSdinHIy5uAhyFB4n3sJrRFCfkJurFP6ZltQKjuBWrMO9/0ZiFlzkGvXYbouwgr5G8ixcfLyURecj/nNb2D0KWlZoC80CD/HAGyxIzUaiY4147z8H/Tzz2GV78QwLBAa5dm4kRzUCaMQ55+LecIJiMxsn8u0EW+iDYCE4FMUfBraWs6AamrEmTMHNXkixpz5mI3NiJAJQqOTHsnePRGXfQvrS1/CyMji0xxNGoCfmt6n0SLQ85YtRT3yMOachRhS+Bas6+BmZuKdegrya5dgHX00CCO1mOIz3DgtgNTKw128FO/lFzHenYEZa4aQBR54noc7+jiMa67BPGp4y0sjv2Dc8HMLQBWINecf/0Q8+XdCtfUIy0R5Hp6UeGNORF72HczjjqVFIIpgET97kaZRtPomNQpvwUK8Z57FnDkbQzto00TYLnZ+Hvr738O69FJkKIz8gpklnzMAarQGLQTe7p24D/wec+o7SFMhMFGOjXPYAPjBFYTPPhthWm24Dj4QO836aZRua7wLlOPgvjkZ/cTfsTZs8vVXAcpTOOecgfXLX2EU9/hCccLPFQBVgB17+RLUHXdjrVmDDIfB8XBCBuriL2H+6Apk1+4+p9gnMaDzcg/d5n+vcjf243/DfO0VQraHNg10wiE5bBDGTTdhBSL5i8ANPzcA1AEAnXfehnvuJlSxB0ImOmlj9+mF+NnPsM45t1XMtrzg54hT+EuhQUgUGnfKFPTDD2PtKAMrgrQdkt26oG+6GWvsWAw0Ig3Ag2Ht+kp78pX/IO+7HysWA9NAJx2Sx4/C/PX1mP0Pa8MVdLA0n+biqHbcRv8P0q58F46PQR3c2920Eefee4nMnosMWWjPw87KQF93HeGLv/y5j6J0egC2+PiSL/wL+cCDmLaDEOAphfPlCwn98lcY2bkHYRF04KKRuJ6LIY2DxmHd+jrsB3+P9cprmIYFnosdiqCu+wWhr339EzvNOwN1+nFrBPaL/0be/wCmk0QIjYvA/dEVhG4aj8jOTSWL/s9HIgRxJ86Nr/yGDzZ94Ccu/M/FMsjcPMI334L7gytwtEJLgeUkMe5/AOelF1PRlzQAP2XOpwBn8iTk/fdjuh4CcA0L7+c/JfyTazBMC6H1QZp8CQgem/kYTy5+hlsm30V5w442yaf/IxElfK+hME1C1/wU9+c/wZECIQSm7cDvHsCeOtnXkT+HHjXZWcEHAnvuHPRvf4uR9JNAPWGgfvYTQpdfntLwpBAHzSXx5po3efSDvxIJR1ldvZLbJ91F0k3+7/UkBDJwvYQvvwL1s5/hBmljoWQc7vkdztzZIARKa/TniB/Kzgc+UAjczZvg9jux6ut9vQuNe9WPsb7znWDQB3eSN1Rt4NbJt9GsmjGkxDJDvLFmCn/+4HFA8D9XpYP4skAT+u7luFf+EKU0QpiE6vag7rwbb/NmPzqk0wD8hEp+8FNDHe5d92CVbQfLxPNc3Eu/ReiKKwK+d3DdD/WJem5+41Y212/HNCw0AkMYCEPy0MxHeHP1W4Ex8r9feKn9RQtd8UPcb16K69kI08LathX37rtRDfWtya5pAH48F4RGoZTCeexxzPlzkZYFCQf3jNMJ//RqpDQCTUwcrD2B1pr73/k9M7d8QMQKIYLgGSgsKUi6MW6dcgebKjemOGHLybr/KSc0DEI/uwb39NNRdgIZChOaNw/n8ccDo0wFWnQagB9V0QEhcd55G/nvf2OYFtpRJIcNwbzhemQkA3Gw97WAfy1+gacXPocMGfsAXwOmabKxfgs3TbyFxkQDQvja6f9aDAqtEdEMzF/fgDt4GNg2wjIw//UiyXff9reJPviqyueXAyJxd+9CP/wnLMcFDU5eLsb112N0K4ZPzFU+/gK0gGdx2SLunnYfDgpDG6nPvZYwHwKFIMOMMH3LTO5/+w+p7OxPZhfpj7E3/O1gduuOuO6XOLn5oASmk0A//Cje7l0gZJoDfpTp9g/yeLh/fYLQli0Iw8DTGu/7lxEacWygfEs+ms8/iIRoFfz7uF4yhRCCysZKbnl9AhWxaqQ0UvfQgNYGCvCEf85OCE3Ysnhq4VO8uOTllP/uk01IS9DxQy4V/kZRWmONHI33ve/gaQ9Mk9DGDThPPul/ngbggaWu1r5J4cyfi/HGGwjDRNsO7uhRhL75rVbpLD76XVvT2WVwdFJ/DARIHM/mzil3M3/3UqJmCFMLtPCBrLQC5eL5aTnINifaHKG4563fsqRsySeLkIiWwJr4SHOX8hECoUu/iTt6NDrpIS0L+dobOPPntj9GmgZgxzOp482ox5/EjMUAjZ2fh7zmJ4hI9BOI0CDPTggWbllI3I75J9M+Ei/2F/5vc/7OS6teJWqFUEKhhQo4nyaiw9x4+nWMLB5Owk0GZ43971vCoixewW8m3kpVU1Ubn+aHWjoA7K7fTcyJ++zto/oHW/yh0Uzk1VfjFvgZ1KF4M+qJJ/ASsU4dK/6MRbA/8c6772IuWowImWhXob58AdYRRyLRHzp5vtWp2+tvQjJ702wuf+4HPDfveQ4sE33HbYvlOn3DDB6a8UeEFGhBu5QG23G5dMQ3uWbM1dxy3s10ixTheC6GlrgatFBEzBBLdy7l7qn34Hh26tsdc2Gd0hmrmyq5+h8/4YkPnmjJnE1Z1B19t+VvrVtHYx01HH3hxWjHQRgW1vzFeO+8iweBgzoNwH34jtfUiH7ueQytEK7GLu2L9a3v0Hq+TOw76W0WpEXUtRW75bU7uGXybex0Krn//T8yc+NM/7o232+9hy/yhJBsrtnCLZMmUOc2YAqjXZDfdm1OLjmJX53xCwCO6X0MN595PRYSW3iYWiLRGAgsy+Tl5a/xxJy/dwi+1vfwAe55Hve8dR8zy2fz8Kw/M33d9EA0dFQQqf19UkWUghQ049vfwu3bF601hufg/eOfqKam4CY6DcC9RYg3/V3M1WvANHGFRnz1qxhduwXKodhLRRKpSd9XffL/lnQT3DL5DlZWrSbbzKTBbuDmSRPYXrO93Uq2vYdAEHNiTJh4G+v2bCQsw+2KDTmeS2l2CXeOu53cSE7gX9N8bcTXuOzY7+LYLlJoVEvqvxA4hseDMx7mvfUz/GcJ0fHmEZIn5j/NP5e9SDQUpdFt5NZJt7O5egtCHtjwanmHlOqIxijugf7KV1CegrCFuWo13owZn9gj8IUGoJeIoV5+GUMBnofbry/mhRcElqU84KS353qtIvbP7z3G5LVTCVthBArLtFizZz23TbqdmB1rbytrlVqUP7z7J97a+C7RUNg/TRcAytYuURnl1vNuZmC3w9BapcSqFJLrzvgFp5aMocm12/kJQ9Kg3mni5sm3U1azLTC4VKvQD36etWkWD7z7IFJKhBCEDIt1dRuYMOk2muxYa3m4D+H8IFPmi3XRRXilpeAoDOWhXn4ZLxGnM4b+P1sALl6KuWINwjRRyoNxFyHyC9qYA+3F7t4/t3DElrO4U1ZP5pFZj2FZRsppY6CJWhZT10/j4fcfab23Vinx+9qy13h87l8JGyat50fA0KBcwc9Ouopzh54TPL+9pZobyeGOCydQmtObpLJT4/bQRIwQa2rWMX7ibcSdWCpcJ4INVla7g1smTqDerkNKI/XdsBVi6qZ3ePjdPwZKiNhXz91LKrSODURhIWrceXieizQMzBUrUYsXpY2QvfUX9cYbSDuB1hqvR3es88/dJ71JCLHfKgFt9b61FWuZMOUuYiqWuk6JVh1PWpK/zP4bb6ycmBKHQghW7lzJ7W/eQ0LbaCkCv5n/edxNctHgc/nRmB+10UnZBwwDiwZy23njyZRRvADYEokWHlErytSN03ho+p/a6ZtxJ84tk25j5Z41mGa4nVGmMbCMEH+d9wSvLHu9Q+7fkWTQgR4oAOP881Dde4AGMxlDTZl6kPImOzkAdWCNeeU7kPPnIQwT5bmok05CFvdoe4Cync4n9tLffL3H/6w+XsctE29nS8M2LMPq2MEiJAllc8fUO1mzazVCSKqaKhk/8VbKm3ZiGSagkFoiNMQ9m2FdhnDL+TcRtaKt2mIHY9Fac+7Qc7jmhCtRroeXihf7hwmkafL43Cd4dcUbCCHwlMuf3nuEievfJGyFMdFInfKMIlEICXFs7n7zHpbtXNbhRtz799ZxacyePVEnnYB2XTAtmDUXt7wsdWChs9jEBx+Awvfzu/PmYVTvQUjQ0QhGcKBob7dpRzpfq1dForTigXf+wLvbZhI1ongHcNyGDZPNjTsYP2kCjclGXlz4IjO3ziJkWfg1siQITVw7FJoF3DPudnrm9gp0to45UGpMGq46+SrOH3S+X4YjZd6AJQxiKsmdU+5kfeV6NlVt4dE5TxAyzJSx02pvtW7BkDTZ2bSTW9+4gz3Ne/Y7Fx1KBQTG2WfjZoQRAszqKtSCRa0bUh+iHBAEeA56+ru+8eFovAH9MA4fGhgGHHBidZvbCOCFhS/y1IJniJpWIFlbC3Y4npO6XgEeHplGhPe3z+Leab/jvCPOY3DxsNR1/nA0Yc/khtOvZXS/0dDiP9uP+EuBQkDEinDr+TcxtOhwbNdOXaPQhKTJjqad/Pq1mynMyudbw7+K47ltOJHGU54faWmzMJZlMXfHXO5783d4ym3nftm/lPH/N44ajjfgMHA1htJ406ejPJcD+na+yABsUZPVrl3INWvBkCg8GHUCRjQzsH4PvNAtKfgCwcJtC7n7nftQQiGFQKGQSDwUYRHm2F7HIpRILYgIUBsyQzy14FkWbFvIAxfeQ66ZjasULpqkm+Sbx1zCt0ddmlooofc1ivbVv/w37JnXi9vGTSA/lI+jPRQCQwuk0FhWiA/KPuD37zzM9Wddy/F9R5JwHT8B1/PontWdDCsLpXS7ObOsEM8te4Fn5j6f+qs6gFHSgkIRjaJHjUQpD2EayFUrUbvKaV/R+hACYAvbV6vXIGpqQQt0JIpx0gkfKcoRTD0CqGis4NeTbmVPohpptCl9q8GzFZeNuJRnv/13zhwwFttNIHWrfiSFgZKK26beTdgKc+MZv8bzNK7jMKbnKK4/6zpMaXRobe+tf7X+PXBdasWJ/Y7nhtOvxfQMhFK4QgdRZrCsCE8vepbJy6fy0MW/ozSrFwknRkGkkMe+/id+M/ZanxO2NcQwQGp+O/1+Zm+ejRDSjwGLDjaEDgoRBxLCPP54vGgGSDBramHthgOK8C+2CA4w4C1YiOHYvlDs1QMxYMB+92Prgrfy0KSb5I4pd7Ns93IsaWLoVgDGvARjSk/k52N/Rm4kl1vPu5nBhYNwvGSKixloTBmiOlnDDa/8hrOHnsm3jryE4khXbr/wdgozClMcRnTgvD6wP86nb4+8lG8MvwTbdbBU6z0MLUEo7ph2N3XxOm4bdyu5MpfrT/8lI3qN4Fsjv8WlR30Dx7FpjWsrTGHSYNdz06RbKa8r8+PbHYXoaD1TDGAMHoLq1QOtFNJx8AJ3jOgkqVrGhAkTJhxMEawScbwnnsSqrgKlsUePJnT+uCCRc/9O55SqJSSPf/A3/jb3SUKW4Z+B8Es2Y2uPPpk9+eNXH6BXXm+U9siL5tOvSylvrp2G47pI2WKfKkxpUNZYxp6GWq4/81eMHXAKx/Q+2i8cJHTK6u14PHtb5e0tZCkkI/oezcKti9lUvw1LBoUvhUBIQZPTxLKy5Vx50o84a9AZnD54LFIYGNJgRJ8RLNq6iG11OzAD36QWGlMa7GjYSWVdJWcMPt0/IxzM7N6WcGo2w2HcxYsw126EIM3NGHc+wjQPQREMqKoqjF27EPg5deYRw/Yp6NixOPbz9N5ZP52H3nsYbULbLEEPsDC4+axfM6R4KKqlor1WnDzgZG449Voc5WGn/HT+MyNmhFdXvMqry19nZOlxqUr4AvmRwHcga7Qgo5D7LrqbXpk9cZQLwj9w5T83xLKKFdw2+S6OLT2WkNFaKLMws4C7L7idoqxu2J6DRKbGm2Fl8OraSTz2/mP+OMW+cWaxlz0thgxFSRBSYuzajVdZeWj6ATWgy8uRDfUgQUXCyCHDPtIghJBs3rOZWyfdTr3XiBRtzsZpSDgOPzzuci4+8qIgXBb44YRk657tnDf0PC49+uvgePso4MoSPDjjYd5a+3bK6OjI4Xwg3+a+m03QbDeRl5HPnefdgilMXC2QqNS4I1aYiWsm8uD0P+7jxxvW43DuPGc8IRHG1W7KbPCEJmRYPDz7L0xZNSUIwYn9jkcAcuhQVNgPMRqN9VC+s9NEhQ++H3DrVkTS9TlNXh6iZ68P5XwAjckmbp14Bxtq1wfOZl/rd4GYm+TM0jH83+k/TxUobwFfQ6KBX/3nV0yYcgfXn/ErRvQ+JsjjEygtMJCEhKBZNXHb5DvYVL0xFdj/OIBrt8mCGi+Pf/Ak3336e4zuN4qfn3g1npNMOfx83U6DIfjzzMd4c/VbqffVyo8VX3TkhVx5wg/wHIUXeElD2j+R16xi3DL1DtZXrGttFbGfiIno2xudn+/7TZM2XvmOQzcS4m7bjlAeKPAKihA5OQdeaOH79P4444+8u/EdIlYkSAHVgAGeQ2l2H249fzzZ4Zwgv641Tel3bz/AB2Wz+c/a13h52avcd+FdFGf0wPMcJBpX+Kp+2LDYXLeJm9/wndSphlt6X8B1pP+lrOHAUn573XQem/1nFlQu4baJd3HlyT/izIFnEfeSKaBKLTGlSYNu5LYpd7C+ckOQxR0UZNLw81Ou4bxB5+LYNlprHBQIRURalNWXceOkW6mP16XixR25sWRuHhR2QSsP6Sn0lq2HKAC1RpaXI4VA40K3LhCN7t8CDrS1V5e9xt/m/B1htQ7X1BJHe1giwk1n38jgboP9hAYtENp3evxz0Qs8tfAZLDNMyLT4/fSHqGyq5o5zb0IKAw8wdGsGtWWFeHvLe/zhnYcCIAdp7x24XvbRu1ry7YRgU/Vmbpk0gXo3QYYV5cVV/+GZ+c9z/4V3MiC/P47npF7QRRMVUbbUb2X8pFtpTDSm3CxaazJCGdx6/s0M7TKIpOditem2FLIsZm6Zze/f/kPKgb2v60ojIlF0t67gaYQh0eU7Ds1QnHaSiD17QAo/GaVLUQcHuoOgf5DhsmLnCu6YejcJkcQUrSfTlFAo1+EHI7/HRUeOawWB0CAMFm5fxG+n/Q6FRgqJEoImr4kb3riZoT2GcvWoH+O5yaBUbmvyZ9gw+ev8p3h5ySspI2b/Mde2YPRFfmOykZsn3cbG+s1EpMQQAmFIHpjxR9ZWr+feC+4k18jB1Z5vhAFekDb23paZ/O6dB4LIi0QIUFrRJ783t4+bQF44iwROqlydQBCxTJ5c9CwvLHqh4zzJIPlBFRSkWpepPTVoxz0EARiPIRqbWhvJ5Oe1Sz5oy/cQUNtcy/jXJ7AttpOwDLWDacxNcGq/U/j56dfQmiTgdyaqaKhg/MQJVCQrMQ3DT1dHEDHCrN2znr++/yQ/O+0aTuk/Ftux28VPTWEQF0nuevMelu1YFpwnOXDoS7RsGK158N2HmL5pBhEz5J9cQ2NJgxqnnt9Ovo/j+hzLL8b+H47n+XvF7/KFRGCYJk8veI4XF75I29Cw1pqT+p/Ir8dei+HJIL1eoALurITLPW/9jsXbF+0HhCBzc3y9WwqshiZIJA5BEdwUR8Ti/lMlkJ+7H33f399Pz3uaOeXzyTIiqXgugOu59Msu4bbzbyE7lN1O7DiezV1Tf8viXUsJG6F2Cr+jHPpk9eIrIy4mM5TJXeffTr/8EhzlpK7zhCZDhNiVqOT6ib+hqqkauR+nbyu/9jObX176Ck/OfRrLMBBts7m1IorFl4+5mLAZ5vLjv8M3jvgqtmvT4qNWAiQGHi53T7s3dbJOpMS+4jujLuOyo75JzIkjtUhFd0xpsjtZzc0Tb6WysWI/emBu4EyVyGQMHPsQBGA8jrATwbaWGDl5HXTR8KGwq2E3zy9+EWH6vi6vxX2sNWEZYvzZNzKo60D2SlHg77Of4qWVrxCyzMBFI3C1xlNgaJObzrqOkX1HobWmf5dS7jhvAllGFq5WuCmR5Vc8WLpzOXe9eReO5yDaRWN0u+iMEIKl5Uu56817cISLkqBE68iSbpJLh1/C90/4HgAhI8TNZ/+a4cXDsV3Xj2FrP0IjDUllvJLfTLqFiqYqRKB2aA2GNLn+nGs5uc8JxN14u9IbUSPM/F1LeWbh8x1vlOxslJHKvTk0Q3HKdcB1/RanAJFo+zBHG1pStozdjbuwhJmKowokjuvww1E/YNwR41KdJlss0fc3vc+D7z2MNHxXhQ4mWyJxHIfvHXcZlxx9SWt8Fzhj8BlcM+ZqtNvSWbPFvpaELIuXlr3KE/OeCqwRvVcYzo94VDVXcdPEW9kVr8A0JGZL1yYt8GyXkb1GcsNZ12MKM7X4XbO7cde42yiKdEF5PufVQQdO0wqxaOcS7pl6jw/+QL0ATX5GAXdecBt9s/v65z5a5hYwDMm0VW8HVvxecx+JtKo3njhE07G0RqiWwzgEzfs6pq1VW3CUnYpZaqDZS3Ja6an89NRr2rj6/UndWVfOLVPuoNapx5C+3mZqCcI/qHRayRiuPe3/Ug7stprnlWN+xLhh5+M4Tiqy4mtZEgx4cHpwsg6xVxclX6zfM/VeFpQvImSaqcwZQ2uUtinKLuaucXfQJbOLz7ECICmtGNHnGH5z5nV+/rRqX3TJMkO8sPxlnpjzdDDYFlmhObx4GL8++1pMabWxZhWmMNhaX8b2PWUdrLRslRad6IjmwQWgFO2cvNrbf+GIeDKOape5q8ggxBXHf4+scGa7ClRJN8ntU+9hVeVqwmabjGihsJVHSa5/oi07mhv4FttPf8gIcdu54zmq2+EkXNvPaNZ+KTSkpMGpZ/zEW9lRU7bXlAmenvsMLyx/iYgZ9vt+IPDQ2Ggswtx69o0c0ePw1ubZbRpVa635+oivccWxl5EMnksAYAvfev7Dew8yY/2MVFm6ljucP+xcjiw+HDfI79PC59oJN0ZNbM++hohSra/diSqbH9xYsGn5rVJbDubE4vuNLEgp29vHWhCSIfIz8mgnd4C/z3qKV1a/TsQMp86UCA2uUoRlmDvOGc+AbgNaHcf7vLame04xd427jS7hLrhK4Qm/HIcBWIbFqpp1jJ90O3E7lnLZzNo0m/un/wFh+OJYBQ5ktMB1XX446vtcfNRFtNQz9P17/v9SipQI/+UZv+CU0pNJuE4Q1fCNEktKGpxGxk++nW0121ojPIAhDIw23NwAVODSUm02Z4vGKuNxREulf9l5mjscXABGM/AiYX8fK43XUJfKENmbinK7YgojOCvhXxNzm3ltxaRUbBgJ7659h9/PfBjTNDGEkUqF12g8T/Hzk67mrGFnHyC01lrIaGTJSH59xi/8lCnVGtSXCEJmlEkbJvPIjD+DEJTVlXHzG7fQaNdjBIaChYEjFHHX4az+p/N/p/008CXuL7Tnc8HcSC53jruVfjklxFQSQ7eekLMMi3U1Gxg/cQINiYbU5pm0cirLKlZiSrPV34cibEQpyChofUKwWVRTU0pn1tJAy86RjnVQc3JEZgY6M4qoCHZmbV0bK7g9CI/oOZRoKIuYihPC8P1lpskzi56hwW7gjEFj2VCxnmcWPE+T10REmDipo+GQdBwuHHoBV4358YeNqs0/zTePu5Q1u9bx94XPIKwwWvgHjEwE0ojw57mP07drH95e/S6ra9YRsUKpO3mA59oMyu/PneMmkBXK2qsCQwdPD/x8h3UdxG3n3sxVL/0MBwejzfVRy+LtzTO47Jnvc+qAk9hZv4uJa6aQ9JKYQbsIT/sp/T3zetCnsHe7BwiA+vpgDyhU2MIwrUMPgESjiOzcIKtZY9TUtjmF256GFg/hxL6jmLrhHVzTjyiYCDzt8c+l/+LFpS+itMIwJJY0gpNoPqOxPYdhXYdw63k3ETEjbZpZ7weCohWApjC5/qzrWFO1ng/K5hIxw6D9g+pSgK0dbpx4E66nfWdzm9F7SpFl5nDnebdSUliyT9Rkfxug5ZJzhp7N/510NffMeBBptYWgwDIEC8oXMK9sLkifM1rSbNWRBdie4ozBp5MbyWsnggFUXS1CKDQmbm42ZjR8CIpgy0IVFPq6mxTo6j0I7XVgLGssI8Q1J11JXigbT7sE0VGEEITNEIZpYFlWULuvlRztkh/K445xE+iZ23O/bp59uSAph29eNI97xt1O76yegQ+wVfeSQpBQDkp6qbT3lIXvefz81J8ydtDYT+xn+/HJP+LCweeQtO19avtZpkk4FCZshn3neBux7nouvbN78I2jL9nnzbRWiJpahDbRSmEUdEEGneEPLStYSFTPHinOoKuqULF4hxOhtWZk6ShuOPWXRDzLX/Q2anXbspMt8VylFXhww+nXckLpCZ8ABK2ZLYOLh3DHOePJFGFsPIw27vK2bSFUG5H/pWFf4soTrvjkflKtiZh+GZAjuwzFc4P2FG2LY9LmbE3wd1d7hLH4zenX0b+o/77JEvEERmWFX/ELjejRCzpJl7mDrolafUv8lDgpMPfsQTQ0dCgSW0TX90/8HhPOHU++lYttuySVh6clSstAwfcjHc1uAukZXHX8j/j2yEs76JT5MWAYfO/8I87nyuN/hOO6uCk3ig9Uqf1ng6DZTTC8+AjGn3dj6mD8J3m2DCzgnnm9uP2C28gLFxJ3kqCCTGrt9wHxgn7DWgua3SRREeWms37NV0d8JVWmpJ0VXF+P3lMDUvmKSr/SQ9MKBtClJahwxHdc1dbhlW/fS1tpb6EKIbj8+O/yr+8+y9eGXUT3SFeU52K7CRJ2Es/1yDOzOa3PKTz+jT9z8zk3touCfAL4tfvtmrFXc/Hgcbi2Q9J1cJQiqTWOUnieQ8yO0z+3P/dceBfdsrvx3x53bHn68f1G8/SljzO29GRMYWLbCWJeAsezSbo2CccGLTix52ie+Ppj/PCEH6Qs3r1Dm3rrZuSeOv/8TDiC6N2DzkIHvVmhs6MMvvM9zJo9eMrDvfaXhL9z+X52ZEvc0ueISmvKarezavdqymt3opSiKLcLg7sNZEDhQEJmm8hA2zK9n3i3+IhoSDTwn+WvMmnlFDbXbcGxbaQp6ZnZnVP6n8Klx32NXvl9PvTA+McLGim/nIibZNH2xby//j3WVq8nlowRtTLoV1jKyYedxOiSkWSEMts4uvdKFwMST/6V0IMPIwwDuyAf49mnMXv27hRc8KAfjZJdupDsVYxRXYHQ4K1cFSR/dhSWE61WovZFVN+CvvQt6HsAvIgDeT0+ETvKieRw+cjv8O0R36S6uYZmO0bYtCjIKCAjlNGOW39qnCE4aBwxw5zY73hO7Hd8YGl7vgO6Hch06tD93hxYa41Yvdbnjkqhe3THKOraaUTwwQdgJIoYOgS9eDlSSsz161D19Zh5+R9HMn6ESz79KTYNi+Kcbp98gB8X/R3c0tjL6mcfc6I991MNdYgNG8AwwPHQRx+NCIXpLN3jD7IOGLgyjhuJCplgCmT5TtTGDZ+rdqO60zdIbR2ft3o1onynr8KELYxjjulUI5WfxdQYg4eg8vNAaWQ8gff+rFS70U+Wp9EWEP97cIhO3qfcT9ANjnHOmYMR95NP3S75yEEDD2UABgn4xcV4w47wuz0aJsyfj441p06DfbL7th7H1p8KOPRn+O3/3t+KEOjmJox5ixAmaNdDDzsCWdy9EwzwM+SAaB90cuzJ/hxIibFxA96K5YBEOf9N/12Fa8dAf/IDN54bR3n2J+ZwSjl4buK/2AIenhOH/6LHkXITaMBdtgyxeQNIC08K5NixrV2fOgkDP6hGSNvMF2PkSNyuRYSq92AkEjhT36Jp6GHMevEeLCtC36Fj6Df8NAwjFFh5ut1+0S1gFoJ44x7WzZ/I7q3LsOPNGFaYoj5DGTL6QrLze3QQCm6tKy3wK5ZuWjqNHWvmEmuoRiLIKurFwGPOpLjfiH0SJlr4dIuYk0Kwe9tyNi2ZRn3VDrRrE87Ko++wMQwYfjpCWmjt+ZkseyW0tiS+NtXtYv2iqVRvX4udaMIMRehWeiQDjzuPzOyi1BlpsVfbCh2c+nO9JFuWTWf76g9IJmOc8OVriUybhplIgGGhunbBOO7YDg6BHWJ+QFILp0mMH0/otVeRMozbNR/9xBPY2SFqd29i9Zz/4LouY758Lbld+gQcQe7tomPnpkXMefVPdCkZyJCR44hmFhCP1bNx8VTK1y/muHN+RMnhJ+9j87X42WINlbz38r0oz+PIk75GXte+KC/Jjg0LWDt/Cr0HH89xZ12BkH4J3za1wBFItPJYMO0Jdqydy9DRF9G9/3CENKmr2MzqOa8hhOSkL/2CzLzutDZyaC94tq1+n4VvPkXvwSMZMPw0rEgOsYZqNiyZQsW2tYw85wp6DzqBVgVFtHO/NOzZwfsv3YdAc/iYr5DXfRCR+hj84EpC1VVoR2NfcjGhCROQnU131Z8hJefO1cljR2g1fLh2jhimY4/9WavUp0qvnPmCfvGBy/T2dXM6/P7aea/pF+67VG9b80GHn1dsX67/84cr9LL3ntdKe/t8vqd8rX7lj1foRdP+plWbJ7dQIlarpz03Xr/z/Hgdb6rad/yxWv3uPyboqU/9WsebazoYgdLL3/uX/s9D39e7tyzt4HNPL5vxD/3y77+rK7av7PAddm1epF/6/Xf18pn/0krt+w7lGxbof93/bb3k3b+nPlda69ijj2h36BHaO3q4To44Vifmzu7gDT97OqgccO/MODeZwLnqaiILF4KQJPv0xnz6KcyCwtR3ytfPY+7kRyns3p/SYacQycon3ljNphXvE2+o5cQv/ZT8INu5I2qqr2DWqw+iPI8BR40lp0tPPDtB+cbFlK1byJGnfo0Bw88+wAZ1WfjWk5StmUO/o8bSre8whBDUlG9i3dJpdOs7jFHnXoVhhvZ7j22r32fB1L9RXDKUPkNOIhzNpqluNxuWvI3nOJzytRvIyuu+3+/X15Qx6z+/RyA57JgzyCrogRNvZOvqWezeuoqR5/6AvkNPTl3v7qnGufx7hHdsAw+SI0cReuRhRDjS6TqFfCYiuNVkgOSUKRi/uRFTGGjlsecb46g791R6lh5BZuD0TcTr2bBoKrs2Lcd1bcIZOfQePJJ+R56KGZQ1q961gV2bl5FoqiEUyaZb6TCK+xzpP0d7bF81k00rZ5KM1WOaEYp6DeSwEWeTles/I9ZQwY4NS2is2YkwJAXd+9NrwLGYQYX8qh2rWbdwCo17KhACMgu6cdjRZ1Lc13+G6ybYtWkJe3ZtwnNtsvKL6TVwBJnZwf0bq1gz73WqyjbieTaRaDZ9hhxP/6NORQbvULVjLbu3rsRO1BOO5lBcehRdegwMjBubTcums3XVbOxEMyErTNeSwzlsxNlkZPkZ0M2NlezcsoLciTMofOENv+2tUqjf3kXonPNoORqQBmAbAKrmRpwfX0V4+TKEjNCQoVn6jdFUyySDjjydYWMuSZ2Nbav3tFAy0cj8yY9RuX013UuOIDOnkObGPezauoL8riWMvuAnZGR12dsUajeO1XNfYc2c1yno3o+8rn3wHJuK7StwHYdR5/2Y4pLh+zii246hYtsyFkz9G1Y4QpeegzEMi9pdW6ir3s6gUeMYOvrivZ7ZXp+NN+1h/pTHqa8qo2vJMKIZeTTXVlBZtobCXoM47pwfEsnI3e/3wWPlBy+xZtEUirwIR780n5y4QLsOiaOHE/rzoxiZWR1mnh/aAAys2OTUScjf3Oz35VUO7uVXkPjeJcz+zwNEMnI48eJrCUWy2kQh/OVvrNnB9BfuIq9rH0addyXhaGs4z0k2s2T6s5RvWsqpX/0V+d0Oa7Veg+8r5TBv4iNUla9nzJd+QX7xYe0WecvK91j01tMcecrXGDjivA5BvGnZVJZMe55jz7mCksNPbS86K7cy6/WHySksZvS4n2JakXbjB6jdvZH3XryPXgOPZfhp38a0Mlo3V7yRpe88RWXZGk7+ynXkdi3dZwyO3cysV/5AY005J11yPZlP/wfjmb8jpIWnwbv3LsJnn+vHgkXnc54f1BK9HWqFQiB79cFZvhxz2xaEaaE2biB80mkcdva3qNi8lCUzniUjI5eMnEIMw8RONLJlxXTmvPow/Yefwchzr0qJytSLmSF6DjiWkBVm7sRHUcojO68rZjiCcm2qytYw+5UH8JTi9Etv6UAHE+R3LaXHgKNYNO0pqspWk1XQjXBGFmhNY80OlrzzLBuXzuDUb/6GHv1G7PN2kcw8+h1xMmWr57Jq1ktk5OQTzS7AlAaJWB3rF7/J3Dce4YgxX+WIk7+J3KvJjmGF6TVwFKCY88bDaDQ5+d0wrBCuk2TnxgW8/+K9ZGQXcNq3bye0qQz9uwcwPA/tKpInHk/4yiuRptkpwfeZc8DU2V4hsRfOR/zk/zCdJNpxsEeOIPSnR5HRKNtWTmfVrFdwPYdwOAPbtolm5nLkKV+jW6CDae3RULOTZHM9oUgWOYU9UwtaW7GZpe88Q0PtbsKRDJTyi0D2O/p0Bh83LpWy1dxYTay+EikNsgt6priunWhk2bvPUb5xEWYkE2lI3GSCot5DOfr0bxPJ8DmvnWyiqbYCz7XJzCkiI6dLaqOtXzSZtXMmooUiHMrATiaJZudy1OnfpmuvYYFEcGncs4tkrIFIZg7ZBT1TY6veuY7Fbz9Fc10l0Wg2jusgpWTQyAsZcPSZePEYztVXE1q0EIwwTsSChx8mdOxxnbph9WcKwFaRCkpD8t57Cf3jOaQVwnVd3KuuJHzl1fi+e49YQyVuIkEoM5tIZpfUxJatm8PKD17ETsYwrQhOMo40LA4/8WL6HXlG6lmJ5hqSsXoMK0w0pwuG9C3XhurtLJn+LHVVO7CsCJ7n4NpJ+g4dzZGnXJriro4dI95QhUaRkV2EFfYB6joJVs56ibK18zCkHwazk80UFPdj+NhvkVPYx39Hz/HfwU4Qycwl0kY33bZqBmvmT8a1EximiZ2IEYlkMeSkr9Bn0PFt9MVqkrEGrHAGGTlFiKDOYfLPj2I9+hhGyELbCezLvkP4uuuDxogiDcCPYpB4lRV4P76S8KYtIAXJjAzcO28h47Sz9+M+0Cx6+ym2LpvO0WdeTu/BozGtMK5rs2vTIhZPe4bifocz8tyrkC1V6vfS4so3zGP26w8zYPjpDBl9IaGMPNCK+qrtLH3nH8Saazjlkuv36yZprq9gxr/vIZpdwIjTv0t2YXeEMEg017F+0ZtsXjKNEWdfQZ8hJ+0ndOeyYPKj7N62hmPPupxuJUf5IjYZp3zjIpZMf45eA47l2LOvaGeMtdUEm995C+vmW7ASDlo5OAMGYj72CEZRt1S0KA3AjwBBhcR+bzriuusxXQ+pPOoKM6j91ZX0OP0rRAKO02I5zp30CPH6GsZ+8yai2UWprOCW+i1OspmZL9+H63kcf/7VZBf0aBezXTP3dVbPfY0TLvopPfsfFyxo+2jFypkvsH7RWxx33g/pPXB0uxHv3LyYOa//if5Hnc7wsd9Khcfahswqy1Yw86UH6Td8LEec9NV2umpTXTmzXvsTUgpO+dqNhMLZ+9wjGavj/Rd/B1Ix+vyfkF3QWlM76cTY/e4r5N77CLk1zWhpYJsm3H8f1smnIjuh26UTA7A1vpt46EFCf3sKGQ6Bp9mSb7P6gmPIHzSCrGgezY3VVOzYQM+Swxlx9hUYZoS2eTQtjQX9+ymWv/88m5fPoKB4ALmFPXHtONU7NiAMk9EXXEVul74B8GQ7l3nLfXasn8uCaU8QySiga68BSGlQs3srjTUVHD32UvoefkqbGDOpnnU6CHw11e1i9msPEW+oo1vpUKIZeTTWVVBRtpa+Q45nxBmXB6E+3SbS3GIKCZRyWPruM2xe8R5dew8hu6A7yWSM2vVLGPzaPEr3GHiWQCcd7B/+gMhPf+YDuE28Ow3Aj0FuUyP2ddcTmTkLwhbCVVSdegwVXz0LOxkjIyefngNGkFPQO8Ux9i9mfGHbXF9B+YYF1NftIhzKorjkcIr6DEtxOrH/UCVCCFwnxo71C6ndtQUEFBT3pcdhx2GFMvf7zPY+Q03F9hVUbF6Ok0yQmVdEz0HHkp3Xc58Y7746sn+HhtpyytctJNZUTdiKUvTiWxTNXAamibbj2GNOxrrvXoys7H1UjTQAP64+uG0L7s9+QWjLFoRloLTEu+rHhH/4w33AcaBp1ii/cPl+APrRDhLp/YCDNiKfT3SPNqd9D7QNgllp1QHtvzyO+Mtf/PPKroNTWorxpz9g9i7plBGP/ZHslKPSGtm3FHnrTTiFBeB6SKURf36E+F//ikrVBtUfssdbqlKJvSqptv4mPqQnCCnO5INAt+lrTtAw8CPu9Y7gG/xdHpBP+b1HZDACRfzxvyAeewypFXgOdlEhYsJ4jN4lnbIr+ucOgBK/NrJxzHHom27EiWYhUFhIjEcfI/mXv6CVQgvZrm1px4vergd7OzCIva75cAAF5dVS2tl/w2XEx9qQSghcpUj+5a8Yj/0VU2iEEtiZGfCbG7GOHtFaLfZzwv06rQhu221II7Bffw1x192Ekkm0lHiewPvuNwj95GeIsF88SArBF5FS5UeSCZIPP4z5/POYQck3NxxG33wj4Qsu+lyJ3U4PwLbkBSq6/erLyHsfIBRrBsPEc5M451+Edd0vMAq6BBYfn8tFOLCbXuDu2YP9wP2EJ07CsEy0p7GjEfSvbyB80cVtTsGkAfjpA1DrVBq7PXki4rf3EaqrB8tAJR3sY4/BuOF6zCHDAiGpP5cL0U4r1AQ9RsBbswrnnvsIL16CDBkoz8XJyUffeAPh8873FYjP7yt3fgAq/P5rGoEWAmfmTPRddxIq34mwQuDYON26wTU/wbzoQqQwPrc8ULc6H1Haw3ntdfjTI4QqKsD03zXZqyfi5vFYJ52YMl8+z9TpAdha6yVYICFw1qzCu+tuwkuWQzQEnocnwB03DuvHP8bs2TulvLf2Iu6sbGLfTinuju04j/8Vc+JETKXBkOiETXL4cIzxN2ENHvKFUTk+BwDs2IHhVlfiPPgQ1sTJvndM+kc63ZIS+P53Mc+/IJWCnirO3QkXq6UuTks3eXfiRPTfn8batg3DstDab9Xqjjsf8/9+jtWl6AtlZHV6AB5IV/I8B/fFl9CPP064sgpCYYTn4gjwRo1CXvYdzBNPCAof6U53IkynLH6F+8EHqGefw5w7H1OANg20beMUFcGPfoR1yVfAsDA+xzruFwaAbS1EDThrVuM+8iih92diCAGGiXaSeJEI3pgxiK98BWvUSKRp0VHc5LNaUs9zcObNgxdfRsz8AMtOIMwQ2nP9gudjxiB/cjXGkKEB/1advizIIQTAvbhhMoH7+mvoZ57F2rIFaYb8fhhJBycjinfcMYhzz8MYMwaZlx80vfbNnGAq/C5Hn1p9v2B0qUiLbFcw3J05EyZPRixcjJWMoy0T4YFyXeySvojLL8O64GKMsF/J6ovlXvoCARD8syVKgIHA3VWO+69/IV97HaOqBsOy/DoproNnCNx+JXDiSciTTsY4fCgyM7sdVxSf4sYQbcVsrAlvxQrUzJnoWXMxN29BKhdhWQjl99FzuhShLr4I6+uXYHTv4efT6M6dUJoGYIs4bnmNQKF3N67He/llxJvTsCqrEIZESAOUi1LgRiNQUoI6ejjiqOEYw4Ygu3dHhCJtuoa08MZ9QSU+hCNrJ4m7czdq1Ur0smWIJUuRWzZjxG2EFGAa4CmU5+F2LUSfcw7Gl7+MMWBg4NtTnT6VKg3AA9jMLZzH3bIJNfVNePNNjK1bkZ7yK3IJAZ4C5eIZJio/B927L5T0hb4lqF49sHr0QOTkQnYmIhxBmCEwZJCX4KFdF5VIIpqaoL4ee9dO5I4dsH0bYvM22FGGUVeH9Dw/m9kIxLDr4hoSVVICZ5+FPPcczJJ+e0WqO7PrKA3Aj+xBTB3BrKnGmbcA/e67iMULMatqkEqBIRFS+s0DlQfaQ2kJhoGOWKhoBjoaRUSjiEgYDMO/o+ugkklUPI6MJZDJGCKRRHh+/xCJgW4BKwpchTIkbmEB+phjkKefjjF6NDK/INWdU37BwXaIAbCVg+g2KZ8ajdpehrdkKSyYh16+AnPXLmTCRmoddPQUQU+NwJft90nYp3imENKvxad1SxdW/xrP7z+nhEBFwqjuxXDEkTDyWOTRx2D06dMul0YcErzukARgx66btjqdV1eDu2kzrF8PG9bD5s3o3dWIhjqMRBLhqqCbk26Hknb9OISJtky8sIXIyUYXd4f+pYj+A9CDBmH274eRV3BIAiwNwI/oxmk1Hmy8+jqoqkTU1KLqG/AaGn2Rq/dSzQQIy8TKzobcXCgoQHTpipGX68ep2050GmufVwB+VOH0Ybbph99DtTl/8VEc1R/tru2LYXbMiw/WHKUB+NGmUyuSiSascKavZykX17URhsRJNKOVJpyRg1YedrIJKS0imfkozyOZaCIUzsC1Y3jKRQqDSGZu60JpgevEkdJMtSx17ATNDdVkFxQjhRlUWdhFNLuAUDgTPxFe4CWbcZ0EGkkkIwchDZTnoLXGNMMoz8ZONhOJ5mInmxHCxApHIIj3JuMNJOON5BT08Mfh2TTXVpFV0BVDWu38fZ5yScabCEeykVLieTZ2wu/5a4Wz0Hg4yRiGESKSkfOpNsk5mPQZ14bZ37YQzJ/6Fxoq11JccjQr57zM1iUvEArnMveVO6na9j5usoGqqgpWT3uAii3z8JQmt2t/Pvj3BDKzTNbOe5nV7/2Fys2z6dJrIOGMotS9577xEDU7FtG9/yhcx2H+5PupWjeFyp1b6N7/GJa9/092LP0H29fOp7j0CMxQNgLB8pnPseKt37Nz7TSi2VnkdjmMFTP/yfr5/6Zk2CnEY3FmvTiBrn16s/z9V2iuXUJR7xEIYdDcUM281++iesN0GurrKOo9lEVvPkrl6tfYtWMDPfodg5StFZPtZJz3/30LBUV5ZOT2oWz9XBa8dhtbl7yOVg3UVO1m5TsPULllAVgR8opKP5ccsBOmk/n2alZWDuUrX8dzG9i+agaW10AoEiU7O5NR5/2S4gEjkWiKSwYw7JRvU77ydUzpkBmNELY8Dj/5UnILihg2+myscGZK5Dl2HBXfQfPuhbjJGpLxRnR8J8eedw1ZOZnE67dTW76c4Sd/nd6DR9FcvSYlMoccdx5FfYbSb9gx5Hbrh+smqSlfSrJmNbG6rWRm5TLguItY+cHLiMRW+vYf7lvJCOqryoiacY4d9wsMmonXl9FUsZJjz/0hTnMlTdXL281CKBQlM8PCki4a6F5yFAOOPouC4i70GXoSUhp061nKsJO+zo7lr6FVMzoNwE+F/QFghcJEQrBj9XSkbiAUzcEwolTvLmP1rH+QkVWEYWZQvmUDq2ZPIa+wi1+0W/qdzbPz+yOsXDLy+hLJ6p2yMmoqtqB1HFdn0lCxDmEYCGlhhAsYcsIPCGV2R6LRZib9j/4SBb1G+iJUK6JZxcjM7shwDll5g2isq0K4TeQW9ad250oAeg88kR1rl1JY3IvM4tGpKdbKQxgmkdy+DB3zYzCyEEJjhAowrTDaTQTqR7ANBQhhIIwQAghFsonkDULIMJn5w5BmFI1JOLMYLRTaS6Q2ik4D8NNghB7ZRX3ZuPBVirt1RWGilEfX7r0YNOp8HDsJWpGTk0FhUS5K5iJkRiokl+obqbx2dm7FpoWoZAOeG6eybHmgX3kopVi94A2UclFKI6XBxqXv0li3GyFka9NDBUL7m6S+ciPaacBONFC9bRkA29d9QJ9+Pamqrsd17LZdhtHKL7WxZsHrfvVSLdFC4HkubZNSW0yhlsOniXhjAGL/jHPLQIQUOE4ieEfxubS4OyUANVBTtRMz0oW8bqXISA7x5kZiTdVUVe5k1pTn2LpiMsnmaoxIHqUjvs7OjWuo272c+roqkvEmbNumvqaCZKIxUP0Enuuya8tCBh13Af2P/y5l6xZgGAozszezXnmQ+s2TkLqJotLRzH/rH2xd/Aw6ubOdn6ahvppkrB7QbF0xg75Dj2Po2J+ya/t6aitWs3b2sww87hxcMtiw8IXUFwu69yfmRJn5yj3Edr9HJGyS1/1IZr72EDjVhDJyWT3/VRJNO1k960Ua92ymbs8e5r/5NPPfmIDy6og11ZOMN6O1Q6K5kbJ1i1n81sMU9+xDfW0V6xe9Csr9XPHATmMF723FJWMVqGQN4ZweuHYSO1ZBJLs38bqteMl6ItlFGNHuJJvKyCgYTLx2C2Y4C+XaSEMQziqhuXY9hhX1RXBAsfpNSCExs3oSr15FRkF/NCFqymaTnV9ING8YYLJn+xxCIU1W16MQsrX8RrxpJ55dS1bBEOIN5SiviWhufxqr1xLO7IIbr8HKKAAs7KZysrsOA6zgnaqp37WI3K59CWcPxlNJ9mybRXZ2NpHCI0g0ViNNi6Uznmbw8OMxIj1INm7BtDLIKjoCpSFeu57MLkPwnCTNVSsxDMgoGICwConXbyMjtxfSiAR8sPNmgnc+AKJpaqhi14bFSCGQ0kRK6U+iNPxMFu2LRi2E39ZLC/937etXBL0//PupVquyJS1PSqS0gpJlIAzT180wkIbf5FprP+nTL24pff2PIOgh8N00IrhOGoDhP9cwQCmElK2bSfjfb2mlKlreQynf2BLSH4NWQThPoDzFnvJF5BZ2J5xdGohijVYKKQUa/32lCLJ7WqIyKKTwPwOJGQr78ydEm6JLaQAeEICxploqt61G4IH229TT0sBQ02ahzJSulnIhtySA6lQGno8YLRBCB/dp4QQebStRCQ3ooOxGiw6pgxQB7QU6nw4+p911rfchdZZSCxBtdU/dEpEONDStUjVrdKsI8LeNFlhWyG/m7Tr+++IF+9DCVQqtnCAbvPU9pTD9v2uFFhaHjz6f3MIee1WkTgPwv45juK7Nzi3L6HPYcZ/aszuToNLAlhXvIA1NydDTaJuNuGnZO+R17U1h98G0a8nqOZRvWkz30uEYZhiBhyY4nio6d45Np+HNeyvOLb9tWz+XOa+MZ9OSlwL+Idi5/j0WTfktrl3XajkGXMUXQfsvN6T3+qm+rooFkx5gyZv34gT3a+FpLffsaJwtNWm8FMds/d//nnfA92xvrbdsA79iak3ZAsJWA56XSG0NjaR290rqy95LbRn/FhJEiMpty1k46S7s5goQFlLI4MS6ojNTp4mEJJrrWD3vZaKZ2Syf8RxFvfuzfc1cti5+hR6lQyjocRgbl04nnJlHQ8Vm+gwaxsrZb7Bt5XtoNHmpFgaaLSveITuviE0r3sO1a9m2Zh7J5t1IK8r8yQ9RvWMN3foeQf2eHSyf/ldCpsuQURewftF0ti57i8oda+naZxjSMBEIdm1byZ6da6ir2kR+UQnb181i2bS/4CpFYXE/tq35gKVvPwGydRxCGGxZ8z51lZtw7AZcJVjyzpNsX/EWZjhKZk5Xls14io0LXiGaV4ydTLB9zftU7lhFQXFfeg48GyEjJJrrWPTmw5RvmMcRp1yGnbRZ+NZfUAjyupayZv6rrJ/9D3oediwDhp/K9jVzWTnzn8hQmLzCvp2+RG+n4YBWOIOabQtxm8to2L0Ep6mcLcunUDp0CPW1NUSye7KnbAFNVavZU7aAaF5fmmu30qd/L7YufQnl1AXKvkHFhvdINm7GjtVSu20mycYK7NoVVO1YTddCi0TDVqq2vc/mVbPJy3KwQjk4rqa5qY78fI/63Suo37kglZZQX7WZ3WvfYPfqN1BeMxVbF1M6aABblr5MsnEH25ZMod+gnmxc/ApurCK14NVbFlG59nVqNk4jZBo07VpEz5JerF/wb5rrd1BXNp/SwUNZN+vvWCZsXvgyq976PcnajQjhn+CrqdpO2GomHLLZsWoSGBn0Paw/u1a/QbJxO9Vb5zLwyGFsXzEZIbPYvW0pAwaXsHXpq3h2Vav/Mg3AD1FGhYFphZESQuEcwpEc+g4dy7b1m8gp7odhRQmFwjRVrcdJ1qM9l2hGDllFQ5ESlNvU+lKGRGgXw/ItQSMUwQxnIY0QtbX1mOEs3OZqSoeMpr4JPGGRmdudkBUmu6CUSHZ3lF3fej9pYkqFGYg07XrUNcWwpEDb9cRjjdRV1xMywHMbUnqbKQSGBCEUUkoiGflkFQ3D0DYhU2KGMogWDgK3iXAkREFxb446+SvU1+xKCefufYeS1W04VbsrcZsr6XXYCfQ68lIMGUaoJIaVSSSvH6Zh4iaqMCVkdT0SQ4Cym9OO6I+BQJQ2iTU34HlxPM8l1lhL/yPHsH3pmwgvjucp8rofTmZ+L6QZwk7EUcrDc7w2EQJwnCSu4+A5DslYE06iCSENYvXVZIQNlJNAGoKqim30GXQ89bvXU1+5Adu18VwX13H8qEMbC9VOOiTtJFppmup2kZMVwXNdv7S6hMKuRbh2gtakQXC0h510sZNJPM/DtuNoz8FzFZ5n4zgxtGejHN+6TyaTaDMX5cYBB9BIYVJ6+FlkZObiOi3hOoOkHUMrhZOM4XlJPNdFIHBtGycex3Pdz4U7upMAUGNIg5KjzmTdgskU9+pJKKOQrNwiNi6eRK/S3pjhDLoPGsvaeS/Ru6QUJcKEMrKRQpHTtQTbjqXu1v2wk6mp3kFGZgb1teXYdavILepN7yEn0hAD1B5yu/ajW/cBbF3zAdk5kmhmNtGMDDytKOo1ANtzU1yoW8mRhPK6E8nrSWPtDgaO+jJbVi+je+8eCDObnIIuRHJLyO91OHYykXqnHgNPIJzbFc8IEWvYRTQ3B2GZ5HTrQzzeSCQrD2kIsrr2RaMp7j+a3Ztm07P/UDRGKye1MuhWejTSstDaQblJQpFMEvFawhmZKM8hq6gvnvLoPmgMVVXrySrsTjLZlI6EfNxIiJPwY6/SKkBKAye+G2mYyFABAgMnvhMpQ8hQIdpr9J3RhonneRhmZsrB69r1GGYE5TWjvTjCzMMwM/G8JpRdiwx1wTAieG4Dyokhw4VICW6yETOUi+c0Y4ZyUiBQKoZWHkppX2dMVCAAI9wFrXxObJgRPMfGDGWnnEee2xj8bIBQaCWQUqK1QGCjtYGQfqVXw4zgxiuQZiaGlbvXDHm4yXoMK9v3g7qNeAoM00B5HoYZwnMdTCsbN1nrz4kC08pK9wn5aL44HdQOkKn2CkK0eud8x60MKkIFv+9zjqyljrPvA9Nap3qGtPrN5F4OkRY3rWqpKJ3qpr5/f6Rqc4Zt7xaIbcexd+1nvVdW9F6LQdtaWaKdo5u9TivrNlcLWqvptyS/tj5PQzoS8klc0brd0vjDDKIawe/tN7ZIcdG9jx7tv1Fk2wVt/Uv738Re42nf71KnKhfo9l7GlghMO02n43f0300ihG7z5I7nou3z/PeVKT9o6/yw13PSHDBNaerkVnCa0gBMU5rSAExTGoBpSlMagGlKAzBNaUoDME1pAKYpTWkApikNwDSlKQ3ANKUBmKY0pQGYpjQA05SmNADTlAZgmtKUBmCa0gBMU5rSAExTGoBpSlMagGlKAzBNafow+n9UVuVnLL9F+wAAAABJRU5ErkJggg==" alt="Merit Acc Tax" style="width:52px;height:52px;flex-shrink:0;">
+      <div>
+        <div class="eyebrow">บริษัท เมอริท แอค แทกซ์ จำกัด</div>
+        <h1 class="display">สมุดบันทึกบิลซื้อ</h1>
+        <p class="sub">ถ่ายรูปบิล ระบบอ่านและกรอกให้อัตโนมัติจากประวัติผู้ขาย ก่อนบันทึกลงทะเบียน</p>
+      </div>
     </div>
-    <div class="stamp">🧾</div>
   </header>
+
+  <!-- Client company selector -->
+  <div class="card" id="companyCard">
+    <div class="key-row">
+      <strong style="color:var(--ledger);font-size:14px;white-space:nowrap;">ลูกค้า/บริษัทที่กำลังบันทึก</strong>
+      <input type="text" id="companyInput" list="companyDatalist" placeholder="เช่น บริษัท แซว เอ็มโพเรียม จำกัด" style="flex:1;min-width:200px;">
+      <datalist id="companyDatalist"></datalist>
+      <button class="btn btn-primary" id="switchCompanyBtn" type="button">เข้าใช้งาน</button>
+      <span class="key-status" id="companyStatus"></span>
+    </div>
+    <div style="font-size:11px;opacity:.55;margin-top:8px;">แต่ละบริษัทมีทะเบียนบิลและประวัติผู้ขายแยกจากกัน — เริ่มพิมพ์ชื่อบริษัทจะมีรายชื่อที่เคยสร้างไว้ให้เลือกจากดรอปดาวน์ (กันพิมพ์ไม่ตรงกัน) เครื่องอื่นที่เลือกชื่อเดียวกันจะเห็นข้อมูลเดียวกันแบบ real-time</div>
+    <div id="companyListRow" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+  </div>
 
   <!-- API key panel -->
   <div class="card" id="keyCard">
@@ -102,6 +117,42 @@
   </div>
 
   <div class="warn-box hidden" id="storageWarn">⚠️ เบราว์เซอร์นี้ไม่รองรับการเก็บข้อมูลถาวร รายการอาจหายเมื่อปิดหน้าต่าง — export Excel เก็บไว้บ่อย ๆ</div>
+
+  <!-- Vendor / chart-of-accounts admin -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" id="vendorAdminToggle">
+      <h2 class="display" style="font-size:18px;color:var(--ledger);margin:0;">จัดการผู้ขาย/รหัส/ผังบัญชี (<span id="vendorCount">0</span> รายการ)</h2>
+      <span id="vendorAdminChevron" style="color:var(--ledger);font-size:13px;">▾ แสดง</span>
+    </div>
+    <div id="vendorAdminBody" class="hidden" style="margin-top:12px;">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+        <label class="btn btn-ghost filebtn" for="importVendorFile">📥 นำเข้าผังบัญชีจาก Excel/CSV</label>
+        <input type="file" id="importVendorFile" accept=".xlsx,.xls,.csv" class="hidden">
+      </div>
+      <div style="overflow-x:auto;margin-bottom:14px;">
+        <table id="vendorTable">
+          <thead><tr>
+            <th>รหัส</th><th>ชื่อผู้ขาย</th><th>คำอธิบาย</th><th>ผังบัญชี</th><th></th>
+          </tr></thead>
+          <tbody id="vendorTableBody"></tbody>
+        </table>
+      </div>
+      <div style="border-top:1px solid var(--ledger-line);padding-top:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--ledger);margin-bottom:6px;">+ เพิ่มผู้ขายใหม่</div>
+        <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+          <input type="text" id="newVendorCode" placeholder="รหัส เช่น วร-003">
+          <input type="text" id="newVendorName" placeholder="ชื่อผู้ขาย">
+          <input type="text" id="newVendorDesc" placeholder="คำอธิบาย เช่น ซื้อวัตถุดิบ-อาหาร">
+          <input type="text" id="newVendorAcct" placeholder="ผังบัญชี เช่น 5110-01">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost" id="aiSuggestVendorBtn" type="button">✨ ให้ AI ช่วยเติมคำอธิบาย/ผังบัญชี</button>
+          <button class="btn btn-primary" id="addVendorBtn" type="button">+ เพิ่มผู้ขาย</button>
+        </div>
+        <div style="font-size:11px;opacity:.55;margin-top:6px;">AI จะเดาคำอธิบาย/ผังบัญชีจากชื่อผู้ขายและผังบัญชีอื่น ๆ ของบริษัทนี้ที่มีอยู่แล้ว เป็นการช่วยร่างเบื้องต้นเท่านั้น กรุณาตรวจสอบก่อนบันทึกเสมอ — สำหรับบริษัทใหม่แนะนำให้กด "นำเข้าจาก Excel/CSV" ด้านบนแทน เพื่อความแม่นยำ</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Upload zone -->
   <div class="card">
@@ -131,7 +182,7 @@
   <!-- Ledger -->
   <div class="card">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;">
-      <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">ทะเบียนที่บันทึกแล้ว (<span id="entryCount">0</span> รายการ)</h2>
+      <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">ทะเบียนที่บันทึกแล้ว — <span id="ledgerCompanyName">ยังไม่ได้เลือกบริษัท</span> (<span id="entryCount">0</span> รายการ)</h2>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-primary" id="exportBtn">⬇ Export Excel</button>
         <button class="btn btn-ghost" id="clearBtn">↻ ล้างทั้งหมด</button>
@@ -173,8 +224,12 @@ const SEED_VENDORS = [
   { code:"กร-001", name:"กรมสรรพากร", desc:"ภ.พ.30", acct:"2137-00" },
   { code:"กร-002", name:"กรมพัฒนาธุรกิจการค้า", desc:"ค่าใช้จ่ายเบ็ดเตล็ด", acct:"5370-05" },
 ];
-const COMPANY_NAME = "บริษัท แซว เอ็มโพเรียม จำกัด";
+const SAEW_EMPORIUM_NAME = "บริษัท แซว เอ็มโพเรียม จำกัด";
 const STRIP_PREFIXES = ["บริษัท","บจก.","บจก","จำกัด (มหาชน)","จำกัด","ห้างหุ้นส่วนจำกัด","หจก.","ร้าน","นางสาว","น.ส.","นาง","นาย","คุณ"];
+
+function companySlug(name){
+  return String(name||"").trim().replace(/[.#$\[\]\/]/g, "_");
+}
 
 function normalizeVendor(raw){
   if(!raw) return "";
@@ -209,11 +264,13 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;
 let uidCounter=0;
 function uid(){ uidCounter++; return Date.now()+"_"+uidCounter; }
 
-const EXTRACT_PROMPT = `คุณคือผู้ช่วยอ่านเอกสารบัญชีภาษาไทย (บิล/ใบเสร็จ/ใบกำกับภาษี/สลิปโอนเงินธนาคาร) ของ "${COMPANY_NAME}" ซึ่งเป็นผู้ซื้อ/ผู้จ่ายเงินเสมอ
+function buildExtractPrompt(companyName){
+  const name = companyName || "บริษัทผู้ซื้อ";
+  return `คุณคือผู้ช่วยอ่านเอกสารบัญชีภาษาไทย (บิล/ใบเสร็จ/ใบกำกับภาษี/สลิปโอนเงินธนาคาร) ของ "${name}" ซึ่งเป็นผู้ซื้อ/ผู้จ่ายเงินเสมอ
 
 กติกาการอ่าน:
-- ถ้าเอกสารเป็น "สลิปโอนเงิน" (เช่น KBIZ, mobile banking) ให้ใช้ชื่อ "ผู้รับปลายทาง" (ช่อง ไปยัง/To) เป็น vendor_name ห้ามใช้ชื่อ ${COMPANY_NAME} ซึ่งเป็นต้นทางเสมอ และใช้เลขที่รายการ/เลขอ้างอิงเป็น bill_no ถ้ามี
-- ถ้าเป็นใบเสร็จ/ใบกำกับภาษี ให้ใช้ชื่อผู้ขาย/ผู้ออกเอกสาร (ไม่ใช่ชื่อลูกค้าซึ่งคือ ${COMPANY_NAME}) เป็น vendor_name และใช้เลขที่เอกสาร/เลขที่ใบกำกับภาษีเป็น bill_no
+- ถ้าเอกสารเป็น "สลิปโอนเงิน" (เช่น KBIZ, mobile banking) ให้ใช้ชื่อ "ผู้รับปลายทาง" (ช่อง ไปยัง/To) เป็น vendor_name ห้ามใช้ชื่อ ${name} ซึ่งเป็นต้นทางเสมอ และใช้เลขที่รายการ/เลขอ้างอิงเป็น bill_no ถ้ามี
+- ถ้าเป็นใบเสร็จ/ใบกำกับภาษี ให้ใช้ชื่อผู้ขาย/ผู้ออกเอกสาร (ไม่ใช่ชื่อลูกค้าซึ่งคือ ${name}) เป็น vendor_name และใช้เลขที่เอกสาร/เลขที่ใบกำกับภาษีเป็น bill_no
 - วันที่: แปลงเป็น ค.ศ. รูปแบบ YYYY-MM-DD เสมอ (ถ้าเอกสารเป็น พ.ศ. เช่น 69 หรือ 2569 ให้ลบ 543 ปี)
 - amount: ยอดเงินรวมสุทธิของเอกสาร (ตัวเลขล้วน ไม่มีคอมม่า)
 - ห้ามเดาหรือสร้างข้อมูลที่ไม่มีในภาพ ถ้าอ่านไม่ชัดหรือไม่มีข้อมูลให้ใส่ null
@@ -221,8 +278,9 @@ const EXTRACT_PROMPT = `คุณคือผู้ช่วยอ่านเ�
 
 ตอบกลับเป็น JSON เท่านั้น ห้ามมีข้อความอื่นใด ห้ามใช้ markdown fence ตามรูปแบบนี้เป๊ะ:
 {"vendor_name": string|null, "bill_no": string|null, "date": string|null, "amount": number|null, "doc_type": string, "confidence": "high"|"medium"|"low", "note": string|null}`;
+}
 
-async function callClaudeVision(base64, mediaType, apiKey){
+async function callClaudeVision(base64, mediaType, apiKey, companyName){
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method:"POST",
     headers:{
@@ -236,7 +294,7 @@ async function callClaudeVision(base64, mediaType, apiKey){
       max_tokens:1000,
       messages:[{ role:"user", content:[
         { type:"image", source:{ type:"base64", media_type:mediaType, data:base64 } },
-        { type:"text", text:EXTRACT_PROMPT }
+        { type:"text", text:buildExtractPrompt(companyName) }
       ]}]
     })
   });
@@ -248,7 +306,7 @@ async function callClaudeVision(base64, mediaType, apiKey){
   return JSON.parse(cleaned);
 }
 
-/* ---------------- Firebase (shared realtime storage) ---------------- */
+/* ---------------- Firebase (shared realtime storage, namespaced per client company) ---------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyCehQyTia8LZLFRQscW7DtBp_zD4Wxbl98",
   authDomain: "bill-ledger.firebaseapp.com",
@@ -262,22 +320,41 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 /* ---------------- State ---------------- */
-let vendors = SEED_VENDORS.slice();
+let vendors = [];
 let entries = [];
 let apiKey = "";
+let companyName = "";
 let storageOk = true;
 let processingCount = 0;
 let firebaseReady = false;
+let entriesRef = null;
+let vendorsRef = null;
 
-function loadStorage(){
-  // API key stays local to this device/browser only (never shared)
-  try{
-    const k = localStorage.getItem("bl_api_key");
-    if(k) apiKey = k;
-  }catch(err){}
+function seedVendorsFor(name){
+  return companySlug(name) === companySlug(SAEW_EMPORIUM_NAME) ? SEED_VENDORS.slice() : [];
+}
 
-  // Entries + vendor map are shared live across devices via Firebase Realtime Database
-  db.ref("entries").on("value", (snap)=>{
+function switchCompany(name){
+  const slug = companySlug(name);
+  if(!slug){ return; }
+  // detach previous listeners so we don't keep syncing the old company's data
+  if(entriesRef) entriesRef.off();
+  if(vendorsRef) vendorsRef.off();
+
+  companyName = name.trim();
+  try{ localStorage.setItem("bl_company_name", companyName); }catch(err){}
+  entries = [];
+  const seed = seedVendorsFor(companyName);
+  vendors = seed.slice();
+  firebaseReady = false;
+  renderLedger();
+  renderVendorAdmin();
+
+  const path = "companies/" + slug;
+  entriesRef = db.ref(path + "/entries");
+  vendorsRef = db.ref(path + "/vendors");
+
+  entriesRef.on("value", (snap)=>{
     const val = snap.val();
     entries = val ? Object.values(val).sort((a,b)=>(a.no||0)-(b.no||0)) : [];
     firebaseReady = true;
@@ -288,20 +365,68 @@ function loadStorage(){
     document.getElementById("storageWarn").textContent = "⚠️ เชื่อมต่อฐานข้อมูลกลางไม่ได้: " + err.message;
   });
 
-  db.ref("vendorMap").on("value", (snap)=>{
+  vendorsRef.on("value", (snap)=>{
     const learned = snap.val() ? Object.values(snap.val()) : [];
     const byCode = {};
-    [...SEED_VENDORS, ...learned].forEach(x=>byCode[x.code]=x);
+    [...seed, ...learned].forEach(x=>byCode[x.code]=x);
     vendors = Object.values(byCode);
+    renderVendorAdmin();
   });
+
+  // register this company in the shared index so it shows up as a suggestion next time
+  db.ref("companyIndex/" + slug).set({ name: companyName, updatedAt: Date.now() });
+
+  document.getElementById("companyStatus").textContent = "✓ กำลังใช้งาน: " + companyName;
+  document.getElementById("companyStatus").style.color = "var(--ledger)";
+}
+
+function loadStorage(){
+  // API key stays local to this device/browser only (never shared)
+  try{
+    const k = localStorage.getItem("bl_api_key");
+    if(k) apiKey = k;
+  }catch(err){}
+
+  // populate the "known companies" dropdown suggestions + mobile-friendly quick-select chips
+  db.ref("companyIndex").on("value", (snap)=>{
+    const val = snap.val() || {};
+    const list = Object.values(val).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+    const dl = document.getElementById("companyDatalist");
+    dl.innerHTML = list.map(c=>`<option value="${esc(c.name)}">`).join("");
+    const chipRow = document.getElementById("companyListRow");
+    if(list.length===0){ chipRow.innerHTML = ""; }
+    else{
+      chipRow.innerHTML = list.map(c=>`<button type="button" class="btn btn-ghost company-chip" data-company="${esc(c.name)}" style="font-size:12px;padding:5px 10px;">${esc(c.name)}</button>`).join("");
+      chipRow.querySelectorAll(".company-chip").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const name = btn.getAttribute("data-company");
+          document.getElementById("companyInput").value = name;
+          switchCompany(name);
+          showToast("เข้าใช้งานทะเบียนของ: " + name);
+        });
+      });
+    }
+  });
+
+  let lastCompany = "";
+  try{ lastCompany = localStorage.getItem("bl_company_name") || ""; }catch(err){}
+  document.getElementById("companyInput").value = lastCompany;
+  if(lastCompany){
+    switchCompany(lastCompany);
+  } else {
+    document.getElementById("companyStatus").textContent = "ยังไม่ได้เลือกบริษัท";
+    document.getElementById("companyStatus").style.color = "var(--rust)";
+  }
 }
 function persistEntries(){
-  try{ db.ref("entries").set(entries); }
+  if(!entriesRef) return;
+  try{ entriesRef.set(entries); }
   catch(err){ storageOk=false; document.getElementById("storageWarn").classList.remove("hidden"); }
 }
 function persistVendors(){
-  const learnedOnly = vendors.filter(v=>!SEED_VENDORS.find(s=>s.code===v.code));
-  try{ db.ref("vendorMap").set(learnedOnly); }catch(err){}
+  if(!vendorsRef) return;
+  // store the whole merged list (so edits to seed vendors are also captured, not just newly-learned ones)
+  try{ vendorsRef.set(vendors); }catch(err){}
 }
 
 function showToast(msg, kind){
@@ -331,6 +456,17 @@ document.getElementById("toggleKeyBtn").addEventListener("click", ()=>{
   apiKeyInput.type = apiKeyInput.type==="password" ? "text" : "password";
 });
 
+const companyInput = document.getElementById("companyInput");
+document.getElementById("switchCompanyBtn").addEventListener("click", ()=>{
+  const name = companyInput.value.trim();
+  if(!name){ showToast("กรุณาพิมพ์ชื่อบริษัท/ลูกค้า", "warn"); return; }
+  switchCompany(name);
+  showToast("เข้าใช้งานทะเบียนของ: " + name);
+});
+companyInput.addEventListener("keydown", (e)=>{
+  if(e.key==="Enter") document.getElementById("switchCompanyBtn").click();
+});
+
 /* ---------------- Upload handling ---------------- */
 const stagingCard = document.getElementById("stagingCard");
 const stagingList = document.getElementById("stagingList");
@@ -352,6 +488,10 @@ function updateProcessingNote(){
 async function handleFiles(fileList){
   const files = Array.from(fileList||[]).filter(f=>f.type.startsWith("image/"));
   if(files.length===0) return;
+  if(!companyName){
+    showToast("กรุณาพิมพ์ชื่อบริษัท/ลูกค้าและกดเข้าใช้งานก่อนถ่ายรูปบิล", "warn");
+    return;
+  }
   if(!apiKey){
     showToast("กรุณาใส่ Anthropic API Key ด้านบนก่อนใช้งาน", "warn");
     return;
@@ -367,7 +507,7 @@ async function handleFiles(fileList){
     try{
       const base64 = await toBase64(file);
       const mediaType = file.type || "image/jpeg";
-      const result = await callClaudeVision(base64, mediaType, apiKey);
+      const result = await callClaudeVision(base64, mediaType, apiKey, companyName);
       const matched = matchVendor(result.vendor_name, vendors);
       row.status = "done";
       row.vendorRaw = result.vendor_name || "";
@@ -522,6 +662,7 @@ const entryCountEl = document.getElementById("entryCount");
 
 function renderLedger(){
   entryCountEl.textContent = entries.length;
+  document.getElementById("ledgerCompanyName").textContent = companyName || "ยังไม่ได้เลือกบริษัท";
   if(entries.length===0){
     ledgerWrap.innerHTML = `<div class="empty">ยังไม่มีรายการ — ถ่ายรูปบิลด้านบนเพื่อเริ่มบันทึก</div>`;
     return;
@@ -611,6 +752,198 @@ function startEditRow(no){
   tr.querySelector("[data-cancel]").addEventListener("click", renderLedger);
 }
 
+/* ---------------- Vendor / chart-of-accounts admin ---------------- */
+const vendorAdminBody = document.getElementById("vendorAdminBody");
+const vendorAdminChevron = document.getElementById("vendorAdminChevron");
+document.getElementById("vendorAdminToggle").addEventListener("click", ()=>{
+  const hidden = vendorAdminBody.classList.toggle("hidden");
+  vendorAdminChevron.textContent = hidden ? "▾ แสดง" : "▴ ซ่อน";
+});
+
+function renderVendorAdmin(){
+  document.getElementById("vendorCount").textContent = vendors.length;
+  const tbody = document.getElementById("vendorTableBody");
+  const sorted = vendors.slice().sort((a,b)=>(a.code||"").localeCompare(b.code||"", "th"));
+  tbody.innerHTML = sorted.map(v => `
+    <tr data-code="${esc(v.code)}">
+      <td class="mono">${esc(v.code)}</td>
+      <td>${esc(v.name)}</td>
+      <td>${esc(v.desc)}</td>
+      <td class="mono">${esc(v.acct)}</td>
+      <td><div class="row-actions">
+        <button data-vedit="${esc(v.code)}">✏️</button>
+        <button data-vdel="${esc(v.code)}">🗑</button>
+      </div></td>
+    </tr>
+  `).join("") || `<tr><td colspan="5" style="opacity:.5;padding:10px 0;">ยังไม่มีผู้ขายในบริษัทนี้ — เพิ่มด้านล่าง หรือปล่อยให้ระบบเรียนรู้จากการถ่ายรูปบิลครั้งแรก</td></tr>`;
+
+  tbody.querySelectorAll("[data-vdel]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const code = btn.getAttribute("data-vdel");
+      if(!confirm(`ลบผู้ขายรหัส ${code} ออกจากประวัติ?`)) return;
+      vendors = vendors.filter(v=>v.code!==code);
+      persistVendors();
+      renderVendorAdmin();
+    });
+  });
+  tbody.querySelectorAll("[data-vedit]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const code = btn.getAttribute("data-vedit");
+      startEditVendorRow(code);
+    });
+  });
+}
+
+function startEditVendorRow(code){
+  const v = vendors.find(x=>x.code===code);
+  if(!v) return;
+  const tr = document.querySelector(`#vendorTableBody tr[data-code="${code}"]`);
+  if(!tr) return;
+  tr.innerHTML = `
+    <td><input class="edit-input ev-code" value="${esc(v.code)}"></td>
+    <td><input class="edit-input ev-name" value="${esc(v.name)}"></td>
+    <td><input class="edit-input ev-desc" value="${esc(v.desc)}"></td>
+    <td><input class="edit-input ev-acct" value="${esc(v.acct)}"></td>
+    <td><div class="row-actions">
+      <button data-vsave="${code}">✓</button>
+      <button data-vcancel="${code}">✕</button>
+    </div></td>
+  `;
+  tr.querySelector("[data-vsave]").addEventListener("click", ()=>{
+    const newCode = tr.querySelector(".ev-code").value.trim();
+    if(!newCode){ showToast("รหัสห้ามว่าง", "warn"); return; }
+    v.code = newCode;
+    v.name = tr.querySelector(".ev-name").value.trim();
+    v.desc = tr.querySelector(".ev-desc").value.trim();
+    v.acct = tr.querySelector(".ev-acct").value.trim();
+    persistVendors();
+    renderVendorAdmin();
+  });
+  tr.querySelector("[data-vcancel]").addEventListener("click", renderVendorAdmin);
+}
+
+async function suggestVendorWithAI(){
+  const name = document.getElementById("newVendorName").value.trim();
+  if(!name){ showToast("กรุณาพิมพ์ชื่อผู้ขายก่อน", "warn"); return; }
+  if(!apiKey){ showToast("กรุณาใส่ Anthropic API Key ก่อนใช้ AI ช่วยเติม", "warn"); return; }
+  const btn = document.getElementById("aiSuggestVendorBtn");
+  const original = btn.textContent;
+  btn.textContent = "⏳ กำลังคิด...";
+  btn.disabled = true;
+  try{
+    const reference = vendors.slice(0,20).map(v=>`- ${v.name} → คำอธิบาย: "${v.desc}", ผังบัญชี: "${v.acct}"`).join("\n") || "(ยังไม่มีผู้ขายอื่นในบริษัทนี้)";
+    const prompt = `คุณคือผู้ช่วยด้านบัญชีไทย บริษัท "${companyName || "ไม่ระบุ"}" มีผู้ขาย/รายจ่ายที่เคยบันทึกไว้ดังนี้ (ใช้เป็นแนวทางผังบัญชีของบริษัทนี้):
+${reference}
+
+ผู้ขายใหม่ที่ต้องการเพิ่ม: "${name}"
+
+ช่วยเดาคำอธิบายรายการ (สั้น กระชับ แบบเดียวกับตัวอย่างข้างบน) และรหัสผังบัญชีที่น่าจะเหมาะสม โดยพยายามให้สอดคล้องกับรูปแบบผังบัญชีที่บริษัทนี้ใช้อยู่แล้วถ้ามีตัวอย่างใกล้เคียง ถ้าไม่มีข้อมูลอ้างอิงเพียงพอ ให้เดาตามหมวดธุรกิจทั่วไปแทน และระบุว่าเป็นการเดา
+ตอบเป็น JSON เท่านั้น ไม่มีข้อความอื่น: {"desc": string, "acct": string, "note": string}`;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "x-api-key": apiKey,
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true"
+      },
+      body: JSON.stringify({
+        model:"claude-sonnet-4-6",
+        max_tokens:400,
+        messages:[{ role:"user", content:[{ type:"text", text:prompt }] }]
+      })
+    });
+    const data = await response.json();
+    if(data.type==="error") throw new Error(data.error?.message || "เรียก API ไม่สำเร็จ");
+    const textBlock = (data.content||[]).find(b=>b.type==="text");
+    if(!textBlock) throw new Error("ไม่ได้รับคำตอบจาก AI");
+    const cleaned = textBlock.text.replace(/```json|```/g,"").trim();
+    const result = JSON.parse(cleaned);
+    document.getElementById("newVendorDesc").value = result.desc || "";
+    document.getElementById("newVendorAcct").value = result.acct || "";
+    showToast(result.note ? "AI แนะนำ: " + result.note : "AI ช่วยเติมให้แล้ว ตรวจสอบก่อนกดเพิ่ม", "ok");
+  }catch(err){
+    showToast("AI ช่วยเติมไม่สำเร็จ: " + err.message, "warn");
+  }finally{
+    btn.textContent = original;
+    btn.disabled = false;
+  }
+}
+document.getElementById("aiSuggestVendorBtn").addEventListener("click", suggestVendorWithAI);
+
+document.getElementById("addVendorBtn").addEventListener("click", ()=>{
+  const code = document.getElementById("newVendorCode").value.trim();
+  const name = document.getElementById("newVendorName").value.trim();
+  const desc = document.getElementById("newVendorDesc").value.trim();
+  const acct = document.getElementById("newVendorAcct").value.trim();
+  if(!code || !name){ showToast("กรุณากรอกรหัสและชื่อผู้ขายอย่างน้อย", "warn"); return; }
+  if(vendors.find(v=>v.code===code)){ showToast("รหัสนี้มีอยู่แล้ว กรุณาใช้รหัสอื่น หรือแก้ไขรายการเดิม", "warn"); return; }
+  vendors.push({ code, name, desc, acct });
+  persistVendors();
+  renderVendorAdmin();
+  ["newVendorCode","newVendorName","newVendorDesc","newVendorAcct"].forEach(id=>document.getElementById(id).value="");
+  showToast("เพิ่มผู้ขายแล้ว: " + name);
+});
+
+/* ---------------- Import vendor / chart-of-accounts from Excel or CSV ---------------- */
+function findCol(headerRow, candidates){
+  for(let i=0;i<headerRow.length;i++){
+    const h = String(headerRow[i]||"").trim();
+    if(candidates.some(c=>h.includes(c))) return i;
+  }
+  return -1;
+}
+
+document.getElementById("importVendorFile").addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  e.target.value = "";
+  if(!file) return;
+  if(!companyName){ showToast("กรุณาเลือกบริษัทก่อนนำเข้าข้อมูล", "warn"); return; }
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    if(rows.length < 2){ showToast("ไม่พบข้อมูลในไฟล์นี้", "warn"); return; }
+
+    const header = rows[0];
+    let codeCol = findCol(header, ["รหัส","code"]);
+    let nameCol = findCol(header, ["ชื่อ","name","ผู้ขาย"]);
+    let descCol = findCol(header, ["คำอธิบาย","desc","รายละเอียด"]);
+    let acctCol = findCol(header, ["ผังบัญชี","บัญชี","acct","account"]);
+
+    // fallback: if header row doesn't look like a header at all, assume fixed column order code,name,desc,acct
+    let dataRows = rows.slice(1);
+    if(codeCol===-1 && nameCol===-1 && descCol===-1 && acctCol===-1){
+      codeCol=0; nameCol=1; descCol=2; acctCol=3;
+      dataRows = rows; // no real header, treat every row as data
+    }
+
+    let added=0, updated=0, skipped=0;
+    dataRows.forEach(r=>{
+      const code = String(r[codeCol]||"").trim();
+      const name = String(nameCol>=0 ? r[nameCol]||"" : "").trim();
+      const desc = String(descCol>=0 ? r[descCol]||"" : "").trim();
+      const acct = String(acctCol>=0 ? r[acctCol]||"" : "").trim();
+      if(!code || !name){ skipped++; return; }
+      const existing = vendors.find(v=>v.code===code);
+      if(existing){
+        existing.name = name; existing.desc = desc; existing.acct = acct;
+        updated++;
+      } else {
+        vendors.push({ code, name, desc, acct });
+        added++;
+      }
+    });
+
+    persistVendors();
+    renderVendorAdmin();
+    showToast(`นำเข้าสำเร็จ: เพิ่มใหม่ ${added} รายการ, อัปเดต ${updated} รายการ${skipped?`, ข้าม ${skipped} แถวที่ข้อมูลไม่ครบ`:""}`);
+  }catch(err){
+    showToast("นำเข้าไฟล์ไม่สำเร็จ: " + err.message, "warn");
+  }
+});
+
 document.getElementById("clearBtn").addEventListener("click", ()=>{
   if(!confirm("ล้างรายการที่บันทึกไว้ทั้งหมด? ทำแล้วกู้คืนไม่ได้")) return;
   entries = [];
@@ -627,7 +960,8 @@ document.getElementById("exportBtn").addEventListener("click", ()=>{
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "บันทึกรายวัน");
   const stamp = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, `บันทึกบิล_${stamp}.xlsx`);
+  const safeCompany = (companyName || "ทะเบียน").replace(/[\\/:*?"<>|]/g,"");
+  XLSX.writeFile(wb, `บันทึกบิล_${safeCompany}_${stamp}.xlsx`);
   showToast("ดาวน์โหลดไฟล์ Excel แล้ว");
 });
 
