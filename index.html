@@ -40,15 +40,20 @@
   .processing-note{margin-top:12px;font-size:13px;color:var(--ledger);display:flex;align-items:center;gap:8px;}
   .spin{animation:spin 1s linear infinite;display:inline-block;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  .staging-item{border-radius:10px;padding:12px;margin-bottom:10px;display:flex;gap:12px;}
-  .staging-item.processing,.staging-item.error{align-items:center;background:rgba(47,82,51,.05);}
+  .staging-item{border-radius:10px;padding:12px;margin-bottom:10px;}
+  .staging-item.processing,.staging-item.error{display:flex;align-items:center;gap:12px;background:rgba(47,82,51,.05);}
   .staging-item.error{background:#FBEAE3;}
   .staging-item.done{background:rgba(47,82,51,.05);}
   .staging-item.new-vendor{background:#FDF6E3;border:1px solid var(--gold);}
+  .staging-head{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+  .staging-head .thumb{flex-shrink:0;}
+  .staging-head .close-btn{margin-left:auto;}
+  .field-grid{display:grid;grid-template-columns:1fr;gap:10px;min-width:0;}
+  @media(min-width:480px){.field-grid{grid-template-columns:1fr 1fr;}}
+  @media(min-width:800px){.field-grid{grid-template-columns:repeat(4,1fr);}}
+  .field{min-width:0;}
   .thumb{width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;}
   .thumb-sm{width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;}
-  .field-grid{flex:1;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
-  @media(min-width:640px){.field-grid{grid-template-columns:repeat(4,1fr);}}
   .field label{display:block;font-size:10px;letter-spacing:.05em;text-transform:uppercase;opacity:.6;margin-bottom:2px;}
   .field input,.field select{width:100%;font-size:13px;}
   .close-btn{background:none;border:none;cursor:pointer;opacity:.6;padding:4px;}
@@ -373,17 +378,21 @@ function renderStagingRow(row){
   el.className = "staging-item " + row.status + (row.status==="done" && !row.matched ? " new-vendor" : "");
 
   if(row.status==="processing"){
-    el.innerHTML = `<img class="thumb" src="${row.previewUrl}"><span class="spin">⏳</span><span style="font-size:13px;opacity:.7;">กำลังอ่าน ${esc(row.photoName)}...</span>`;
+    el.innerHTML = `<div class="staging-head"><img class="thumb" src="${row.previewUrl}"><span class="spin">⏳</span><span style="font-size:13px;opacity:.7;">กำลังอ่าน ${esc(row.photoName)}...</span></div>`;
     return;
   }
   if(row.status==="error"){
-    el.innerHTML = `<img class="thumb" src="${row.previewUrl}"><span style="flex:1;font-size:13px;color:var(--rust-dark);">อ่านไม่สำเร็จ: ${esc(row.error)}</span><button class="close-btn" data-remove="${row.id}">✕</button>`;
+    el.innerHTML = `<div class="staging-head"><img class="thumb" src="${row.previewUrl}"><span style="flex:1;font-size:13px;color:var(--rust-dark);">อ่านไม่สำเร็จ: ${esc(row.error)}</span><button class="close-btn" data-remove="${row.id}">✕</button></div>`;
     el.querySelector("[data-remove]").addEventListener("click", ()=>removeStagingRow(row.id));
     return;
   }
   const vendorOptions = vendors.map(v=>`<option value="${esc(v.code)}" ${v.code===row.code?"selected":""}>${esc(v.code)} · ${esc(v.name)}</option>`).join("");
   el.innerHTML = `
-    <img class="thumb" src="${row.previewUrl}">
+    <div class="staging-head">
+      <img class="thumb" src="${row.previewUrl}">
+      <span style="font-size:12px;opacity:.6;flex:1;">${esc(row.photoName)}</span>
+      <button class="close-btn" data-remove="${row.id}">✕</button>
+    </div>
     <div class="field-grid">
       <div class="field"><label>รหัส</label>
         <select class="f-code">
@@ -399,7 +408,6 @@ function renderStagingRow(row){
       <div class="field"><label>จำนวนเงิน</label><input class="f-amount mono" type="number" step="0.01" value="${row.amount}"></div>
       <div class="field"><label>โอน</label><input class="f-transfer mono" type="number" step="0.01" value="${row.transfer}"></div>
     </div>
-    <button class="close-btn" data-remove="${row.id}">✕</button>
   `;
   el.querySelector("[data-remove]").addEventListener("click", ()=>removeStagingRow(row.id));
   const codeSel = el.querySelector(".f-code");
