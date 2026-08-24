@@ -682,21 +682,54 @@ document.getElementById("saveAllBtn").addEventListener("click", async ()=>{
 
   const slug = companySlug(companyName);
   let startNo = entries.length;
-  for(let i=0;i<toCommit.length;i++){
-    const r = toCommit[i];
-    let photoUrl = "";
-    if(r._photoBlob){
-      try{
-        const path = `companies/${slug}/photos/${Date.now()}_${i}.jpg`;
-        const fileRef = storage.ref(path);
-        await fileRef.put(r._photoBlob);
-        photoUrl = await fileRef.getDownloadURL();
-      }catch(err){
-        // non-fatal — entry still saves, just without a linked photo
-      }
+for(let i=0;i<toCommit.length;i++){
+  const r = toCommit[i];
+
+  const newEntry = {
+    no: startNo+i+1,
+    code: r.code,
+    name: r.name,
+    billNo: r.billNo,
+    descr: r.descr,
+    date: r.date,
+    acct: r.acct,
+    amount: r.amount,
+    transfer: r.transfer,
+    photoUrl: ""
+  };
+
+  // บันทึกข้อมูลก่อน
+  entries.push(newEntry);
+  persistEntries();
+
+  // ค่อยอัปโหลดรูปภายหลัง
+  if(r._photoBlob){
+    try{
+      const path = `companies/${slug}/photos/${Date.now()}_${i}.jpg`;
+      const fileRef = storage.ref(path);
+
+      await Promise.race([
+        fileRef.put(r._photoBlob),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Upload timeout")), 10000)
+        )
+      ]);
+
+      const photoUrl = await Promise.race([
+        fileRef.getDownloadURL(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Get URL timeout")), 10000)
+        )
+      ]);
+
+      newEntry.photoUrl = photoUrl;
+      persistEntries();
+
+    }catch(err){
+      console.warn("อัปโหลดรูปไม่สำเร็จ แต่ข้อมูลบันทึกแล้ว", err);
     }
-    entries.push({ no:startNo+i+1, code:r.code, name:r.name, billNo:r.billNo, desc:r.desc, date:r.date, acct:r.acct, amount:r.amount, transfer:r.transfer, photoUrl });
   }
+}
   persistEntries();
   const committedIds = new Set(toCommit.map(r=>r._id));
   stagingRows = stagingRows.filter(r=>!committedIds.has(r.id));
