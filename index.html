@@ -75,6 +75,8 @@
   .hidden{display:none !important;}
   .key-status{font-size:12px;opacity:.7;}
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -246,35 +248,60 @@ async function callClaudeVision(base64, mediaType, apiKey){
   return JSON.parse(cleaned);
 }
 
+/* ---------------- Firebase (shared realtime storage) ---------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyCehQyTia8LZLFRQscW7DtBp_zD4Wxbl98",
+  authDomain: "bill-ledger.firebaseapp.com",
+  databaseURL: "https://bill-ledger-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "bill-ledger",
+  storageBucket: "bill-ledger.firebasestorage.app",
+  messagingSenderId: "476130972814",
+  appId: "1:476130972814:web:63cc43962fc5c9b64025df"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 /* ---------------- State ---------------- */
 let vendors = SEED_VENDORS.slice();
 let entries = [];
 let apiKey = "";
 let storageOk = true;
 let processingCount = 0;
+let firebaseReady = false;
 
 function loadStorage(){
+  // API key stays local to this device/browser only (never shared)
   try{
-    const e = localStorage.getItem("bl_entries");
-    if(e) entries = JSON.parse(e);
-    const v = localStorage.getItem("bl_vendor_map");
-    if(v){
-      const learned = JSON.parse(v);
-      const byCode = {};
-      [...vendors, ...learned].forEach(x=>byCode[x.code]=x);
-      vendors = Object.values(byCode);
-    }
     const k = localStorage.getItem("bl_api_key");
     if(k) apiKey = k;
-  }catch(err){ storageOk = false; document.getElementById("storageWarn").classList.remove("hidden"); }
+  }catch(err){}
+
+  // Entries + vendor map are shared live across devices via Firebase Realtime Database
+  db.ref("entries").on("value", (snap)=>{
+    const val = snap.val();
+    entries = val ? Object.values(val).sort((a,b)=>(a.no||0)-(b.no||0)) : [];
+    firebaseReady = true;
+    renderLedger();
+  }, (err)=>{
+    storageOk = false;
+    document.getElementById("storageWarn").classList.remove("hidden");
+    document.getElementById("storageWarn").textContent = "⚠️ เชื่อมต่อฐานข้อมูลกลางไม่ได้: " + err.message;
+  });
+
+  db.ref("vendorMap").on("value", (snap)=>{
+    const learned = snap.val() ? Object.values(snap.val()) : [];
+    const byCode = {};
+    [...SEED_VENDORS, ...learned].forEach(x=>byCode[x.code]=x);
+    vendors = Object.values(byCode);
+  });
 }
 function persistEntries(){
-  try{ localStorage.setItem("bl_entries", JSON.stringify(entries)); }
+  try{ db.ref("entries").set(entries); }
   catch(err){ storageOk=false; document.getElementById("storageWarn").classList.remove("hidden"); }
 }
 function persistVendors(){
   const learnedOnly = vendors.filter(v=>!SEED_VENDORS.find(s=>s.code===v.code));
-  try{ localStorage.setItem("bl_vendor_map", JSON.stringify(learnedOnly)); }catch(err){}
+  try{ db.ref("vendorMap").set(learnedOnly); }catch(err){}
 }
 
 function showToast(msg, kind){
