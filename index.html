@@ -528,6 +528,10 @@ function loadStorage(){
     if(m) selectedModel = m;
   }catch(err){}
   document.getElementById("modelSelect").value = selectedModel;
+  try{
+    const certCompany = localStorage.getItem("bl_cert_company");
+    if(certCompany) document.getElementById("certCompanyInput").value = certCompany;
+  }catch(err){}
 
   const urlCompany = new URLSearchParams(window.location.search).get("company");
   const lockedToOneCompany = !!(urlCompany && urlCompany.trim());
@@ -1212,6 +1216,9 @@ document.getElementById("tabCertBtn").addEventListener("click", ()=>{
   document.getElementById("certPanel").classList.remove("hidden");
   document.getElementById("ledgerPanel").classList.add("hidden");
 });
+document.getElementById("certCompanyInput").addEventListener("change", (e)=>{
+  try{ localStorage.setItem("bl_cert_company", e.target.value.trim()); }catch(err){}
+});
 
 const THAI_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 function isoToThaiShort(iso){
@@ -1422,7 +1429,7 @@ function setupSigPad(canvasId, clearBtnId){
 const payerSigPad = setupSigPad("payerSigCanvas","payerSigClear");
 const approverSigPad = setupSigPad("approverSigCanvas","approverSigClear");
 
-document.getElementById("certGenerateBtn").addEventListener("click", ()=>{
+document.getElementById("certGenerateBtn").addEventListener("click", async ()=>{
   if(certRows.length===0){ showToast("กรุณาเพิ่มรายการอย่างน้อย 1 แถวก่อน", "warn"); return; }
   const company = document.getElementById("certCompanyInput").value.trim() || "…………………………………";
   const total = certRows.reduce((s,r)=>s+(Number(r.amount)||0),0);
@@ -1442,7 +1449,7 @@ document.getElementById("certGenerateBtn").addEventListener("click", ()=>{
 
   const rowsWithPhotos = certRows.filter(r=>(r.photos||[]).length>0);
   const attachmentsHtml = rowsWithPhotos.length ? `
-    <div style="page-break-before:always;">
+    <div style="margin-top:28px;">
       <div style="text-align:center;font-size:16px;font-weight:600;margin-bottom:16px;">เอกสารประกอบ (รูปถ่ายต้นฉบับ)</div>
       <div style="display:flex;flex-wrap:wrap;gap:14px;">
         ${rowsWithPhotos.map(r => r.photos.map(photoUrl => `
@@ -1484,6 +1491,11 @@ document.getElementById("certGenerateBtn").addEventListener("click", ()=>{
     <div style="margin-top:24px;font-size:12px;">วันที่ ${todayThai()}</div>
     ${attachmentsHtml}
   `;
+
+  // wait for every embedded image (signatures + attached photos) to finish decoding
+  // before opening the print dialog — otherwise some images can print blank
+  const imgs = Array.from(document.getElementById("certPrintArea").querySelectorAll("img"));
+  await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res=>{ img.onload = res; img.onerror = res; })));
 
   document.body.classList.add("printing-cert");
   window.print();
