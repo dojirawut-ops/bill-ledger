@@ -139,6 +139,14 @@
       <span class="key-status" id="keyStatus"></span>
     </div>
     <div style="font-size:11px;opacity:.55;margin-top:8px;">คีย์ถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น (localStorage) ไม่ถูกส่งไปที่ใดนอกจาก Anthropic API โดยตรง — ขอคีย์ได้ที่ <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--rust);">console.anthropic.com</a></div>
+    <div class="key-row" style="margin-top:12px;">
+      <strong style="color:var(--ledger);font-size:14px;white-space:nowrap;">โมเดลที่ใช้อ่านบิล</strong>
+      <select id="modelSelect" style="flex:1;min-width:200px;">
+        <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — แม่นยำกว่า (~0.4-0.7 บาท/รูป)</option>
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — ประหยัดกว่า (~0.15-0.25 บาท/รูป)</option>
+      </select>
+    </div>
+    <div style="font-size:11px;opacity:.55;margin-top:6px;">ใช้ร่วมกันทั้งแท็บสมุดบันทึกบิลซื้อและใบรับรองแทนใบเสร็จ — Haiku ประหยัดกว่ามาก แต่แม่นยำน้อยกว่าเล็กน้อยสำหรับบิลลายมือ/พิมพ์เลอะเลือน</div>
   </div>
 
   <div class="warn-box hidden" id="storageWarn">⚠️ เบราว์เซอร์นี้ไม่รองรับการเก็บข้อมูลถาวร รายการอาจหายเมื่อปิดหน้าต่าง — export Excel เก็บไว้บ่อย ๆ</div>
@@ -247,12 +255,13 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
         <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">รายการ (<span id="certRowCount">0</span>)</h2>
         <button class="btn btn-ghost" id="certAddRowBtn" type="button">+ เพิ่มแถวเอง</button>
+        <input type="file" id="certAddPhotoInput" accept="image/*" multiple class="hidden">
       </div>
       <div style="overflow-x:auto;">
         <table id="certTable">
-          <thead><tr><th>วัน/เดือน/ปี</th><th>รายการเบิกจ่าย</th><th class="num">จำนวนเงิน</th><th>หมายเหตุ</th><th></th></tr></thead>
+          <thead><tr><th>วัน/เดือน/ปี</th><th>รายการเบิกจ่าย</th><th class="num">จำนวนเงิน</th><th>หมายเหตุ</th><th>รูปแนบ</th><th></th></tr></thead>
           <tbody id="certTableBody"></tbody>
-          <tfoot><tr><td colspan="2" style="text-align:right;">รวมทั้งสิ้น</td><td class="mono num" id="certTotal">0.00</td><td colspan="2"></td></tr></tfoot>
+          <tfoot><tr><td colspan="2" style="text-align:right;">รวมทั้งสิ้น</td><td class="mono num" id="certTotal">0.00</td><td colspan="3"></td></tr></tfoot>
         </table>
       </div>
     </div>
@@ -412,7 +421,7 @@ async function callClaudeVision(base64, mediaType, apiKey, companyName){
       "anthropic-dangerous-direct-browser-access":"true"
     },
     body: JSON.stringify({
-      model:"claude-sonnet-4-6",
+      model:selectedModel,
       max_tokens:1000,
       messages:[{ role:"user", content:[
         { type:"image", source:{ type:"base64", media_type:mediaType, data:base64 } },
@@ -449,6 +458,7 @@ const PHOTO_STORAGE_ENABLED = false;
 let vendors = [];
 let entries = [];
 let apiKey = "";
+let selectedModel = "claude-sonnet-4-6";
 let companyName = "";
 let storageOk = true;
 let processingCount = 0;
@@ -514,7 +524,10 @@ function loadStorage(){
   try{
     const k = localStorage.getItem("bl_api_key");
     if(k) apiKey = k;
+    const m = localStorage.getItem("bl_model");
+    if(m) selectedModel = m;
   }catch(err){}
+  document.getElementById("modelSelect").value = selectedModel;
 
   const urlCompany = new URLSearchParams(window.location.search).get("company");
   const lockedToOneCompany = !!(urlCompany && urlCompany.trim());
@@ -596,6 +609,11 @@ document.getElementById("saveKeyBtn").addEventListener("click", ()=>{
 });
 document.getElementById("toggleKeyBtn").addEventListener("click", ()=>{
   apiKeyInput.type = apiKeyInput.type==="password" ? "text" : "password";
+});
+document.getElementById("modelSelect").addEventListener("change", (e)=>{
+  selectedModel = e.target.value;
+  try{ localStorage.setItem("bl_model", selectedModel); }catch(err){}
+  showToast("เปลี่ยนโมเดลเป็น " + (selectedModel.startsWith("claude-haiku") ? "Claude Haiku 4.5 (ประหยัด)" : "Claude Sonnet 4.6 (แม่นยำ)"));
 });
 
 const companyInput = document.getElementById("companyInput");
@@ -1055,7 +1073,7 @@ ${reference}
         "anthropic-dangerous-direct-browser-access":"true"
       },
       body: JSON.stringify({
-        model:"claude-sonnet-4-6",
+        model:selectedModel,
         max_tokens:400,
         messages:[{ role:"user", content:[{ type:"text", text:prompt }] }]
       })
@@ -1225,7 +1243,7 @@ async function callClaudeCert(base64, mediaType, apiKey){
       "anthropic-dangerous-direct-browser-access":"true"
     },
     body: JSON.stringify({
-      model:"claude-sonnet-4-6",
+      model:selectedModel,
       max_tokens:500,
       messages:[{ role:"user", content:[
         { type:"image", source:{ type:"base64", media_type:mediaType, data:base64 } },
@@ -1248,17 +1266,21 @@ function renderCertTable(){
   const tbody = document.getElementById("certTableBody");
   document.getElementById("certRowCount").textContent = certRows.length;
   if(certRows.length===0){
-    tbody.innerHTML = `<tr><td colspan="5" style="opacity:.5;padding:10px 0;">ยังไม่มีรายการ — ถ่ายรูปบิลด้านบนหรือกด "+ เพิ่มแถวเอง"</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="opacity:.5;padding:10px 0;">ยังไม่มีรายการ — ถ่ายรูปบิลด้านบนหรือกด "+ เพิ่มแถวเอง"</td></tr>`;
   } else {
-    tbody.innerHTML = certRows.map(r => `
+    tbody.innerHTML = certRows.map(r => {
+      const n = (r.photos||[]).length;
+      return `
       <tr data-cid="${r.id}">
         <td><input class="edit-input cr-date" value="${esc(r.date)}" style="width:90px;"></td>
         <td><input class="edit-input cr-desc" value="${esc(r.desc)}" style="width:100%;min-width:140px;"></td>
         <td><input class="edit-input cr-amount mono" type="number" step="0.01" value="${r.amount}" style="width:90px;text-align:right;"></td>
         <td><input class="edit-input cr-note" value="${esc(r.note||"")}" style="width:100%;min-width:100px;"></td>
+        <td><button data-craddphoto="${r.id}" title="แนบรูปเพิ่ม (สลิป/สินค้า ฯลฯ)" style="white-space:nowrap;">📎 ${n>0 ? n+" รูป" : "แนบรูป"}</button></td>
         <td><button data-crdel="${r.id}">🗑</button></td>
       </tr>
-    `).join("");
+    `;
+    }).join("");
   }
   const total = certRows.reduce((s,r)=>s+(Number(r.amount)||0),0);
   document.getElementById("certTotal").textContent = fmtMoney(total);
@@ -1267,6 +1289,12 @@ function renderCertTable(){
     btn.addEventListener("click", ()=>{
       certRows = certRows.filter(r=>r.id!==Number(btn.getAttribute("data-crdel")));
       renderCertTable();
+    });
+  });
+  tbody.querySelectorAll("[data-craddphoto]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      certAddPhotoTargetId = Number(btn.getAttribute("data-craddphoto"));
+      document.getElementById("certAddPhotoInput").click();
     });
   });
   tbody.querySelectorAll("tr[data-cid] input").forEach(input=>{
@@ -1285,9 +1313,29 @@ function renderCertTable(){
   });
 }
 
+let certAddPhotoTargetId = null;
+async function handleCertAddPhoto(fileList){
+  const files = Array.from(fileList||[]).filter(f=>f.type.startsWith("image/"));
+  if(files.length===0 || certAddPhotoTargetId==null) return;
+  const row = certRows.find(r=>r.id===certAddPhotoTargetId);
+  if(!row) return;
+  if(!row.photos) row.photos = [];
+  for(const file of files){
+    try{
+      const resizedBlob = await resizeImageToJpegBlob(file);
+      const base64 = await blobToBase64(resizedBlob);
+      row.photos.push("data:image/jpeg;base64," + base64);
+    }catch(err){
+      showToast("แนบรูปไม่สำเร็จ: " + err.message, "warn");
+    }
+  }
+  renderCertTable();
+  showToast(`แนบรูปเพิ่มแล้ว (${row.photos.length} รูปในแถวนี้)`);
+}
+
 document.getElementById("certAddRowBtn").addEventListener("click", ()=>{
   certUid++;
-  certRows.push({ id:certUid, date: todayThai(), desc:"", amount:0, note:"" });
+  certRows.push({ id:certUid, date: todayThai(), desc:"", amount:0, note:"", photos:[] });
   renderCertTable();
 });
 
@@ -1318,7 +1366,8 @@ async function handleCertFiles(fileList){
         date: isoToThaiShort(result.date) || todayThai(),
         desc: result.desc || "",
         amount: result.amount!=null ? Number(result.amount) : 0,
-        note: result.note || ""
+        note: result.note || "",
+        photos: ["data:image/jpeg;base64," + base64]
       });
       renderCertTable();
     }catch(err){
@@ -1329,6 +1378,7 @@ async function handleCertFiles(fileList){
 }
 document.getElementById("certCameraInput").addEventListener("change", (e)=>{ handleCertFiles(e.target.files); e.target.value=""; });
 document.getElementById("certGalleryInput").addEventListener("change", (e)=>{ handleCertFiles(e.target.files); e.target.value=""; });
+document.getElementById("certAddPhotoInput").addEventListener("change", (e)=>{ handleCertAddPhoto(e.target.files); e.target.value=""; });
 const certDropzone = document.getElementById("certDropzone");
 certDropzone.addEventListener("dragover", e=>e.preventDefault());
 certDropzone.addEventListener("drop", e=>{ e.preventDefault(); handleCertFiles(e.dataTransfer.files); });
@@ -1361,7 +1411,9 @@ function setupSigPad(canvasId, clearBtnId){
   document.getElementById(clearBtnId).addEventListener("click", ()=>{
     ctx.clearRect(0,0,canvas.width,canvas.height);
   });
-  return { isEmpty: ()=>{
+  return {
+    clear: ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); },
+    isEmpty: ()=>{
     const blank = document.createElement("canvas");
     blank.width = canvas.width; blank.height = canvas.height;
     return canvas.toDataURL() === blank.toDataURL();
@@ -1387,6 +1439,21 @@ document.getElementById("certGenerateBtn").addEventListener("click", ()=>{
       <td>${esc(r.note||"")}</td>
     </tr>
   `).join("");
+
+  const rowsWithPhotos = certRows.filter(r=>(r.photos||[]).length>0);
+  const attachmentsHtml = rowsWithPhotos.length ? `
+    <div style="page-break-before:always;">
+      <div style="text-align:center;font-size:16px;font-weight:600;margin-bottom:16px;">เอกสารประกอบ (รูปถ่ายต้นฉบับ)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;">
+        ${rowsWithPhotos.map(r => r.photos.map(photoUrl => `
+          <div style="width:47%;border:1px solid #999;padding:8px;box-sizing:border-box;">
+            <div style="font-size:12px;margin-bottom:6px;"><strong>${esc(r.date)}</strong> — ${esc(r.desc)} (${fmtMoney(r.amount)})</div>
+            <img src="${photoUrl}" style="width:100%;display:block;">
+          </div>
+        `).join("")).join("")}
+      </div>
+    </div>
+  ` : "";
 
   document.getElementById("certPrintArea").innerHTML = `
     <div style="text-align:center;font-size:20px;font-weight:600;margin-bottom:18px;">ใบรับรองแทนใบเสร็จรับเงิน</div>
@@ -1415,12 +1482,24 @@ document.getElementById("certGenerateBtn").addEventListener("click", ()=>{
       </div>
     </div>
     <div style="margin-top:24px;font-size:12px;">วันที่ ${todayThai()}</div>
+    ${attachmentsHtml}
   `;
 
   document.body.classList.add("printing-cert");
   window.print();
 });
-window.addEventListener("afterprint", ()=>{ document.body.classList.remove("printing-cert"); });
+window.addEventListener("afterprint", ()=>{
+  document.body.classList.remove("printing-cert");
+  // no persistence by design: clear everything (including attached photos) right after download
+  certRows = [];
+  renderCertTable();
+  document.getElementById("certPrintArea").innerHTML = "";
+  document.getElementById("payerName").value = "";
+  document.getElementById("approverName").value = "";
+  payerSigPad.clear();
+  approverSigPad.clear();
+  showToast("ดาวน์โหลด PDF แล้ว — ล้างรายการและรูปที่แนบไว้ทั้งหมดออกจากหน่วยความจำแล้ว");
+});
 
 renderCertTable();
 
