@@ -17,6 +17,8 @@
   .display{font-family:'Fraunces','Noto Serif Thai',serif;}
   .mono{font-family:'JetBrains Mono',monospace;}
   .wrap{max-width:920px;margin:0 auto;padding:24px 16px 60px;}
+  @media(min-width:1200px){ .wrap{max-width:1180px;} }
+  @media(min-width:640px){ .new-vendor-grid{grid-template-columns:repeat(4,1fr) !important;} }
   header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:24px;}
   .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);}
   h1{font-size:30px;margin:4px 0 6px;color:var(--ledger);font-weight:600;}
@@ -140,7 +142,7 @@
       </div>
       <div style="border-top:1px solid var(--ledger-line);padding-top:12px;">
         <div style="font-size:12px;font-weight:600;color:var(--ledger);margin-bottom:6px;">+ เพิ่มผู้ขายใหม่</div>
-        <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+        <div class="new-vendor-grid" style="display:grid;grid-template-columns:1fr;gap:8px;">
           <input type="text" id="newVendorCode" placeholder="รหัส เช่น วร-003">
           <input type="text" id="newVendorName" placeholder="ชื่อผู้ขาย">
           <input type="text" id="newVendorDesc" placeholder="คำอธิบาย เช่น ซื้อวัตถุดิบ-อาหาร">
@@ -227,14 +229,11 @@ const SEED_VENDORS = [
 ];
 const SAEW_EMPORIUM_NAME = "บริษัท แซว เอ็มโพเรียม จำกัด";
 const STRIP_PREFIXES = ["บริษัท","บจก.","บจก","จำกัด (มหาชน)","จำกัด","ห้างหุ้นส่วนจำกัด","หจก.","ร้าน","นางสาว","น.ส.","นาง","นาย","คุณ"];
+
 function companySlug(name){
-  return String(name || "")
-    .normalize("NFC")
-    .replace(/\u00A0/g, " ")
-    .trim()
-    .replace(/\s+/g, " ")
-    .replace(/[.#$\[\]\/]/g, "_");
+  return String(name||"").trim().replace(/[.#$\[\]\/]/g, "_");
 }
+
 function normalizeVendor(raw){
   if(!raw) return "";
   let s = String(raw).replace(/\u00a0/g," ").trim();
@@ -292,6 +291,12 @@ function resizeImageToJpegBlob(file, maxDim, quality){
   });
 }
 function blobToBase64(blob){ return new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result.split(",")[1]); r.onerror=()=>reject(new Error("อ่านไฟล์ไม่สำเร็จ")); r.readAsDataURL(blob); }); }
+function withTimeout(promise, ms, message){
+  return Promise.race([
+    promise,
+    new Promise((_, reject)=>setTimeout(()=>reject(new Error(message || "หมดเวลารอ")), ms))
+  ]);
+}
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 let uidCounter=0;
 function uid(){ uidCounter++; return Date.now()+"_"+uidCounter; }
@@ -351,6 +356,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const storage = firebase.storage();
+// Photo attachments need Firebase Storage on the paid "Blaze" plan (Google policy since Feb 2026),
+// which requires a linked credit card. Turned off for now — bill data still saves normally either way.
+const PHOTO_STORAGE_ENABLED = false;
 
 /* ---------------- State ---------------- */
 let vendors = [];
@@ -451,21 +459,10 @@ function loadStorage(){
     document.getElementById("companyStatus").style.color = "var(--rust)";
   }
 }
-async function persistEntries(){
-  if(!entriesRef){
-    console.error("entriesRef ยังไม่พร้อม");
-    showToast("ยังเชื่อมฐานข้อมูลรายการบิลไม่สำเร็จ", "warn");
-    return false;
-  }
-try{
-    await entriesRef.set(entries);
-    console.log("บันทึก entries สำเร็จ:", entries.length, "รายการ");
-    return true;
-  }catch(err){
-    console.error("Firebase entries write error:", err);
-    showToast("บันทึกรายการลง Firebase ไม่สำเร็จ: " + err.message, "warn");
-    return false;
-  }
+function persistEntries(){
+  if(!entriesRef) return;
+  try{ entriesRef.set(entries); }
+  catch(err){ storageOk=false; document.getElementById("storageWarn").classList.remove("hidden"); }
 }
 function persistVendors(){
   if(!vendorsRef) return;
@@ -688,36 +685,30 @@ document.getElementById("saveAllBtn").addEventListener("click", async ()=>{
     vendors = [...vendors, ...newlyLearned];
     persistVendors();
   }
-if(!firebaseReady){
-  showToast("กำลังโหลดข้อมูลเดิมจาก Firebase กรุณารอสักครู่แล้วกดบันทึกใหม่", "warn");
-  return;
-}
+
   const btn = document.getElementById("saveAllBtn");
   const originalBtnText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "⏳ กำลังบันทึกข้อมูล...";
+  btn.textContent = PHOTO_STORAGE_ENABLED ? "⏳ กำลังบันทึก + อัปโหลดรูป..." : "⏳ กำลังบันทึก...";
 
   const slug = companySlug(companyName);
   let startNo = entries.length;
-for(let i=0;i<toCommit.length;i++){
-  const r = toCommit[i];
-
-  const newEntry = {
-    no: startNo+i+1,
-    code: r.code,
-    name: r.name,
-    billNo: r.billNo,
-    descr: r.descr,
-    date: r.date,
-    acct: r.acct,
-    amount: r.amount,
-    transfer: r.transfer,
-    photoUrl: ""
-  };
-
-  // บันทึกข้อมูลก่อน
-  entries.push(newEntry);
-}
+  let photoFailCount = 0;
+  for(let i=0;i<toCommit.length;i++){
+    const r = toCommit[i];
+    let photoUrl = "";
+    if(PHOTO_STORAGE_ENABLED && r._photoBlob){
+      try{
+        const path = `companies/${slug}/photos/${Date.now()}_${i}.jpg`;
+        const fileRef = storage.ref(path);
+        await withTimeout(fileRef.put(r._photoBlob), 15000, "อัปโหลดรูปนานเกินไป (Storage อาจยังไม่ได้เปิดใช้งาน)");
+        photoUrl = await withTimeout(fileRef.getDownloadURL(), 10000, "ดึงลิงก์รูปนานเกินไป");
+      }catch(err){
+        photoFailCount++; // non-fatal — entry still saves, just without a linked photo
+      }
+    }
+    entries.push({ no:startNo+i+1, code:r.code, name:r.name, billNo:r.billNo, desc:r.desc, date:r.date, acct:r.acct, amount:r.amount, transfer:r.transfer, photoUrl });
+  }
   persistEntries();
   const committedIds = new Set(toCommit.map(r=>r._id));
   stagingRows = stagingRows.filter(r=>!committedIds.has(r.id));
@@ -727,7 +718,11 @@ for(let i=0;i<toCommit.length;i++){
   renderLedger();
   btn.disabled = false;
   btn.textContent = originalBtnText;
-  showToast(`บันทึกแล้ว ${toCommit.length} รายการ`);
+  if(photoFailCount>0){
+    showToast(`บันทึกแล้ว ${toCommit.length} รายการ (แนบรูปไม่สำเร็จ ${photoFailCount} รูป — เช็คว่าเปิด Firebase Storage แล้วหรือยัง)`, "warn");
+  } else {
+    showToast(`บันทึกแล้ว ${toCommit.length} รายการ`);
+  }
 });
 
 /* ---------------- Ledger table ---------------- */
