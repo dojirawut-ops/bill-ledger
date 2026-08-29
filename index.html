@@ -97,6 +97,107 @@
   footer{text-align:center;font-size:12px;opacity:.5;margin-top:24px;}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border-radius:8px;padding:10px 18px;font-size:13px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:50;}
   .hidden{display:none !important;}
+  /* company chips + delete dialog */
+  .company-chip-wrap{display:inline-flex;align-items:stretch;border:1px solid var(--ledger-line);border-radius:8px;overflow:hidden;background:#fff;}
+  .company-chip-wrap .company-chip{border:none;border-radius:0;font-size:12px;padding:5px 10px;background:transparent;}
+  .company-chip-wrap .company-chip:hover{background:#F3EFE6;}
+  .company-chip-wrap.is-active{border-color:var(--ledger);box-shadow:inset 0 0 0 1px var(--ledger);}
+  .company-del{border:none;border-left:1px solid var(--ledger-line);background:transparent;cursor:pointer;padding:0 8px;font-size:12px;line-height:1;color:var(--rust);font-family:inherit;}
+  .company-del:hover{background:#FBEAE3;}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(30,42,34,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:200;}
+  .modal-card{background:var(--cream-card);border:1px solid var(--ledger-line);border-radius:14px;box-shadow:0 10px 34px rgba(30,42,34,.2);padding:24px;max-width:440px;width:100%;}
+  .modal-card h3{margin:0 0 8px;color:var(--ledger);font-size:16px;}
+  .modal-card p{margin:0 0 12px;font-size:13px;line-height:1.55;}
+  .modal-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .modal-danger{background:#FBEAE3;border:1px solid var(--rust);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--rust-dark);margin-bottom:12px;}
+  /* ===== dashboard ===== */
+  #dashPanel{max-width:100%;overflow-x:hidden;}
+  .dash-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
+  .dash-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .range-chip{background:transparent;border:1px solid var(--ledger-line);color:var(--ink);border-radius:999px;
+    padding:5px 13px;font-size:12px;font-family:inherit;cursor:pointer;transition:background .12s,border-color .12s,color .12s;}
+  .range-chip:hover{background:#EFEAE0;}
+  .range-chip.active{background:var(--ledger);border-color:var(--ledger);color:#fff;font-weight:600;}
+  .budget-box{display:flex;align-items:center;gap:6px;font-size:12px;}
+  .budget-box input{width:118px;font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 8px;}
+  .date-range{display:flex;align-items:center;gap:6px;font-size:12px;flex-wrap:wrap;}
+  .date-range label{opacity:.65;}
+  .date-range input[type=date]{font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 8px;
+    background:#fff;border:1px solid var(--ledger-line);color:var(--ink);border-radius:6px;min-width:132px;}
+  .date-range.is-active input[type=date]{border-color:var(--ledger);box-shadow:inset 0 0 0 1px var(--ledger);}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;align-items:stretch;}
+  .kpi{background:var(--cream-card);border:1px solid var(--ledger-line);border-radius:12px;padding:16px 18px;
+    box-shadow:0 1px 3px rgba(30,42,34,.05);display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .kpi-top{display:flex;align-items:center;gap:8px;}
+  .kpi-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-size:16px;background:#EAF0E7;flex:none;}
+  .kpi-icon.gold{background:#F7EFD9;} .kpi-icon.rust{background:#FBEAE3;}
+  .kpi-label{font-size:12px;opacity:.68;font-weight:600;letter-spacing:.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .kpi-value{font-family:'JetBrains Mono',monospace;font-size:25px;font-weight:500;color:var(--ledger);
+    line-height:1.1;letter-spacing:-.01em;overflow-wrap:anywhere;}
+  .kpi-value.warn{color:var(--rust);}
+  .kpi-unit{font-size:12px;opacity:.55;margin-left:3px;font-family:'IBM Plex Sans Thai',sans-serif;}
+  .kpi-sub{font-size:11.5px;opacity:.6;line-height:1.45;margin-top:auto;}
+  .kpi-delta{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;
+    border-radius:999px;padding:2px 8px;font-family:'JetBrains Mono',monospace;}
+  .kpi-delta.up{background:#FBEAE3;color:var(--rust-dark);}
+  .kpi-delta.down{background:#EAF0E7;color:var(--ledger);}
+  .kpi-delta.flat{background:#EFEAE0;color:var(--ink);opacity:.7;}
+
+  .chart-card{display:flex;flex-direction:column;height:100%;min-width:0;}
+  .chart-head{margin-bottom:12px;}
+  .chart-title{font-size:14px;font-weight:600;color:var(--ledger);margin:0 0 3px;}
+  .chart-note{font-size:11.5px;opacity:.55;margin:0;line-height:1.45;}
+  .chart-body{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0;}
+  .chart-svg{width:100%;height:auto;display:block;max-width:100%;}
+  .chart-grid-line{stroke:var(--ledger-line);stroke-width:1;}
+  .chart-axis{font-size:10.5px;fill:var(--ink);opacity:.62;font-family:'IBM Plex Sans Thai',sans-serif;}
+  .chart-val{font-size:10.5px;fill:var(--ledger);font-family:'JetBrains Mono',monospace;font-weight:500;}
+  .bar-hit{cursor:pointer;transition:opacity .12s;}
+  .bar-hit:hover{opacity:.72;}
+
+  .dash-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch;}
+  .dash-two > .card{margin-bottom:0;}
+  @media(max-width:820px){ .dash-two{grid-template-columns:1fr;} }
+
+  .dash-three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch;margin-bottom:20px;}
+  .dash-three > .card{margin-bottom:0;}
+  @media(max-width:1080px){ .dash-three{grid-template-columns:1fr 1fr;} }
+  @media(max-width:820px){ .dash-three{grid-template-columns:1fr;} }
+
+  .alert-line{margin-top:12px;background:#FBEAE3;border:1px solid var(--rust);border-radius:9px;
+    padding:9px 11px;font-size:11.5px;line-height:1.5;color:var(--rust-dark);}
+  .hint-line{margin-top:8px;font-size:11.5px;line-height:1.5;opacity:.6;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;margin-top:14px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;min-width:0;}
+  .legend{gap:7px 14px;}
+  .legend span.legend-txt{display:inline;}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none;margin-top:3px;}
+  .legend > span{align-items:flex-start;}
+  .legend b{font-family:'JetBrains Mono',monospace;font-weight:500;}
+
+  .dash-tip{position:fixed;z-index:400;pointer-events:none;color:var(--ink);
+    background:rgba(255,253,248,.82);
+    -webkit-backdrop-filter:blur(12px) saturate(140%);backdrop-filter:blur(12px) saturate(140%);
+    border:1px solid rgba(255,255,255,.65);border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.6;
+    box-shadow:0 4px 18px rgba(23,63,43,.16);max-width:260px;opacity:0;transition:opacity .1s;}
+  .dash-tip.show{opacity:1;}
+  .dash-tip strong{color:var(--ledger);font-weight:600;}
+  .dash-tip b{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--ledger);}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .dash-tip{background:rgba(255,253,248,.98);}
+  }
+  .target-dot{transition:r .12s;cursor:pointer;}
+  .target-dot:hover{r:5.4;}
+
+  .state-box{text-align:center;padding:34px 18px;color:var(--ink);opacity:.62;font-size:13px;line-height:1.6;}
+  .state-box .state-icon{font-size:30px;display:block;margin-bottom:8px;opacity:.75;}
+  .state-box.error{color:var(--rust-dark);opacity:1;}
+  .skel{background:linear-gradient(90deg,#EFEAE0 25%,#F7F3EA 50%,#EFEAE0 75%);background-size:400% 100%;
+    animation:skelSlide 1.3s ease-in-out infinite;border-radius:8px;}
+  @keyframes skelSlide{0%{background-position:100% 0;}100%{background-position:0 0;}}
   .tab-nav{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--ledger-line);}
   .tab-btn{background:none;border:none;padding:10px 4px;margin-right:14px;font-size:14px;font-weight:600;color:var(--ink);opacity:.5;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit;}
   .tab-btn.active{opacity:1;color:var(--ledger);border-bottom-color:var(--rust);}
@@ -176,6 +277,7 @@
 
   <div class="tab-nav">
     <button class="tab-btn active" id="tabLedgerBtn" type="button">📒 สมุดบันทึกบิลซื้อ</button>
+    <button class="tab-btn" id="tabDashBtn" type="button">📊 แดชบอร์ด</button>
     <button class="tab-btn" id="tabCertBtn" type="button">🧾 ใบรับรองแทนใบเสร็จ</button>
   </div>
 
@@ -245,6 +347,8 @@
     </div>
   </div>
 
+  <div id="modalHost" class="hidden"></div>
+
   <div id="ledgerPanel">
   <!-- Client company selector -->
   <div class="card" id="companyCard">
@@ -254,10 +358,11 @@
       <datalist id="companyDatalist"></datalist>
       <datalist id="acctDatalist"></datalist>
       <button class="btn btn-primary" id="switchCompanyBtn" type="button">เข้าใช้งาน</button>
+      <button class="btn btn-ghost" id="addCompanyBtn" type="button">➕ เพิ่มบริษัทใหม่</button>
       <button class="btn btn-ghost" id="copyCompanyLinkBtn" type="button">🔗 คัดลอกลิงก์เฉพาะบริษัทนี้</button>
       <span class="key-status" id="companyStatus"></span>
     </div>
-    <div style="font-size:11px;opacity:.55;margin-top:8px;">แต่ละบริษัทมีทะเบียนบิลและประวัติผู้ขายแยกจากกัน — เริ่มพิมพ์ชื่อบริษัทจะมีรายชื่อที่เคยสร้างไว้ให้เลือกจากดรอปดาวน์ (กันพิมพ์ไม่ตรงกัน) เครื่องอื่นที่เลือกชื่อเดียวกันจะเห็นข้อมูลเดียวกันแบบ real-time</div>
+    <div style="font-size:11px;opacity:.55;margin-top:8px;">แต่ละบริษัทมีทะเบียนบิลและประวัติผู้ขายแยกจากกัน — เริ่มพิมพ์ชื่อบริษัทจะมีรายชื่อที่เคยสร้างไว้ให้เลือกจากดรอปดาวน์ (กันพิมพ์ไม่ตรงกัน) เครื่องอื่นที่เลือกชื่อเดียวกันจะเห็นข้อมูลเดียวกันแบบ real-time — กด ✕ บนชื่อบริษัทเพื่อเอาออกจากรายการหรือลบข้อมูล</div>
     <div id="companyListRow" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;"></div>
   </div>
 
@@ -378,6 +483,37 @@
   <p style="font-size:12px;opacity:.5;text-align:center;">ข้อมูลถูกเก็บไว้ในเบราว์เซอร์นี้อย่างต่อเนื่อง กด Export Excel เพื่อดาวน์โหลดหรือรวมเข้ากับไฟล์บัญชีหลักได้ทุกเมื่อ</p>
   </div><!-- /ledgerPanel -->
 
+  <div id="dashPanel" class="hidden">
+    <div class="card">
+      <div class="dash-head">
+        <div style="min-width:0;">
+          <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0 0 4px;">📊 ภาพรวมทะเบียนบิลซื้อ</h2>
+          <div style="font-size:12px;opacity:.62;">บริษัท: <strong id="dashCompanyName" style="color:var(--ledger);"></strong></div>
+        </div>
+        <div class="dash-controls">
+          <button class="range-chip" type="button" data-range="3">3 เดือน</button>
+          <button class="range-chip" type="button" data-range="6">6 เดือน</button>
+          <button class="range-chip active" type="button" data-range="12">12 เดือน</button>
+          <button class="range-chip" type="button" data-range="fy">ปีนี้</button>
+          <button class="range-chip" type="button" data-range="all">ทั้งหมด</button>
+          <span class="date-range">
+            <label for="dashFrom">ตั้งแต่</label>
+            <input type="date" id="dashFrom">
+            <label for="dashTo">ถึง</label>
+            <input type="date" id="dashTo">
+            <button class="btn btn-ghost" id="dashClearRange" type="button" style="font-size:11px;padding:5px 10px;">ล้าง</button>
+          </span>
+          <span class="budget-box">
+            <label for="dashBudget" style="opacity:.65;">งบ/เดือน</label>
+            <input type="number" id="dashBudget" placeholder="ไม่กำหนด" min="0" step="1000">
+          </span>
+        </div>
+      </div>
+      <div id="dashRangeNote" style="font-size:11.5px;opacity:.62;margin-top:10px;line-height:1.5;"></div>
+      <div style="font-size:11.5px;opacity:.5;margin-top:6px;line-height:1.5;">ช่วงเวลาที่เลือกมีผลกับทุกกราฟและการ์ดสรุปในหน้านี้ · งบประมาณต่อเดือนใช้ร่วมกันทุกเครื่องในบริษัทนี้</div>
+    </div>
+    <div id="dashBody"></div>
+  </div>
   <div id="certPanel" class="hidden">
     <div class="card">
       <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0 0 10px;">ใบรับรองแทนใบเสร็จรับเงิน</h2>
@@ -840,9 +976,173 @@ let processingCount = 0;
 let firebaseReady = false;
 let entriesRef = null;
 let vendorsRef = null;
+/* ---------- dashboard state (per company, monthly budget shared via Firebase) ---------- */
+let settingsRef = null;
+let dashRange = "12";              // "3" | "6" | "12" | "fy" | "all" | "custom"
+let customFrom = "", customTo = ""; // ISO yyyy-mm-dd, used when dashRange === "custom"
+let monthlyBudget = 0;             // 0 = not set
 
 function seedVendorsFor(name){
   return companySlug(name) === companySlug(SAEW_EMPORIUM_NAME) ? SEED_VENDORS.slice() : [];
+}
+
+/* ---------------- Add / remove client companies ----------------
+   "Add" writes the name into the shared companyIndex and switches to it, so every device
+   sees the same spelling in the dropdown instead of each person typing their own variant.
+   "Remove" deliberately offers two very different actions, because they are not the same thing:
+     - เอาออกจากรายการ  : deletes only companyIndex/<slug>. The ledger data under
+                          companies/<slug> is untouched and comes straight back if anyone
+                          types the name again. Safe, reversible, the default.
+     - ลบข้อมูลทั้งหมด  : deletes companies/<slug> as well. Irreversible, syncs to every
+                          device instantly, so it demands the exact name typed back. */
+let knownCompanies = [];
+
+function renderCompanyChips(){
+  const chipRow = document.getElementById("companyListRow");
+  if(!chipRow) return; // share-link mode replaces the whole card, so there is nothing to draw
+  if(knownCompanies.length === 0){ chipRow.innerHTML = ""; return; }
+  chipRow.innerHTML = knownCompanies.map(c=>{
+    const active = companySlug(c.name) === companySlug(companyName) ? " is-active" : "";
+    return `<span class="company-chip-wrap${active}">`
+      + `<button type="button" class="btn btn-ghost company-chip" data-company="${esc(c.name)}">${esc(c.name)}</button>`
+      + `<button type="button" class="company-del" data-del-company="${esc(c.name)}" title="เอาออกจากรายการ / ลบข้อมูลของ ${esc(c.name)}">✕</button>`
+      + `</span>`;
+  }).join("");
+  chipRow.querySelectorAll(".company-chip").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const name = btn.getAttribute("data-company");
+      const inp = document.getElementById("companyInput");
+      if(inp) inp.value = name;
+      switchCompany(name);
+      showToast("เข้าใช้งานทะเบียนของ: " + name);
+    });
+  });
+  chipRow.querySelectorAll(".company-del").forEach(btn=>{
+    btn.addEventListener("click", (ev)=>{
+      ev.stopPropagation();
+      openDeleteCompanyDialog(btn.getAttribute("data-del-company"));
+    });
+  });
+}
+
+function isKnownCompany(name){
+  const slug = companySlug(name);
+  return knownCompanies.some(c => companySlug(c.name) === slug);
+}
+
+function addCompany(rawName){
+  const name = String(rawName||"").trim();
+  if(!name){ showToast("กรุณาพิมพ์ชื่อบริษัท", "warn"); return; }
+  if(!companySlug(name)){ showToast("ชื่อบริษัทไม่ถูกต้อง", "warn"); return; }
+  if(isKnownCompany(name)){
+    showToast("มีบริษัทนี้อยู่แล้ว — กำลังเข้าใช้งานทะเบียนเดิม");
+    document.getElementById("companyInput").value = name;
+    switchCompany(name);
+    return;
+  }
+  document.getElementById("companyInput").value = name;
+  switchCompany(name); // switchCompany already registers it in companyIndex
+  showToast("เพิ่มบริษัทแล้ว: " + name);
+}
+
+function closeModal(){
+  const m = document.getElementById("modalHost");
+  m.innerHTML = "";
+  m.classList.add("hidden");
+}
+
+function openDeleteCompanyDialog(name){
+  const slug = companySlug(name);
+  if(!slug) return;
+  const isCurrent = slug === companySlug(companyName);
+  const countNote = isCurrent
+    ? `ขณะนี้กำลังเปิดทะเบียนนี้อยู่ มี <strong>${entries.length}</strong> รายการในทะเบียน`
+    : `ยังไม่ได้เปิดทะเบียนนี้ จึงยังไม่ทราบจำนวนรายการข้างใน`;
+
+  const host = document.getElementById("modalHost");
+  host.classList.remove("hidden");
+  host.innerHTML = `
+    <div class="modal-backdrop" id="delBackdrop">
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <h3>เอาบริษัทออก: ${esc(name)}</h3>
+        <p>${countNote}</p>
+        <p><strong>เอาออกจากรายการ</strong> — ซ่อนชื่อออกจากดรอปดาวน์เท่านั้น ข้อมูลบิลและผังบัญชียังอยู่ครบ พิมพ์ชื่อเดิมเมื่อไรก็กลับมาได้ทันที</p>
+        <p><strong>ลบข้อมูลทั้งหมด</strong> — ลบทะเบียนบิลและประวัติผู้ขายของบริษัทนี้ออกจากฐานข้อมูลกลางถาวร <span style="color:var(--rust);">กู้คืนไม่ได้</span> และมีผลกับทุกเครื่องทันที</p>
+        <div class="modal-danger">
+          ถ้าต้องการลบข้อมูลทั้งหมด ให้พิมพ์ชื่อบริษัทให้ตรงทุกตัวอักษรก่อน:<br>
+          <input type="text" id="delConfirmInput" placeholder="${esc(name)}" style="width:100%;margin-top:6px;">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="delCancelBtn">ยกเลิก</button>
+          <button type="button" class="btn btn-primary" id="delFromListBtn">เอาออกจากรายการ (ข้อมูลยังอยู่)</button>
+          <button type="button" class="btn btn-ghost" id="delAllBtn" style="color:var(--rust);border-color:var(--rust);">🗑 ลบข้อมูลทั้งหมด</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById("delCancelBtn").addEventListener("click", closeModal);
+  document.getElementById("delBackdrop").addEventListener("click", (ev)=>{
+    if(ev.target.id === "delBackdrop") closeModal();
+  });
+  document.getElementById("delFromListBtn").addEventListener("click", ()=>{
+    removeCompanyFromIndex(name, slug, isCurrent);
+  });
+  document.getElementById("delAllBtn").addEventListener("click", ()=>{
+    const typed = document.getElementById("delConfirmInput").value.trim();
+    if(typed !== name.trim()){
+      showToast("ชื่อที่พิมพ์ไม่ตรง — ยังไม่ลบข้อมูล", "warn");
+      return;
+    }
+    deleteCompanyData(name, slug, isCurrent);
+  });
+}
+
+function detachCurrentCompany(){
+  if(entriesRef) entriesRef.off();
+  if(vendorsRef) vendorsRef.off();
+  if(settingsRef) settingsRef.off();
+  entriesRef = null; vendorsRef = null; settingsRef = null;
+  companyName = "";
+  entries = []; vendors = [];
+  firebaseReady = false;
+  try{ localStorage.removeItem("bl_company_name"); }catch(err){}
+  const inp = document.getElementById("companyInput");
+  if(inp) inp.value = "";
+  const statusEl = document.getElementById("companyStatus");
+  if(statusEl){
+    statusEl.textContent = "ยังไม่ได้เลือกบริษัท";
+    statusEl.style.color = "var(--rust)";
+  }
+  renderLedger();
+  renderVendorAdmin();
+}
+
+function removeCompanyFromIndex(name, slug, isCurrent){
+  db.ref("companyIndex/" + slug).remove()
+    .then(()=>{
+      if(isCurrent) detachCurrentCompany();
+      closeModal();
+      showToast("เอา " + name + " ออกจากรายการแล้ว — ข้อมูลยังอยู่ พิมพ์ชื่อเดิมเพื่อกลับมาได้");
+    })
+    .catch(err=> showToast("เอาออกไม่สำเร็จ: " + err.message, "warn"));
+}
+
+function deleteCompanyData(name, slug, isCurrent){
+  // detach listeners BEFORE removing, so the live "value" callback doesn't fire on a
+  // half-deleted node and repaint an empty ledger under the old company's name
+  if(isCurrent){
+    if(entriesRef) entriesRef.off();
+    if(vendorsRef) vendorsRef.off();
+    if(settingsRef) settingsRef.off();
+  }
+  Promise.all([
+    db.ref("companies/" + slug).remove(),
+    db.ref("companyIndex/" + slug).remove(),
+  ]).then(()=>{
+    if(isCurrent) detachCurrentCompany();
+    closeModal();
+    showToast("ลบข้อมูลของ " + name + " ทั้งหมดแล้ว");
+  }).catch(err=> showToast("ลบไม่สำเร็จ: " + err.message, "warn"));
 }
 
 function switchCompany(name){
@@ -864,6 +1164,20 @@ function switchCompany(name){
   const path = "companies/" + slug;
   entriesRef = db.ref(path + "/entries");
   vendorsRef = db.ref(path + "/vendors");
+  // additive node — the existing entries/vendors structure is untouched
+  if(settingsRef) settingsRef.off();
+  settingsRef = db.ref(path + "/settings");
+  monthlyBudget = 0;
+  const budgetEl = document.getElementById("dashBudget");
+  if(budgetEl) budgetEl.value = "";
+  settingsRef.on("value", (snap)=>{
+    const v = snap.val() || {};
+    monthlyBudget = Math.max(0, Number(v.monthlyBudget) || 0);
+    const el = document.getElementById("dashBudget");
+    // don't fight the user while they are typing in the field
+    if(el && document.activeElement !== el) el.value = monthlyBudget || "";
+    if(dashboardVisible()) renderDashboard();
+  }, ()=>{});
 
   entriesRef.on("value", (snap)=>{
     const val = snap.val();
@@ -892,6 +1206,7 @@ function switchCompany(name){
     statusEl.textContent = "✓ กำลังใช้งาน: " + companyName;
     statusEl.style.color = "var(--ledger)";
   }
+  renderCompanyChips(); // move the highlight to the company we just opened
 }
 
 function loadStorage(){
@@ -929,19 +1244,8 @@ function loadStorage(){
       const list = Object.values(val).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
       const dl = document.getElementById("companyDatalist");
       dl.innerHTML = list.map(c=>`<option value="${esc(c.name)}">`).join("");
-      const chipRow = document.getElementById("companyListRow");
-      if(list.length===0){ chipRow.innerHTML = ""; }
-      else{
-        chipRow.innerHTML = list.map(c=>`<button type="button" class="btn btn-ghost company-chip" data-company="${esc(c.name)}" style="font-size:12px;padding:5px 10px;">${esc(c.name)}</button>`).join("");
-        chipRow.querySelectorAll(".company-chip").forEach(btn=>{
-          btn.addEventListener("click", ()=>{
-            const name = btn.getAttribute("data-company");
-            document.getElementById("companyInput").value = name;
-            switchCompany(name);
-            showToast("เข้าใช้งานทะเบียนของ: " + name);
-          });
-        });
-      }
+      knownCompanies = list;
+      renderCompanyChips();
     });
   }
 
@@ -1004,6 +1308,14 @@ document.getElementById("switchCompanyBtn").addEventListener("click", ()=>{
 });
 companyInput.addEventListener("keydown", (e)=>{
   if(e.key==="Enter") document.getElementById("switchCompanyBtn").click();
+});
+
+document.getElementById("addCompanyBtn").addEventListener("click", ()=>{
+  // if something is already typed, use it; otherwise ask
+  const typed = companyInput.value.trim();
+  const name = typed || (prompt("ชื่อบริษัท/ลูกค้าที่ต้องการเพิ่ม:", "") || "").trim();
+  if(!name) return;
+  addCompany(name);
 });
 
 document.getElementById("copyCompanyLinkBtn").addEventListener("click", async ()=>{
@@ -1391,6 +1703,7 @@ document.querySelectorAll("#ledgerVatFilterRow [data-vat-filter]").forEach(btn=>
 document.querySelector('#ledgerVatFilterRow [data-vat-filter="all"]').classList.replace("btn-ghost","btn-primary");
 
 function renderLedger(){
+  if(typeof dashboardVisible === "function" && dashboardVisible()) renderDashboard();
   entryCountEl.textContent = entries.length;
   document.getElementById("ledgerCompanyName").textContent = companyName || "ยังไม่ได้เลือกบริษัท";
   if(entries.length===0){
@@ -1875,20 +2188,806 @@ dropzone.addEventListener("dragover", e=>e.preventDefault());
 dropzone.addEventListener("drop", e=>{ e.preventDefault(); routeSelectedFiles(e.dataTransfer.files); });
 
 /* ==================================================================
+   Dashboard
+   The project ships no charting library (only Firebase + Google Fonts are
+   loaded), so the charts stay hand-drawn SVG rather than pulling in Chart.js:
+   no extra CDN to fail, and the bars inherit the ledger's CSS variables.
+   Each render replaces the container's innerHTML wholesale, so there is no
+   chart instance left behind to stack — the equivalent of destroy-before-create.
+
+   prepare* functions do the maths and return plain data.
+   render*  functions turn that data into markup. Nothing reads `entries` twice.
+   ================================================================== */
+
+const nfMoney = new Intl.NumberFormat("th-TH", { minimumFractionDigits:2, maximumFractionDigits:2 });
+const nfInt   = new Intl.NumberFormat("th-TH");
+const nfPct   = new Intl.NumberFormat("th-TH", { maximumFractionDigits:1 });
+
+function money(n){ return nfMoney.format(num(n)); }
+function num(n){ const v = Number(n); return Number.isFinite(v) ? v : 0; }
+
+// บาท / K / M — used on axes and bar ends where full precision would not fit
+function fmtCompact(n){
+  const v = num(n);
+  const a = Math.abs(v);
+  if(a >= 1e6) return nfPct.format(v/1e6) + "M";
+  if(a >= 1e4) return nfPct.format(v/1e3) + "K";
+  if(a >= 1e3) return nfInt.format(Math.round(v));
+  return nfInt.format(Math.round(v));
+}
+function pct(part, whole){
+  const w = num(whole);
+  if(w <= 0) return 0;              // guards NaN and division by zero
+  return num(part) / w * 100;
+}
+
+/* dashboard state is declared with the other Firebase refs, above switchCompany */
+
+const THAI_MONTH_ABBR = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+
+// Bills carry dd/mm/yyyy but the year may be Buddhist (2569) or Christian (2026)
+// depending on what the vendor printed — normalise both to CE before bucketing.
+function parseBillDate(str){
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(String(str==null?"":str).trim());
+  if(!m) return null;
+  let y = Number(m[3]);
+  if(y > 2400) y -= 543;
+  const mo = Number(m[2]), day = Number(m[1]);
+  if(!(mo >= 1 && mo <= 12)) return null;
+  if(!(day >= 1 && day <= 31)) return null;
+  const mm = String(mo).padStart(2,"0"), dd = String(day).padStart(2,"0");
+  return { y, m:mo, d:day, key:`${y}-${mm}`, iso:`${y}-${mm}-${dd}` };
+}
+function monthLabel(key){
+  const [y, m] = String(key).split("-").map(Number);
+  if(!m) return String(key);
+  return `${THAI_MONTH_ABBR[m-1]} ${String((y+543)%100).padStart(2,"0")}`;
+}
+function monthLabelFull(key){
+  const [y, m] = String(key).split("-").map(Number);
+  if(!m) return String(key);
+  return `${THAI_MONTH_ABBR[m-1]} ${y+543}`;
+}
+function shiftMonth(key, delta){
+  let [y, m] = String(key).split("-").map(Number);
+  const t = (y*12 + (m-1)) + delta;
+  return `${Math.floor(t/12)}-${String(t%12 + 1).padStart(2,"0")}`;
+}
+
+/* ---------- date window ----------
+   One place decides what "the selected period" means. Presets anchor to the newest
+   bill in the ledger rather than today's date, so a ledger that stopped in March
+   still shows March instead of twelve empty months. */
+const MAX_MONTH_COLS = 24;   // keep the month axis readable on a wide custom range
+
+function latestBillKey(){
+  let best = null;
+  entries.forEach(e=>{
+    const d = parseBillDate(e.date);
+    if(d && (!best || d.key > best)) best = d.key;
+  });
+  return best;
+}
+function monthEndIso(key){
+  const [y,m] = key.split("-").map(Number);
+  return `${key}-${String(new Date(y, m, 0).getDate()).padStart(2,"0")}`;
+}
+
+function getRangeWindow(){
+  if(dashRange === "all") return null;                 // null = show everything
+
+  if(dashRange === "custom"){
+    let a = customFrom, b = customTo;
+    if(!a && !b) return null;
+    if(a && b && a > b){ const t=a; a=b; b=t; }         // tolerate reversed input
+    return { fromIso: a || "0000-01-01", toIso: b || "9999-12-31", custom:true };
+  }
+
+  const last = latestBillKey();
+  if(!last) return null;
+
+  if(dashRange === "fy"){
+    const y = last.split("-")[0];
+    return { fromIso:`${y}-01-01`, toIso: monthEndIso(last) };
+  }
+  const span = Number(dashRange) || 12;
+  return { fromIso:`${shiftMonth(last, -(span-1))}-01`, toIso: monthEndIso(last) };
+}
+
+function thaiIso(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||"");
+  return m ? `${m[3]}/${m[2]}/${Number(m[1])+543}` : (iso||"");
+}
+
+function describeRange(win, excluded){
+  if(!win){
+    return "แสดงรายการทั้งหมดในทะเบียน"
+         + (excluded ? ` · รวม ${nfInt.format(excluded)} รายการที่อ่านวันที่ไม่ได้` : "");
+  }
+  const from = win.fromIso === "0000-01-01" ? "ต้นทะเบียน" : thaiIso(win.fromIso);
+  const to   = win.toIso   === "9999-12-31" ? "ล่าสุด"      : thaiIso(win.toIso);
+  return `ช่วงที่แสดง ${from} – ${to}`
+       + (excluded ? ` · ไม่รวม ${nfInt.format(excluded)} รายการที่อยู่นอกช่วงหรืออ่านวันที่ไม่ได้` : "");
+}
+
+/* ================= data preparation ================= */
+
+function prepareDashboardData(){
+  const win = getRangeWindow();
+  // A bill counts only if it falls inside the selected window. Bills whose date
+  // couldn't be parsed have no place on a timeline, so they are excluded whenever
+  // a window is active and reported separately instead of being silently dropped.
+  let excluded = 0;
+  const rows = entries.filter(e=>{
+    const d = parseBillDate(e.date);
+    if(!win) return true;
+    if(!d || d.iso < win.fromIso || d.iso > win.toIso){ excluded++; return false; }
+    return true;
+  });
+
+  const byMonth = {}, byVendor = {}, byAcct = {};
+  let total = 0, totalVat = 0, vatBills = 0, pass864 = 0, fail864 = 0, undated = 0;
+  let rdFound = 0, rdMissing = 0, rdUnchecked = 0;
+  let amtPass864 = 0, amtFail864 = 0, amtNonVat = 0;
+  let amtRdFound = 0, amtRdMissing = 0, amtRdUnchecked = 0;
+
+  rows.forEach(e=>{
+    const amt = num(e.amount);
+    total += amt;
+
+    const d = parseBillDate(e.date);
+    if(d){
+      if(!byMonth[d.key]) byMonth[d.key] = { amount:0, count:0 };
+      byMonth[d.key].amount += amt;
+      byMonth[d.key].count  += 1;
+    } else { undated++; }
+
+    const vname = String(e.name||"").trim() || "(ไม่ระบุผู้ขาย)";
+    if(!byVendor[vname]) byVendor[vname] = { amount:0, count:0 };
+    byVendor[vname].amount += amt;
+    byVendor[vname].count  += 1;
+
+    const acct = String(e.acct||"").trim() || "(ไม่ระบุผังบัญชี)";
+    if(!byAcct[acct]) byAcct[acct] = { amount:0, count:0 };
+    byAcct[acct].amount += amt;
+    byAcct[acct].count  += 1;
+
+    if(hasVat(e)){
+      vatBills++;
+      totalVat += num(e.vat);
+      if(check864(e).ok){ pass864++; amtPass864 += amt; } else { fail864++; amtFail864 += amt; }
+
+      // status of the Revenue Department lookup that was already run for this tax ID.
+      // Reads the cache only — opening the dashboard never fires a new lookup.
+      const tid = String(e.taxId||"").replace(/\D/g,"");
+      const rd = tid.length === 13 ? rdCache[tid] : null;
+      if(!rd || rd.error){ rdUnchecked++; amtRdUnchecked += amt; }
+      else if(rd.found)   { rdFound++;     amtRdFound     += amt; }
+      else                { rdMissing++;   amtRdMissing   += amt; }
+    } else {
+      amtNonVat += amt;
+    }
+  });
+
+  return {
+    total, totalVat, vatBills, pass864, fail864, undated,
+    rdFound, rdMissing, rdUnchecked,
+    amtPass864, amtFail864, amtNonVat, amtRdFound, amtRdMissing, amtRdUnchecked,
+    win, excluded,
+    billCount: rows.length,
+    nonVatBills: rows.length - vatBills,
+    vendorCount: Object.keys(byVendor).length,
+    acctCount: Object.keys(byAcct).length,
+    byMonth,
+    months: prepareMonths(byMonth, win),
+    vendors: prepareVendors(byVendor),
+    accounts: prepareAccounts(byAcct, total),
+    mom: prepareMoM(byMonth),
+  };
+}
+
+// Always returns a continuous run of months (zero-filled) so the axis has no gaps.
+function prepareMonths(byMonth, win){
+  const keys = Object.keys(byMonth).sort();
+  if(keys.length === 0) return [];
+
+  // span the selected window so gaps show as zero columns; with no window (or an
+  // open-ended custom one) fall back to the months that actually have data
+  let startKey = win && win.fromIso > "0000-01-01" ? win.fromIso.slice(0,7) : keys[0];
+  let endKey   = win && win.toIso   < "9999-12-31" ? win.toIso.slice(0,7)   : keys[keys.length-1];
+  if(startKey > endKey){ const t=startKey; startKey=endKey; endKey=t; }
+
+  const [sy,sm] = startKey.split("-").map(Number);
+  const [ey,em] = endKey.split("-").map(Number);
+  let span = (ey*12+em) - (sy*12+sm) + 1;
+  if(span > MAX_MONTH_COLS){                 // very wide custom range: show the tail
+    startKey = shiftMonth(endKey, -(MAX_MONTH_COLS-1));
+    span = MAX_MONTH_COLS;
+  }
+
+  const out = [];
+  for(let i=0;i<span;i++){
+    const key = shiftMonth(startKey, i);
+    const b = byMonth[key];
+    out.push({ key, label:monthLabel(key), labelFull:monthLabelFull(key),
+               value: b ? b.amount : 0, count: b ? b.count : 0 });
+  }
+  return out;
+}
+
+function prepareVendors(byVendor){
+  return Object.entries(byVendor)
+    .sort((a,b)=>b[1].amount - a[1].amount)
+    .slice(0,8)
+    .map(([label,v],i)=>({ rank:i+1, label, value:v.amount, count:v.count }));
+}
+
+function prepareAccounts(byAcct, total){
+  return Object.entries(byAcct)
+    .sort((a,b)=>b[1].amount - a[1].amount)
+    .slice(0,8)
+    .map(([label,v])=>{
+      const share = pct(v.amount, total);
+      return { label, value:v.amount, count:v.count, share,
+               // a single account soaking up more than 40% of spend is worth a second look
+               watch: share > 40 };
+    });
+}
+
+function prepareMoM(byMonth){
+  const keys = Object.keys(byMonth).sort();
+  if(keys.length < 2) return null;
+  const cur  = byMonth[keys[keys.length-1]];
+  const prev = byMonth[keys[keys.length-2]];
+  if(!prev || prev.amount <= 0) return null;
+  return {
+    curKey: keys[keys.length-1],
+    prevKey: keys[keys.length-2],
+    curAmount: cur.amount,
+    prevAmount: prev.amount,
+    changePct: (cur.amount - prev.amount) / prev.amount * 100,
+  };
+}
+
+/* ================= tooltip ================= */
+
+let tipEl = null;
+function ensureTip(){
+  if(tipEl) return tipEl;
+  tipEl = document.createElement("div");
+  tipEl.className = "dash-tip";
+  document.body.appendChild(tipEl);
+  return tipEl;
+}
+function bindTooltips(root){
+  const tip = ensureTip();
+  root.querySelectorAll("[data-tip]").forEach(el=>{
+    el.addEventListener("mouseenter", ()=>{
+      tip.innerHTML = el.getAttribute("data-tip");
+      tip.classList.add("show");
+    });
+    el.addEventListener("mousemove", (ev)=>{
+      const pad = 14;
+      let x = ev.clientX + pad, y = ev.clientY + pad;
+      const r = tip.getBoundingClientRect();
+      if(x + r.width  > window.innerWidth  - 8) x = ev.clientX - r.width  - pad;
+      if(y + r.height > window.innerHeight - 8) y = ev.clientY - r.height - pad;
+      tip.style.left = Math.max(8,x) + "px";
+      tip.style.top  = Math.max(8,y) + "px";
+    });
+    el.addEventListener("mouseleave", ()=> tip.classList.remove("show"));
+  });
+}
+
+/* ================= chart rendering =================
+   No chart library is loaded by this project (only Firebase + Google Fonts),
+   so gradients use native SVG <linearGradient> defs rather than a library's
+   gradient system or canvas createLinearGradient(). Every render replaces the
+   container's innerHTML, so nothing is left behind to stack.
+   ================================================================== */
+
+const DASH_COLORS = {
+  greenFrom:"#173F2B", greenTo:"#57A66A",
+  goldFrom:"#B77B09",  goldTo:"#E5A91A",
+  pendFrom:"#B77B09",  pendTo:"#F2C94C",
+  redFrom:"#A92820",   redTo:"#E45B50",
+  gold:"#D99A13",
+  donut:["#173F2B","#2F6F46","#57A66A","#B8D6B5"],
+};
+
+function hexToRgb(h){ const n=parseInt(h.slice(1),16); return [n>>16 & 255, n>>8 & 255, n & 255]; }
+function lerpHex(a,b,t){
+  const A=hexToRgb(a), B=hexToRgb(b), c=t<0?0:(t>1?1:t);
+  return "#" + A.map((v,i)=>Math.round(v + (B[i]-v)*c).toString(16).padStart(2,"0")).join("");
+}
+
+// vertical = bottom-to-top, horizontal = left-to-right
+function linGrad(id, from, to, dir){
+  const c = dir === "v" ? 'x1="0" y1="1" x2="0" y2="0"' : 'x1="0" y1="0" x2="1" y2="0"';
+  return `<linearGradient id="${id}" ${c}><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient>`;
+}
+
+function roundedTopPath(x,y,w,h,r){
+  const rad = Math.max(0, Math.min(r, w/2, h));
+  return `M${x},${y+h} L${x},${y+rad} Q${x},${y} ${x+rad},${y} `
+       + `L${x+w-rad},${y} Q${x+w},${y} ${x+w},${y+rad} L${x+w},${y+h} Z`;
+}
+
+function emptyState(msg, icon){
+  return `<div class="state-box"><span class="state-icon">${icon||"📭"}</span>${esc(msg)}</div>`;
+}
+
+function renderMonthlyChart(months, budget){
+  if(months.length === 0) return emptyState("ยังไม่มีรายการที่ระบุวันที่ได้ — กราฟรายเดือนจะขึ้นเมื่อมีบิลที่อ่านวันที่ออก","🗓️");
+
+  const W = 760, padL = 54, padR = 16, padT = 26, padB = 38;
+  const rowH = 210;
+  const H = padT + rowH + padB;
+  const plotW = W - padL - padR;
+  const maxData = Math.max(...months.map(m=>m.value), 0);
+  const max = Math.max(maxData, budget > 0 ? budget : 0) || 1;
+  const slot = plotW / months.length;
+  const bw = Math.min(56, slot * 0.6); // cap so a single month isn't a giant block
+  const y0 = padT + rowH;
+
+  const defs = `<defs>
+    ${linGrad("gBarGreen", DASH_COLORS.greenFrom, DASH_COLORS.greenTo, "v")}
+    ${linGrad("gBarRed",   DASH_COLORS.redFrom,   DASH_COLORS.redTo,   "v")}
+    ${linGrad("gGoldLine", DASH_COLORS.goldFrom,  DASH_COLORS.goldTo,  "h")}
+  </defs>`;
+
+  const grid = [0,.25,.5,.75,1].map(f=>{
+    const y = y0 - rowH*f;
+    return `<line class="chart-grid-line" x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}"`
+         + `${f===0?'':' stroke-dasharray="2 4"'} opacity="${f===0?1:.55}"/>`
+         + `<text class="chart-axis" x="${padL-8}" y="${(y+3.5).toFixed(1)}" text-anchor="end">${fmtCompact(max*f)}</text>`;
+  }).join("");
+
+  const bars = months.map((m,i)=>{
+    const h = m.value > 0 ? Math.max(3, rowH * (m.value/max)) : 0;
+    const x = padL + slot*i + (slot-bw)/2;
+    const y = y0 - h;
+    const over = budget > 0 && m.value > budget;
+    const share = pct(m.value, months.reduce((s,q)=>s+q.value,0));
+    const tip = `<strong>${esc(m.labelFull)}</strong><br>ยอดซื้อ <b>${money(m.value)}</b> บาท<br>`
+              + `คิดเป็น <b>${nfPct.format(share)}%</b> ของช่วงที่แสดง<br>`
+              + (budget > 0
+                  ? `งบประมาณ <b>${money(budget)}</b> บาท<br>${over ? "⚠️ เกินงบ " : "เหลืองบ "}<b>${money(Math.abs(m.value-budget))}</b> บาท`
+                  : "ยังไม่ได้กำหนดงบประมาณ")
+              + `<br>${nfInt.format(m.count)} รายการ`;
+    const fill = m.value === 0 ? "var(--ledger-line)" : (over ? "url(#gBarRed)" : "url(#gBarGreen)");
+    const bar = h > 0
+      ? `<path class="bar-hit" d="${roundedTopPath(x,y,bw,h,6)}" fill="${fill}" data-tip="${tip}"/>`
+      : `<rect class="bar-hit" x="${x.toFixed(1)}" y="${(y0-2).toFixed(1)}" width="${bw.toFixed(1)}" height="2" fill="var(--ledger-line)" data-tip="${tip}"/>`;
+    const valLabel = m.value > 0
+      ? `<text class="chart-val" x="${(x+bw/2).toFixed(1)}" y="${(y-7).toFixed(1)}" text-anchor="middle">${fmtCompact(m.value)}</text>`
+      : "";
+    return bar + valLabel
+      + `<text class="chart-axis" x="${(x+bw/2).toFixed(1)}" y="${(y0+16).toFixed(1)}" text-anchor="middle">${esc(m.label)}</text>`;
+  }).join("");
+
+  let budgetLayer = "";
+  if(budget > 0){
+    const by = y0 - rowH*(budget/max);
+    // one marker dot per month so the target reads as a target line, not a stray rule
+    const dots = months.map((m,i)=>{
+      const cx = padL + slot*i + slot/2;
+      return `<circle class="target-dot" cx="${cx.toFixed(1)}" cy="${by.toFixed(1)}" r="3.4"
+        fill="${DASH_COLORS.gold}" stroke="#fff" stroke-width="1.6"
+        data-tip="<strong>${esc(m.labelFull)}</strong><br>งบประมาณ <b>${money(budget)}</b> บาท<br>ใช้จริง <b>${money(m.value)}</b> บาท"/>`;
+    }).join("");
+    budgetLayer = `<line x1="${padL}" y1="${by.toFixed(1)}" x2="${W-padR}" y2="${by.toFixed(1)}"
+        stroke="url(#gGoldLine)" stroke-width="2.2" stroke-dasharray="7 5"/>${dots}
+      <text class="chart-val" x="${W-padR}" y="${(by-9).toFixed(1)}" text-anchor="end" fill="${DASH_COLORS.goldFrom}">งบ ${fmtCompact(budget)}</text>`;
+  }
+
+  return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="ยอดซื้อรายเดือน">${defs}${grid}${budgetLayer}${bars}</svg>`;
+}
+
+function renderVendorChart(vendors){
+  if(vendors.length === 0) return emptyState("ยังไม่มีข้อมูลผู้ขาย","🏪");
+
+  const W = 500, rowH = 33, padT = 2, padR = 66, rankW = 22, labelW = 132;
+  const barX = rankW + labelW;
+  const plotW = W - barX - padR;
+  const H = padT + vendors.length*rowH + 2;
+  const max = Math.max(...vendors.map(v=>v.value)) || 1;
+  const grandTotal = vendors.reduce((s,v)=>s+v.value,0);
+
+  // each rank gets its own left-to-right ramp, stepping lighter down the list
+  const defs = `<defs>${vendors.map((v,i)=>{
+    const t = i/Math.max(1, vendors.length-1);
+    return linGrad(`gVen${i}`, lerpHex(DASH_COLORS.greenFrom, "#2F6F46", t), lerpHex(DASH_COLORS.greenTo, "#8FC49B", t), "h");
+  }).join("")}</defs>`;
+
+  const rows = vendors.map((v,i)=>{
+    const y = padT + i*rowH;
+    const w = v.value > 0 ? Math.max(4, plotW*(v.value/max)) : 4;
+    const top = v.rank === 1;
+    const short = v.label.length > 20 ? v.label.slice(0,19)+"…" : v.label;
+    const tip = `<strong>#${v.rank} ${esc(v.label)}</strong><br>ยอดซื้อ <b>${money(v.value)}</b> บาท<br>`
+              + `คิดเป็น <b>${nfPct.format(pct(v.value, grandTotal))}%</b> ของ 8 อันดับแรก · ${nfInt.format(v.count)} รายการ`;
+    return `<text class="chart-axis" x="${rankW-8}" y="${y+21}" text-anchor="end"
+              style="font-family:'JetBrains Mono',monospace;opacity:.45;">${v.rank}</text>
+      <text class="chart-axis" x="${barX-9}" y="${y+21}" text-anchor="end"
+        ${top?'style="font-weight:600;opacity:.9;"':''} data-tip="${tip}">${esc(short)}</text>
+      <rect class="bar-hit" x="${barX}" y="${y+(top?6:8)}" width="${w.toFixed(1)}" height="${top?20:16}" rx="${top?10:8}"
+        fill="url(#gVen${i})" data-tip="${tip}"/>
+      <text class="chart-val" x="${(barX+w+8).toFixed(1)}" y="${y+21}">${fmtCompact(v.value)}</text>`;
+  }).join("");
+
+  return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="ผู้ขาย 8 อันดับแรก">${defs}${rows}</svg>`;
+}
+
+function renderAccountChart(accounts){
+  if(accounts.length === 0) return emptyState("ยังไม่มีรายการที่ระบุผังบัญชี","📂");
+
+  const W = 500, rowH = 38, padT = 2, padR = 8, labelW = 118;
+  const plotW = W - labelW - padR;
+  const H = padT + accounts.length*rowH + 2;
+  const max = Math.max(...accounts.map(a=>a.value)) || 1;
+
+  const defs = `<defs>${accounts.map((a,i)=>{
+    const t = i/Math.max(1, accounts.length-1);
+    return a.watch
+      ? linGrad(`gAcc${i}`, DASH_COLORS.goldFrom, DASH_COLORS.goldTo, "h")
+      : linGrad(`gAcc${i}`, lerpHex(DASH_COLORS.greenFrom, "#2F6F46", t), lerpHex(DASH_COLORS.greenTo, "#B8D6B5", t), "h");
+  }).join("")}</defs>`;
+
+  const rows = accounts.map((a,i)=>{
+    const y = padT + i*rowH;
+    const w = a.value > 0 ? Math.max(4, plotW*(a.value/max)) : 4;
+    const short = a.label.length > 16 ? a.label.slice(0,15)+"…" : a.label;
+    const tip = `<strong>${esc(a.label)}</strong><br>ยอดซื้อ <b>${money(a.value)}</b> บาท<br>`
+              + `สัดส่วน <b>${nfPct.format(a.share)}%</b> ของยอดรวม · ${nfInt.format(a.count)} รายการ`
+              + (a.watch ? `<br>⚠️ กระจุกตัวเกิน 40% ของยอดซื้อ` : "");
+    return `<text class="chart-axis" x="${labelW-9}" y="${y+18}" text-anchor="end"
+              style="font-family:'JetBrains Mono',monospace;" data-tip="${tip}">${esc(short)}</text>
+      <rect class="bar-hit" x="${labelW}" y="${y+6}" width="${w.toFixed(1)}" height="18" rx="9" fill="url(#gAcc${i})" data-tip="${tip}"/>
+      <text class="chart-val" x="${labelW}" y="${y+34}" style="opacity:.72;">${money(a.value)} บาท · ${nfPct.format(a.share)}%</text>`;
+  }).join("");
+
+  return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="ยอดซื้อตามหมวดบัญชี">${defs}${rows}</svg>`;
+}
+
+let donutSeq = 0;
+function renderDonut(segments, centerTop, centerSub){
+  const size = 190, r = 68, sw = 26, cx = size/2, cy = size/2;
+  const circ = 2*Math.PI*r;
+  const totalV = segments.reduce((s,x)=>s+num(x.value), 0);
+
+  if(totalV <= 0){
+    return `<svg class="chart-svg" viewBox="0 0 ${size} ${size}" style="max-width:190px;margin:0 auto;" role="img">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--ledger-line)" stroke-width="${sw}" opacity=".65"/>
+      <text x="${cx}" y="${cy+5}" text-anchor="middle" class="chart-axis">ยังไม่มีข้อมูล</text>
+    </svg>`;
+  }
+
+  const uid = "d" + (++donutSeq);
+  const live = segments.filter(s=>num(s.value) > 0);
+  const defs = `<defs>${live.map((s,i)=>linGrad(`g${uid}_${i}`, s.from, s.to, "h")).join("")}</defs>`;
+  const GAP = totalV > 1 ? 2.5 : 0;   // small gap so segments read as separate
+
+  let offset = 0;
+  const arcs = live.map((s,i)=>{
+    const frac = num(s.value)/totalV;
+    const len = Math.max(1, circ*frac - GAP);
+    const tip = `<strong>${esc(s.label)}</strong><br>`
+              + (s.amount != null ? `ยอดเงิน <b>${money(s.amount)}</b> บาท<br>` : "")
+              + `<b>${nfInt.format(s.value)}</b> รายการ · <b>${nfPct.format(frac*100)}%</b>`;
+    const el = `<circle class="bar-hit" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#g${uid}_${i})"
+      stroke-width="${sw}" stroke-linecap="butt"
+      stroke-dasharray="${len.toFixed(2)} ${(circ-len).toFixed(2)}" stroke-dashoffset="${(-circ*offset).toFixed(2)}"
+      transform="rotate(-90 ${cx} ${cy})" data-tip="${tip}"/>`;
+    offset += frac;
+    return el;
+  }).join("");
+
+  return `<svg class="chart-svg" viewBox="0 0 ${size} ${size}" style="max-width:190px;margin:0 auto;" role="img">
+    ${defs}${arcs}
+    <text x="${cx}" y="${cy}" text-anchor="middle" class="chart-val" style="font-size:26px;">${esc(centerTop)}</text>
+    <text x="${cx}" y="${cy+19}" text-anchor="middle" class="chart-axis">${esc(centerSub)}</text>
+  </svg>`;
+}
+
+function renderLegend(items, totalV){
+  return `<div class="legend">` + items.map(it=>
+    `<span><i style="background:linear-gradient(90deg,${it.from},${it.to});"></i>`
+    + `<span class="legend-txt">${esc(it.label)}`
+    + (it.amount != null ? ` <b>${money(it.amount)}</b> บาท` : "")
+    + ` <span style="opacity:.6;">· ${nfInt.format(it.value)} รายการ · ${nfPct.format(pct(it.value, totalV))}%</span>`
+    + `</span></span>`
+  ).join("") + `</div>`;
+}
+
+/* ================= KPI cards ================= */
+
+function renderDeltaBadge(mom){
+  if(!mom) return `<span style="opacity:.45;font-size:11.5px;">ยังเทียบเดือนก่อนไม่ได้</span>`;
+  const v = mom.changePct;
+  const cls = Math.abs(v) < 0.5 ? "flat" : (v > 0 ? "up" : "down");
+  const arrow = Math.abs(v) < 0.5 ? "→" : (v > 0 ? "▲" : "▼");
+  return `<span class="kpi-delta ${cls}" data-tip="${esc(monthLabelFull(mom.curKey))} <b>${money(mom.curAmount)}</b><br>`
+       + `${esc(monthLabelFull(mom.prevKey))} <b>${money(mom.prevAmount)}</b>">`
+       + `${arrow} ${nfPct.format(Math.abs(v))}%</span> <span style="opacity:.55;font-size:11.5px;">เทียบเดือนก่อน</span>`;
+}
+
+function renderKpis(d){
+  const avg = d.billCount ? d.total / d.billCount : 0;
+  const failRate = pct(d.fail864, d.vatBills);
+  const vatShare = pct(d.vatBills, d.billCount);
+
+  return `<div class="card"><div class="kpi-grid">
+
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon">💰</span><span class="kpi-label">ยอดซื้อสะสม</span></div>
+      <div class="kpi-value">${money(d.total)}<span class="kpi-unit">บาท</span></div>
+      <div class="kpi-sub">${renderDeltaBadge(d.mom)}</div>
+      <div class="kpi-sub">${nfInt.format(d.billCount)} รายการ · เฉลี่ย ${money(avg)} บาท/ใบ</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon">🧾</span><span class="kpi-label">ภาษีซื้อ VAT</span></div>
+      <div class="kpi-value">${money(d.totalVat)}<span class="kpi-unit">บาท</span></div>
+      <div class="kpi-sub">จากบิลมี VAT ${nfInt.format(d.vatBills)} ใบ (${nfPct.format(vatShare)}% ของทั้งหมด)</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon ${d.fail864?"rust":""}">⚠️</span><span class="kpi-label">บิลไม่ผ่าน ม.86/4</span></div>
+      <div class="kpi-value${d.fail864?" warn":""}">${nfInt.format(d.fail864)}<span class="kpi-unit">ใบ</span></div>
+      <div class="kpi-sub">${d.vatBills ? nfPct.format(failRate)+"% ของบิลมี VAT" : "ยังไม่มีบิลมี VAT ให้ตรวจ"}</div>
+      <div class="kpi-sub">${d.fail864 ? "ต้องแก้ก่อนใช้เครดิตภาษีซื้อ" : "รูปแบบใบกำกับครบถ้วนทุกใบ"}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon gold">🏪</span><span class="kpi-label">ผู้ขายทั้งหมด</span></div>
+      <div class="kpi-value">${nfInt.format(d.vendorCount)}<span class="kpi-unit">ราย</span></div>
+      <div class="kpi-sub">${nfInt.format(d.acctCount)} หมวดบัญชีที่ใช้งาน</div>
+      <div class="kpi-sub">${d.undated ? nfInt.format(d.undated)+" รายการยังอ่านวันที่ไม่ได้" : "ทุกรายการระบุวันที่ครบ"}</div>
+    </div>
+
+  </div></div>`;
+}
+
+/* ================= view states ================= */
+
+function renderDashLoading(){
+  const bar = (h,w)=>`<div class="skel" style="height:${h}px;width:${w};margin-bottom:10px;"></div>`;
+  return `<div class="card"><div class="kpi-grid">
+      ${[1,2,3,4].map(()=>`<div class="kpi">${bar(14,"55%")}${bar(28,"75%")}${bar(11,"85%")}</div>`).join("")}
+    </div></div>
+    <div class="card">${bar(16,"32%")}<div class="skel" style="height:210px;"></div></div>
+    <div class="dash-two">
+      <div class="card">${bar(16,"40%")}<div class="skel" style="height:250px;"></div></div>
+      <div class="card">${bar(16,"40%")}<div class="skel" style="height:250px;"></div></div>
+    </div>`;
+}
+
+function renderDashError(msg){
+  return `<div class="card"><div class="state-box error">
+    <span class="state-icon">⚠️</span>โหลดข้อมูลจากฐานข้อมูลกลางไม่สำเร็จ<br>
+    <span style="font-size:12px;opacity:.75;">${esc(msg||"ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองรีเฟรชหน้าเว็บอีกครั้ง")}</span>
+  </div></div>`;
+}
+
+/* ================= main render ================= */
+
+function renderDashboard(){
+  const nameEl = document.getElementById("dashCompanyName");
+  if(nameEl) nameEl.textContent = companyName || "ยังไม่ได้เลือกบริษัท";
+  const body = document.getElementById("dashBody");
+  if(!body) return;
+
+  if(!companyName){
+    body.innerHTML = `<div class="card"><div class="state-box">
+      <span class="state-icon">🏢</span>ยังไม่ได้เลือกบริษัท — เลือกบริษัทในแท็บสมุดบันทึกบิลซื้อก่อน</div></div>`;
+    return;
+  }
+  if(typeof storageOk !== "undefined" && !storageOk){
+    body.innerHTML = renderDashError();
+    return;
+  }
+  if(!firebaseReady){
+    body.innerHTML = renderDashLoading();
+    return;
+  }
+  if(entries.length === 0){
+    body.innerHTML = `<div class="card"><div class="state-box">
+      <span class="state-icon">📭</span>ยังไม่มีรายการในทะเบียนนี้<br>
+      <span style="font-size:12px;">ถ่ายรูปบิลในแท็บสมุดบันทึกบิลซื้อ แล้วกลับมาดูภาพรวมได้ทันที</span></div></div>`;
+    return;
+  }
+  const probe = prepareDashboardData();
+  if(probe.billCount === 0){
+    const noteEmpty = document.getElementById("dashRangeNote");
+    if(noteEmpty) noteEmpty.textContent = describeRange(probe.win, probe.excluded);
+    body.innerHTML = `<div class="card"><div class="state-box">
+      <span class="state-icon">🔍</span>ไม่มีรายการในช่วงวันที่ที่เลือก<br>
+      <span style="font-size:12px;">ทะเบียนนี้มี ${nfInt.format(entries.length)} รายการ — ลองขยายช่วงวันที่ หรือกด “ทั้งหมด”</span></div></div>`;
+    return;
+  }
+
+  const d = prepareDashboardData();
+  const noteEl = document.getElementById("dashRangeNote");
+  if(noteEl) noteEl.textContent = describeRange(d.win, d.excluded);
+  const rangeNote = d.win
+    ? `${thaiIso(d.win.fromIso === "0000-01-01" ? "" : d.win.fromIso) || "ต้นทะเบียน"} – ${thaiIso(d.win.toIso === "9999-12-31" ? "" : d.win.toIso) || "ล่าสุด"}`
+    : "ทั้งหมดในทะเบียน";
+
+  const totalCompliance = d.pass864 + d.fail864;
+  const G = DASH_COLORS;
+  const seg864 = [
+    { label:"ผ่าน",    value:d.pass864, amount:d.amtPass864, from:G.greenFrom, to:G.greenTo },
+    { label:"ไม่ผ่าน", value:d.fail864, amount:d.amtFail864, from:G.redFrom,   to:G.redTo   },
+  ];
+  const segRd = [
+    { label:"พบในทะเบียน",   value:d.rdFound,     amount:d.amtRdFound,     from:G.greenFrom, to:G.greenTo },
+    { label:"ไม่พบ",         value:d.rdMissing,   amount:d.amtRdMissing,   from:G.redFrom,   to:G.redTo   },
+    { label:"ยังไม่ได้ตรวจ", value:d.rdUnchecked, amount:d.amtRdUnchecked, from:G.pendFrom,  to:G.pendTo  },
+  ];
+  const rdTotal = d.rdFound + d.rdMissing + d.rdUnchecked;
+  const docSegments = [
+    { label:"ไม่เป็น VAT / เอกสารครบ", value:d.nonVatBills, amount:d.amtNonVat,  from:G.donut[0], to:G.donut[1] },
+    { label:"เป็น VAT / เอกสารครบ",    value:d.pass864,     amount:d.amtPass864, from:G.donut[2], to:G.donut[3] },
+    { label:"เป็น VAT / เอกสารไม่ครบ", value:d.fail864,     amount:d.amtFail864, from:G.redFrom,  to:G.redTo    },
+  ];
+  const docTotal = docSegments.reduce((s,x)=>s+x.value,0);
+
+  body.innerHTML =
+    renderKpis(d) +
+    `<div class="card chart-card">
+      <div class="chart-head">
+        <p class="chart-title">ภาพรวมการใช้จ่ายรายเดือน</p>
+        <p class="chart-note">แสดง ${esc(rangeNote)} · เดือนที่ไม่มีบิลจะแสดงเป็นศูนย์${
+          monthlyBudget > 0 ? " · เส้นประสีทองคืองบประมาณต่อเดือน แท่งสีแดงคือเดือนที่เกินงบ" : ""}</p>
+      </div>
+      <div class="chart-body">${renderMonthlyChart(d.months, monthlyBudget)}</div>
+    </div>
+
+    <div class="dash-two">
+      <div class="card chart-card">
+        <div class="chart-head">
+          <p class="chart-title">ผู้ขาย 8 อันดับแรก</p>
+          <p class="chart-note">เรียงตามยอดซื้อสะสมจากมากไปน้อย · ชี้ที่แถบเพื่อดูชื่อเต็ม</p>
+        </div>
+        <div class="chart-body">${renderVendorChart(d.vendors)}</div>
+      </div>
+      <div class="card chart-card">
+        <div class="chart-head">
+          <p class="chart-title">ยอดซื้อตามหมวดบัญชี</p>
+          <p class="chart-note">สูงสุด 8 หมวด · สีทองคือหมวดที่กินสัดส่วนเกิน 40% ของยอดซื้อ</p>
+        </div>
+        <div class="chart-body">${renderAccountChart(d.accounts)}</div>
+      </div>
+    </div>
+
+    <div class="dash-three">
+      <div class="card chart-card">
+        <div class="chart-head">
+          <p class="chart-title">สถานะมาตรา 86/4</p>
+          <p class="chart-note">ตรวจรูปแบบใบกำกับภาษีในเครื่อง นับเฉพาะบิลที่มี VAT</p>
+        </div>
+        <div class="chart-body">
+          ${renderDonut(seg864, nfInt.format(totalCompliance), "บิลมี VAT")}
+          ${renderLegend(seg864, totalCompliance)}
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-head">
+          <p class="chart-title">สถานะทะเบียน VAT กับกรมสรรพากร</p>
+          <p class="chart-note">นับจากผลที่เคยกดตรวจไว้ ไม่ได้ยิงไปกรมสรรพากรใหม่ตอนเปิดหน้านี้</p>
+        </div>
+        <div class="chart-body">
+          ${renderDonut(segRd, nfInt.format(rdTotal), "บิลมี VAT")}
+          ${renderLegend(segRd, rdTotal)}
+          ${d.rdMissing ? `<div class="alert-line">⚠️ มี ${nfInt.format(d.rdMissing)} ใบที่ไม่พบเลขผู้เสียภาษีในทะเบียนกรมสรรพากร — ตรวจต้นฉบับก่อนใช้เครดิตภาษีซื้อ</div>` : ""}
+          ${d.rdUnchecked ? `<div class="hint-line">ยังไม่ได้ตรวจ ${nfInt.format(d.rdUnchecked)} ใบ — กดปุ่ม “ตรวจสอบกับกรมสรรพากร” ในแท็บสมุดบันทึกบิลซื้อ</div>` : ""}
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-head">
+          <p class="chart-title">สถานะ VAT และความครบถ้วนของเอกสาร</p>
+          <p class="chart-note">แยกทุกรายการในทะเบียนเป็น 3 กลุ่มตามการมี VAT และผลตรวจ ม.86/4</p>
+        </div>
+        <div class="chart-body">
+          ${renderDonut(docSegments, nfInt.format(d.billCount), "รายการทั้งหมด")}
+          ${renderLegend(docSegments, docTotal)}
+        </div>
+      </div>
+    </div>`;
+
+  bindTooltips(body);
+}
+
+function dashboardVisible(){
+  const p = document.getElementById("dashPanel");
+  return !!p && !p.classList.contains("hidden");
+}
+
+/* ---------- dashboard controls ---------- */
+
+const dashFromInput  = document.getElementById("dashFrom");
+const dashToInput    = document.getElementById("dashTo");
+const dateRangeBox   = document.querySelector(".date-range");
+
+function syncRangeUi(){
+  const custom = dashRange === "custom";
+  document.querySelectorAll(".range-chip").forEach(b=>{
+    b.classList.toggle("active", !custom && b.getAttribute("data-range") === dashRange);
+  });
+  if(dateRangeBox) dateRangeBox.classList.toggle("is-active", custom);
+}
+
+document.querySelectorAll(".range-chip").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    dashRange = btn.getAttribute("data-range");
+    // picking a preset clears any custom dates, so the two controls never disagree
+    customFrom = ""; customTo = "";
+    if(dashFromInput) dashFromInput.value = "";
+    if(dashToInput)   dashToInput.value = "";
+    syncRangeUi();
+    renderDashboard();
+  });
+});
+
+function applyCustomRange(){
+  customFrom = dashFromInput ? dashFromInput.value : "";
+  customTo   = dashToInput   ? dashToInput.value   : "";
+  if(!customFrom && !customTo){
+    dashRange = "12";                 // both cleared: fall back to the default preset
+  } else {
+    dashRange = "custom";
+    if(customFrom && customTo && customFrom > customTo){
+      showToast("วันที่เริ่มต้นอยู่หลังวันที่สิ้นสุด — ระบบสลับให้อัตโนมัติ", "warn");
+    }
+  }
+  syncRangeUi();
+  renderDashboard();
+}
+if(dashFromInput) dashFromInput.addEventListener("change", applyCustomRange);
+if(dashToInput)   dashToInput.addEventListener("change", applyCustomRange);
+
+const dashClearRangeBtn = document.getElementById("dashClearRange");
+if(dashClearRangeBtn){
+  dashClearRangeBtn.addEventListener("click", ()=>{
+    if(dashFromInput) dashFromInput.value = "";
+    if(dashToInput)   dashToInput.value = "";
+    applyCustomRange();
+  });
+}
+
+const dashBudgetInput = document.getElementById("dashBudget");
+let budgetTimer = null;
+dashBudgetInput.addEventListener("input", ()=>{
+  monthlyBudget = Math.max(0, num(dashBudgetInput.value));
+  renderDashboard();
+  clearTimeout(budgetTimer);
+  // debounce the write so typing doesn't fire a Firebase set per keystroke
+  budgetTimer = setTimeout(()=>{
+    if(settingsRef){ try{ settingsRef.child("monthlyBudget").set(monthlyBudget); }catch(err){} }
+  }, 700);
+});
+
+/* ==================================================================
    ใบรับรองแทนใบเสร็จรับเงิน (Certificate tool) — separate tab, no persistence
    ================================================================== */
-document.getElementById("tabLedgerBtn").addEventListener("click", ()=>{
-  document.getElementById("tabLedgerBtn").classList.add("active");
-  document.getElementById("tabCertBtn").classList.remove("active");
-  document.getElementById("ledgerPanel").classList.remove("hidden");
-  document.getElementById("certPanel").classList.add("hidden");
-});
-document.getElementById("tabCertBtn").addEventListener("click", ()=>{
-  document.getElementById("tabCertBtn").classList.add("active");
-  document.getElementById("tabLedgerBtn").classList.remove("active");
-  document.getElementById("certPanel").classList.remove("hidden");
-  document.getElementById("ledgerPanel").classList.add("hidden");
-});
+function showTab(which){
+  const map = {
+    ledger: ["tabLedgerBtn","ledgerPanel"],
+    dash:   ["tabDashBtn","dashPanel"],
+    cert:   ["tabCertBtn","certPanel"],
+  };
+  Object.entries(map).forEach(([k,[btn,panel]])=>{
+    document.getElementById(btn).classList.toggle("active", k===which);
+    document.getElementById(panel).classList.toggle("hidden", k!==which);
+  });
+  if(which === "dash") renderDashboard();
+}
+document.getElementById("tabLedgerBtn").addEventListener("click", ()=>showTab("ledger"));
+document.getElementById("tabDashBtn").addEventListener("click", ()=>showTab("dash"));
+document.getElementById("tabCertBtn").addEventListener("click", ()=>showTab("cert"));
 document.getElementById("certCompanyInput").addEventListener("change", (e)=>{
   try{ localStorage.setItem("bl_cert_company", e.target.value.trim()); }catch(err){}
 });
