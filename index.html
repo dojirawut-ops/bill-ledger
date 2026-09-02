@@ -75,8 +75,10 @@
      query below. A plain (non-media) rule beats a media-query rule of equal specificity once the
      query matches, if the plain rule appears LATER in the source — so this can't be declared down
      near the rest of the .ledger-card-view rules (which sit after that media query) without
-     permanently hiding the card list on real phones. */
+     permanently hiding the card list on real phones. Same reasoning applies to .cert-card-view. */
   .ledger-card-view{display:none;}
+  .cert-card-view{display:none;}
+  .cert-card-total-row{display:none;}
   /* ===== Mobile-first breakpoint (≤768px): hamburger header, 2-col summary cards, 1-col forms,
      API settings as an accordion (see #keyCardHead JS), ledger table → card list. Nothing here
      ever scales/zooms the whole page — every rule reflows layout instead (see also the
@@ -136,6 +138,22 @@
        tablet ≥768px) but stays off-screen here; see .ledger-card-view below and renderLedger(). */
     .ledger-table-view{display:none;}
     .ledger-card-view{display:block;}
+
+    /* Certificate rows (#certTable) → card list, same dual-render strategy — see
+       .cert-card-view below and renderCertTable(). */
+    .cert-table-view{display:none;}
+    .cert-card-view{display:block;}
+    .cert-card-total-row{display:flex;}
+
+    /* Upload dropzone actions stack full-width instead of sitting side by side. */
+    .dropzone-actions{flex-direction:column !important;align-items:stretch !important;}
+    .dropzone-actions .btn{width:100%;justify-content:center;}
+    .dropzone{padding:16px !important;}
+
+    /* "+ เพิ่มแถวเอง" moves under the "รายการ (N)" heading and goes full width, instead of
+       sitting to the right of the heading where it could crowd/overflow on a narrow screen. */
+    .cert-toolbar{flex-direction:column !important;align-items:stretch !important;}
+    .cert-toolbar .btn{width:100%;}
   }
   @media(max-width:480px){
     .main-col{padding:16px 12px 40px;}
@@ -217,7 +235,14 @@
   .close-btn{background:none;border:none;cursor:pointer;opacity:.6;padding:4px;}
   .close-btn:hover{opacity:1;}
   .flag-note{font-size:12px;margin-top:6px;color:var(--gold);display:flex;gap:6px;align-items:center;}
+  /* Real <table> headers/cells must never line-wrap: with the page-wide overflow-wrap:anywhere
+     safety net (see body{}), an unbroken Thai header squeezed into a narrow auto-sized column would
+     otherwise collapse to one character per line instead of just staying on one line and letting the
+     table's own overflow-x:auto wrapper scroll horizontally. Every table that still renders as a real
+     table on mobile (vendor admin) relies on this; the ones with many columns (ledger, certificate)
+     additionally get a proper mobile card-list view instead of ever needing that scroll on a phone. */
   table{width:100%;border-collapse:collapse;font-size:13px;}
+  table th,table td{white-space:nowrap;}
   thead th{text-align:left;color:var(--ledger);font-weight:700;padding:9px 10px 9px 0;border-bottom:2px solid var(--ledger-line);background:var(--blue-bg);}
   thead th:first-child{padding-left:8px;border-top-left-radius:8px;}
   thead th:last-child{border-top-right-radius:8px;}
@@ -247,6 +272,19 @@
   .ledger-card-more{font-size:12px;opacity:.5;margin-top:6px;}
   .ledger-select-all-row{display:flex;align-items:center;gap:10px;padding:6px 4px 12px;font-size:14px;font-weight:600;color:var(--ink);}
   .ledger-select-all-row input[type=checkbox]{width:22px;height:22px;cursor:pointer;}
+  /* Certificate row card (mobile): every field stays directly editable (label above a full-width
+     input), matching how the desktop table already lets you type straight into each cell — no
+     separate bottom-sheet "view then edit" detour needed here since there are only 4 fields. */
+  .cert-card{background:#fff;border:1px solid var(--ledger-line);border-radius:14px;padding:14px;margin-bottom:12px;}
+  .cert-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .cert-card-title{font-size:14px;font-weight:700;color:var(--ink);}
+  .cert-card-menu{display:flex;gap:6px;}
+  .cert-card-menu button{background:var(--blue-bg);border:none;border-radius:8px;width:36px;height:36px;font-size:15px;cursor:pointer;}
+  .cert-field{margin-bottom:12px;}
+  .cert-field:last-child{margin-bottom:0;}
+  .cert-field label{display:block;font-size:12px;font-weight:600;color:var(--ledger);margin-bottom:5px;}
+  .cert-field input,.cert-field button.btn{width:100%;}
+  .cert-card-total-row{justify-content:space-between;align-items:center;padding:14px 4px 4px;font-size:15px;font-weight:700;color:var(--ledger);border-top:1px solid var(--ledger-line);margin-top:6px;}
   /* Bottom sheet: anchored to the viewport bottom, slides up, rounded top corners only. */
   .sheet-backdrop{position:fixed;inset:0;background:rgba(30,41,59,.45);z-index:300;
     display:flex;align-items:flex-end;justify-content:center;}
@@ -643,7 +681,7 @@
       <div class="dropzone" id="dropzone">
         <div class="dz-title">ถ่ายรูปหรือเลือกไฟล์บิล</div>
         <div class="dz-sub">รองรับสลิป/ใบเสร็จ/ใบกำกับภาษี รูปภาพและ PDF</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+        <div class="dropzone-actions" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
           <label class="btn btn-primary filebtn" for="cameraInput">📷 ถ่ายรูปบิล</label>
           <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
           <label class="btn btn-ghost filebtn" for="galleryInput">⬆ เลือกไฟล์ (หลายไฟล์ได้)</label>
@@ -783,7 +821,7 @@
       <div class="dropzone" id="certDropzone">
         <div class="dz-title">ถ่ายรูปหรือเลือกไฟล์บิลย่อย</div>
         <div class="dz-sub">แต่ละไฟล์ (รูปภาพหรือ PDF) จะกลายเป็น 1 แถวในใบรับรอง — เลือกได้หลายไฟล์พร้อมกัน</div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
+        <div class="dropzone-actions" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
           <label class="btn btn-primary filebtn" for="certCameraInput">📷 ถ่ายรูปบิล</label>
           <input type="file" id="certCameraInput" accept="image/*" capture="environment" class="hidden">
           <label class="btn btn-ghost filebtn" for="certGalleryInput">⬆ เลือกจากคลังภาพ (หลายรูปได้)</label>
@@ -794,18 +832,22 @@
     </div>
 
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div class="cert-toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
         <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">รายการ (<span id="certRowCount">0</span>)</h2>
         <button class="btn btn-ghost" id="certAddRowBtn" type="button">+ เพิ่มแถวเอง</button>
         <input type="file" id="certAddPhotoInput" accept="image/*" multiple class="hidden">
       </div>
       <datalist id="certDescDatalist"></datalist>
-      <div style="overflow-x:auto;">
+      <div class="cert-table-view" style="overflow-x:auto;">
         <table id="certTable">
           <thead><tr><th>วัน/เดือน/ปี</th><th>รายการเบิกจ่าย</th><th class="num">จำนวนเงิน</th><th>หมายเหตุ</th><th>รูปแนบ</th><th></th></tr></thead>
           <tbody id="certTableBody"></tbody>
           <tfoot><tr><td colspan="2" style="text-align:right;">รวมทั้งสิ้น</td><td class="mono num" id="certTotal">0.00</td><td colspan="3"></td></tr></tfoot>
         </table>
+      </div>
+      <div class="cert-card-view" id="certCardView"></div>
+      <div class="cert-card-total-row" id="certCardTotalRow">
+        <span>รวมทั้งสิ้น</span><span class="mono" id="certTotalMobile">0.00</span>
       </div>
     </div>
 
@@ -3721,6 +3763,7 @@ let certUid = 0;
 
 function renderCertTable(){
   const tbody = document.getElementById("certTableBody");
+  const cardView = document.getElementById("certCardView");
   document.getElementById("certRowCount").textContent = certRows.length;
 
   // "รายการเบิกจ่าย" suggests from descriptions already used — this company's vendor list plus
@@ -3735,6 +3778,7 @@ function renderCertTable(){
 
   if(certRows.length===0){
     tbody.innerHTML = `<tr><td colspan="6" style="opacity:.5;padding:10px 0;">ยังไม่มีรายการ — ถ่ายรูปบิลด้านบนหรือกด "+ เพิ่มแถวเอง"</td></tr>`;
+    cardView.innerHTML = `<div class="empty">ยังไม่มีรายการ — ถ่ายรูปบิลด้านบนหรือกด "+ เพิ่มแถวเอง"</div>`;
   } else {
     tbody.innerHTML = certRows.map(r => {
       const n = (r.photos||[]).length;
@@ -3752,17 +3796,46 @@ function renderCertTable(){
       </tr>
     `;
     }).join("");
-  }
-  const total = certRows.reduce((s,r)=>s+(Number(r.amount)||0),0);
-  document.getElementById("certTotal").textContent = fmtMoney(total);
 
-  tbody.querySelectorAll("[data-crdel]").forEach(btn=>{
+    // Mobile card list — same fields as the table, just one labeled full-width input per row
+    // instead of a cramped multi-column table (which is what was squeezing "รายการเบิกจ่าย" /
+    // "หมายเหตุ" into a single vertical stack of characters on a phone). Directly editable, same
+    // as the table — no separate view/edit-mode toggle needed for just 4 fields.
+    cardView.innerHTML = certRows.map((r,i) => {
+      const n = (r.photos||[]).length;
+      return `
+      <div class="cert-card" data-cid="${r.id}">
+        <div class="cert-card-head">
+          <span class="cert-card-title">รายการที่ ${i+1}</span>
+          <div class="cert-card-menu">
+            <button data-crinsert="${r.id}" type="button" title="แทรกแถวใหม่ต่อจากรายการนี้">➕</button>
+            <button data-crdel="${r.id}" type="button" title="ลบรายการนี้">🗑</button>
+          </div>
+        </div>
+        <div class="cert-field"><label>วันที่เอกสาร</label><input class="edit-input cr-date" value="${esc(r.date)}"></div>
+        <div class="cert-field"><label>รายการเบิกจ่าย</label><input class="edit-input cr-desc" list="certDescDatalist" value="${esc(r.desc)}"></div>
+        <div class="cert-field"><label>จำนวนเงิน</label><input class="edit-input cr-amount mono" type="number" step="0.01" style="text-align:right;" value="${r.amount}"></div>
+        <div class="cert-field"><label>หมายเหตุ</label><input class="edit-input cr-note" value="${esc(r.note||"")}"></div>
+        <div class="cert-field">
+          <button class="btn btn-ghost" data-craddphoto="${r.id}" type="button">📎 ${n>0 ? n+" รูปแนบ — แตะเพื่อเพิ่ม/เปลี่ยน" : "แนบรูปหลักฐาน"}</button>
+        </div>
+      </div>
+    `;
+    }).join("");
+  }
+
+  updateCertTotals();
+
+  // Both views share the exact same data-attributes/classes, so one pass over the whole panel
+  // (not tbody or cardView separately) wires up every button/input in whichever view is visible.
+  const scope = document.getElementById("certPanel");
+  scope.querySelectorAll("[data-crdel]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       certRows = certRows.filter(r=>r.id!==Number(btn.getAttribute("data-crdel")));
       renderCertTable();
     });
   });
-  tbody.querySelectorAll("[data-crinsert]").forEach(btn=>{
+  scope.querySelectorAll("[data-crinsert]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const afterId = Number(btn.getAttribute("data-crinsert"));
       const idx = certRows.findIndex(r=>r.id===afterId);
@@ -3775,26 +3848,33 @@ function renderCertTable(){
       renderCertTable();
     });
   });
-  tbody.querySelectorAll("[data-craddphoto]").forEach(btn=>{
+  scope.querySelectorAll("[data-craddphoto]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       certAddPhotoTargetId = Number(btn.getAttribute("data-craddphoto"));
       document.getElementById("certAddPhotoInput").click();
     });
   });
-  tbody.querySelectorAll("tr[data-cid] input").forEach(input=>{
+  scope.querySelectorAll("[data-cid] input").forEach(input=>{
     input.addEventListener("change", ()=>{
-      const tr = input.closest("tr");
-      const id = Number(tr.getAttribute("data-cid"));
+      const holder = input.closest("[data-cid]");
+      const id = Number(holder.getAttribute("data-cid"));
       const row = certRows.find(r=>r.id===id);
       if(!row) return;
-      row.date = tr.querySelector(".cr-date").value.trim();
-      row.desc = tr.querySelector(".cr-desc").value.trim();
-      row.amount = parseFloat(tr.querySelector(".cr-amount").value) || 0;
-      row.note = tr.querySelector(".cr-note").value.trim();
-      const total2 = certRows.reduce((s,r)=>s+(Number(r.amount)||0),0);
-      document.getElementById("certTotal").textContent = fmtMoney(total2);
+      row.date = holder.querySelector(".cr-date").value.trim();
+      row.desc = holder.querySelector(".cr-desc").value.trim();
+      row.amount = parseFloat(holder.querySelector(".cr-amount").value) || 0;
+      row.note = holder.querySelector(".cr-note").value.trim();
+      updateCertTotals();
     });
   });
+}
+
+function updateCertTotals(){
+  const total = certRows.reduce((s,r)=>s+(Number(r.amount)||0),0);
+  const totalText = fmtMoney(total);
+  document.getElementById("certTotal").textContent = totalText;
+  const mobileTotal = document.getElementById("certTotalMobile");
+  if(mobileTotal) mobileTotal.textContent = totalText;
 }
 
 let certAddPhotoTargetId = null;
