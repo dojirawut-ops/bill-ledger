@@ -21,7 +21,7 @@
   /* A wide table (ledger/vendor) sitting inside its own overflow-x:auto wrapper must never be able
      to stretch the whole page wider than the phone's screen — without this, mobile browsers zoom
      the ENTIRE page out to fit that one wide element, shrinking the header/cards/everything too. */
-  body{margin:0;max-width:100%;overflow-x:hidden;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;}
+  body{margin:0;max-width:100%;overflow-x:hidden;overflow-wrap:anywhere;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;}
   .display{font-family:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;font-weight:600;}
   .mono{font-family:'JetBrains Mono',monospace;}
   .wrap{max-width:1320px;margin:0 auto;padding:0 0 60px;}
@@ -156,7 +156,12 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748B'%3E%3Cpath d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%2364748B' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;background-position:right 10px center;background-size:16px;}
   input:focus,select:focus{outline:none;border-color:var(--ledger);box-shadow:0 0 0 3px var(--blue-bg);}
-  .btn{border-radius:9px;padding:9px 16px;min-height:44px;font-size:14px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:background .15s,border-color .15s,transform .08s,box-shadow .15s;}
+  /* min-width:0 + overflow-wrap let a long unspaced Thai label (e.g. "เลือกจากคลังภาพ") actually wrap
+     onto a second line inside its button once space runs out, instead of refusing to shrink below
+     its own content width — a flex item's default min-width:auto otherwise blows the row (and the
+     whole card around it) wider than the phone screen, which then just gets silently clipped by the
+     body/html overflow-x:hidden guard rather than becoming reachable by scrolling. */
+  .btn{border-radius:9px;padding:9px 16px;min-height:44px;min-width:0;font-size:14px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;font-family:inherit;overflow-wrap:anywhere;word-break:break-word;text-align:center;transition:background .15s,border-color .15s,transform .08s,box-shadow .15s;}
   .btn:active{transform:translateY(1px);}
   .btn-primary{background:var(--rust);color:#fff;box-shadow:0 1px 2px rgba(194,65,12,.25);}
   .btn-primary:hover{background:var(--rust-dark);}
@@ -572,7 +577,7 @@
         <button type="button" class="card-menu-btn" id="companyDetailsToggle" title="รายละเอียดเพิ่มเติม">⋮</button>
       </div>
       <div class="key-row">
-        <strong style="color:var(--ledger);font-size:14px;white-space:nowrap;">ลูกค้า/บริษัทที่กำลังบันทึก</strong>
+        <strong style="color:var(--ledger);font-size:14px;">ลูกค้า/บริษัทที่กำลังบันทึก</strong>
         <input type="text" id="companyInput" list="companyDatalist" placeholder="เช่น บริษัท แซว เอ็มโพเรียม จำกัด" style="flex:1;min-width:160px;">
         <datalist id="companyDatalist"></datalist>
         <datalist id="acctDatalist"></datalist>
@@ -598,7 +603,7 @@
       </div>
       <div id="keyCardBody">
         <div class="key-row">
-          <strong style="color:var(--ledger);font-size:14px;white-space:nowrap;">ผู้ให้บริการ AI</strong>
+          <strong style="color:var(--ledger);font-size:14px;">ผู้ให้บริการ AI</strong>
           <select id="providerSelect" style="flex:1;min-width:160px;">
             <option value="anthropic">Anthropic (Claude)</option>
             <option value="gemini">Google (Gemini)</option>
@@ -614,7 +619,7 @@
         <div style="font-size:11px;opacity:.55;margin-top:8px;"><span id="apiKeyWarnText">คีย์ถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น (localStorage) ไม่ถูกส่งไปที่ใดนอกจาก Anthropic API โดยตรง</span> — ขอคีย์ได้ที่ <a href="https://console.anthropic.com/settings/keys" id="apiKeyHelpLink" target="_blank" style="color:var(--rust);">console.anthropic.com</a></div>
         <div class="flag-note" style="margin-top:6px;">⚠ ใครก็ตามที่ใช้เบราว์เซอร์/โปรไฟล์นี้ต่อจากคุณจะเห็นและใช้คีย์นี้ได้ด้วย — อย่าใส่คีย์ไว้ในเครื่องสาธารณะ คีย์ของแต่ละผู้ให้บริการเก็บแยกกัน สลับไปมาได้โดยไม่ต้องกรอกใหม่</div>
         <div class="key-row" style="margin-top:12px;">
-          <strong style="color:var(--ledger);font-size:14px;white-space:nowrap;">โมเดลที่ใช้อ่านบิล</strong>
+          <strong style="color:var(--ledger);font-size:14px;">โมเดลที่ใช้อ่านบิล</strong>
           <select id="modelSelect" style="flex:1;min-width:160px;">
             <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — แม่นยำกว่า (~0.4-0.7 บาท/รูป)</option>
             <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — ประหยัดกว่า (~0.15-0.25 บาท/รูป)</option>
@@ -761,7 +766,7 @@
       <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0 0 10px;">ใบรับรองแทนใบเสร็จรับเงิน</h2>
       <p style="font-size:12px;opacity:.6;margin:0 0 14px;">ถ่ายรูปบิล/สลิปย่อยที่ไม่มีใบเสร็จทางการหลายใบ ระบบจะแยกแต่ละรายการลงตาราง แก้ไขได้ก่อนพิมพ์ — ไม่มีการบันทึกข้อมูลไว้ถาวร ปิดหน้านี้แล้วรายการจะหายไป กด "ดาวน์โหลด PDF" ก่อนปิดเสมอ</p>
       <div class="key-row">
-        <strong style="color:var(--ledger);font-size:14px;white-space:nowrap;">บริษัท</strong>
+        <strong style="color:var(--ledger);font-size:14px;">บริษัท</strong>
         <input type="text" id="certCompanyInput" list="companyDatalist" placeholder="เช่น บริษัท เมอริท แอค แทกซ์ จำกัด" style="flex:1;min-width:200px;">
       </div>
     </div>
