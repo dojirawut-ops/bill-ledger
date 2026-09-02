@@ -83,6 +83,14 @@
      html/body overflow-x:hidden guard near the top, which stops any stray wide element from
      forcing that zoom-out in the first place). ===== */
   @media(max-width:768px){
+    /* Blanket safety net: cap every element in the main content column to its parent's width.
+       Several fixed pixel min-widths (inline "min-width:200px" on inputs etc.) and flex-item
+       default sizing kept overflowing individual elements even after per-element fixes — rather
+       than keep chasing each one, this guarantees NOTHING in .main-col can ever exceed the phone
+       screen width, while excluding <table>/<canvas>, which legitimately need to be wider than
+       their own overflow-x:auto wrapper so that wrapper's internal horizontal scroll still works. */
+    .main-col *:not(table):not(canvas){max-width:100%;}
+    .main-col input,.main-col select,.main-col textarea,.main-col button,.main-col .btn{min-width:0 !important;}
     /* Hamburger: the nav (sidebar) and the header's account/notification/logout cluster both
        collapse behind ☰ and reveal in normal document flow (not a floating overlay) when
        body.mobile-nav-open is toggled — see the hamburgerBtn click handler in the script. */
