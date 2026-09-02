@@ -49,12 +49,15 @@
   .brand-word b{color:var(--ledger);font-weight:700;}
   .brand-word i{font-style:normal;color:var(--ink);font-weight:500;opacity:.72;margin-left:5px;}
   .card-menu-btn{margin-left:auto;background:transparent;border:none;color:var(--ink);opacity:.45;
-    font-size:18px;line-height:1;cursor:pointer;padding:4px 9px;border-radius:7px;font-family:inherit;
+    font-size:18px;line-height:1;cursor:pointer;padding:4px 9px;min-width:44px;min-height:44px;
+    display:inline-flex;align-items:center;justify-content:center;border-radius:7px;font-family:inherit;
     transition:background .15s,opacity .15s;}
   .card-menu-btn:hover{opacity:1;background:var(--blue-bg);}
-  .notif-btn{position:relative;width:36px;height:36px;border-radius:10px;border:1px solid var(--ledger-line);
-    background:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;flex:none;}
+  .notif-btn{position:relative;width:44px;height:44px;border-radius:10px;border:1px solid var(--ledger-line);
+    background:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;flex:none;}
   .notif-dot{position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:999px;background:var(--rust);}
+  .header-actions{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .hamburger-btn{display:none;font-size:19px;}
   .user-chip{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink);}
   .user-chip .avatar{width:30px;height:30px;border-radius:999px;background:var(--blue-bg);color:var(--ledger);
     display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex:none;}
@@ -68,6 +71,64 @@
     .sidebar .side-steps{display:none;}
     .sidebar .tab-nav{flex-direction:row;gap:6px;}
   }
+  /* Desktop/tablet default: table visible, card list off — MUST come before the ≤768px media
+     query below. A plain (non-media) rule beats a media-query rule of equal specificity once the
+     query matches, if the plain rule appears LATER in the source — so this can't be declared down
+     near the rest of the .ledger-card-view rules (which sit after that media query) without
+     permanently hiding the card list on real phones. */
+  .ledger-card-view{display:none;}
+  /* ===== Mobile-first breakpoint (≤768px): hamburger header, 2-col summary cards, 1-col forms,
+     API settings as an accordion (see #keyCardHead JS), ledger table → card list. Nothing here
+     ever scales/zooms the whole page — every rule reflows layout instead (see also the
+     html/body overflow-x:hidden guard near the top, which stops any stray wide element from
+     forcing that zoom-out in the first place). ===== */
+  @media(max-width:768px){
+    /* Hamburger: the nav (sidebar) and the header's account/notification/logout cluster both
+       collapse behind ☰ and reveal in normal document flow (not a floating overlay) when
+       body.mobile-nav-open is toggled — see the hamburgerBtn click handler in the script. */
+    .hamburger-btn{display:inline-flex;}
+    header{flex-wrap:wrap;}
+    .header-actions{display:none;}
+    body.mobile-nav-open .header-actions{
+      display:flex;flex-direction:column;align-items:stretch;width:100%;order:3;
+      gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--ledger-line);
+    }
+    body.mobile-nav-open .header-actions .btn{width:100%;justify-content:center;}
+    .sidebar{display:none;}
+    body.mobile-nav-open .sidebar{display:block;}
+
+    /* Summary cards: exactly 2 columns (not auto-fit, which can give 1 or 3 depending on width).
+       !important because this file's convention is to declare each component's base rule near
+       where it's used rather than all up front — several of those base rules (.kpi-grid, .status-
+       pill, table, input font-size, .tab-btn, .kpi-label) sit LATER in this stylesheet than this
+       shared mobile block, and would otherwise silently win the cascade tie by source order. */
+    .kpi-grid{grid-template-columns:repeat(2,1fr) !important;}
+
+    /* All forms: 1 column, label above field, field full width — no fixed/min pixel widths. */
+    .setup-grid{grid-template-columns:1fr !important;}
+    .key-row,.key-row-sub{flex-direction:column !important;align-items:stretch !important;}
+    .key-row strong{width:100%;}
+    .key-row input,.key-row select{min-width:0 !important;width:100% !important;flex:1 1 100% !important;}
+    .new-vendor-grid{grid-template-columns:1fr !important;}
+    .field-grid{grid-template-columns:1fr !important;}
+
+    /* 16px inputs stop iOS Safari auto-zooming the page when a field gets focus. */
+    input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{font-size:16px !important;}
+
+    /* Readable-text floor for primary UI (buttons/labels/table-equivalents already default to
+       ≥14px elsewhere in this file); chart SVG annotations and the print-only certificate sheet
+       are deliberately left alone — 14px there would overlap/misprint, and neither is something
+       a phone user reads to operate the app day-to-day. */
+    .tab-btn{font-size:14px !important;}
+    .status-pill{font-size:14px !important;}
+    .kpi-label{font-size:14px !important;}
+    table{font-size:14px !important;}
+
+    /* Document table (#ledgerWrap) → card list. The table markup still renders (for desktop/
+       tablet ≥768px) but stays off-screen here; see .ledger-card-view below and renderLedger(). */
+    .ledger-table-view{display:none;}
+    .ledger-card-view{display:block;}
+  }
   @media(max-width:480px){
     .main-col{padding:16px 12px 40px;}
     .card{padding:14px;}
@@ -79,11 +140,10 @@
     .key-row input,.key-row select{min-width:0 !important;width:100% !important;flex:1 1 100% !important;}
     .dz-title{font-size:16px;}
     h2.display{font-size:16px !important;}
-    /* Ledger/vendor tables stay wide (many columns) — this only shrinks the type/padding so more
-       columns fit before the reader needs to scroll sideways inside the table's own scrollbox. */
-    table{font-size:11.5px;}
+    /* The ledger table itself is hidden below 768px (replaced by a card list — see that query),
+       so this only affects tables that stay real tables at every width: vendor admin, cert rows.
+       Padding tightens so more columns fit; font-size floor stays 14px per the mobile spec. */
     thead th, tbody td{padding:7px 6px 7px 0;}
-    .status-pill{padding:2px 7px;font-size:10.5px;}
     .status-pill .pill-text{max-width:90px;}
   }
   .warn-box{background:var(--orange-bg);color:var(--rust-dark);border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start;}
@@ -96,13 +156,13 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748B'%3E%3Cpath d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%2364748B' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;background-position:right 10px center;background-size:16px;}
   input:focus,select:focus{outline:none;border-color:var(--ledger);box-shadow:0 0 0 3px var(--blue-bg);}
-  .btn{border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:background .15s,border-color .15s,transform .08s,box-shadow .15s;}
+  .btn{border-radius:9px;padding:9px 16px;min-height:44px;font-size:14px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:background .15s,border-color .15s,transform .08s,box-shadow .15s;}
   .btn:active{transform:translateY(1px);}
   .btn-primary{background:var(--rust);color:#fff;box-shadow:0 1px 2px rgba(194,65,12,.25);}
   .btn-primary:hover{background:var(--rust-dark);}
   .btn-ghost{background:#fff;border:1px solid var(--ledger-line);color:var(--ledger);}
   .btn-ghost:hover{background:var(--blue-bg);border-color:var(--ledger);}
-  .btn-sm{padding:6px 12px;font-size:12px;border-radius:8px;}
+  .btn-sm{padding:6px 12px;min-height:44px;font-size:13px;border-radius:8px;}
   .dropzone{border:2px dashed var(--ledger-line);border-radius:10px;padding:18px 14px;text-align:center;}
   .dz-title{font-weight:600;font-size:16px;color:var(--ink);margin:2px 0;}
   .dz-sub{font-size:12px;opacity:.6;margin-bottom:10px;}
@@ -157,6 +217,41 @@
   #ledgerWrap table{width:max-content;min-width:100%;}
   #ledgerWrap td,#ledgerWrap th{white-space:nowrap;}
   #ledgerWrap td.clip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* Both views render on every renderLedger() call; CSS (not JS) decides which is visible, so
+     there's no resize-triggered re-render to keep in sync — see the ≤768px query above for the
+     swap, and the .ledger-card-view{display:none} base rule near the top of this stylesheet. */
+  .ledger-card{background:#fff;border:1px solid var(--ledger-line);border-radius:14px;padding:14px;
+    margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;cursor:pointer;
+    transition:border-color .15s,box-shadow .15s;}
+  .ledger-card:hover{border-color:var(--ledger);box-shadow:0 2px 8px rgba(29,78,216,.08);}
+  .ledger-card input[type=checkbox]{width:22px;height:22px;flex:none;margin-top:2px;cursor:pointer;}
+  .ledger-card-body{flex:1;min-width:0;}
+  .ledger-card-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ledger-card-row{display:flex;justify-content:space-between;align-items:center;gap:8px;
+    font-size:13px;opacity:.8;margin-top:2px;flex-wrap:wrap;}
+  .ledger-card-amount{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--ledger);}
+  .ledger-card-more{font-size:12px;opacity:.5;margin-top:6px;}
+  .ledger-select-all-row{display:flex;align-items:center;gap:10px;padding:6px 4px 12px;font-size:14px;font-weight:600;color:var(--ink);}
+  .ledger-select-all-row input[type=checkbox]{width:22px;height:22px;cursor:pointer;}
+  /* Bottom sheet: anchored to the viewport bottom, slides up, rounded top corners only. */
+  .sheet-backdrop{position:fixed;inset:0;background:rgba(30,41,59,.45);z-index:300;
+    display:flex;align-items:flex-end;justify-content:center;}
+  .sheet-card{background:var(--cream-card);width:100%;max-width:600px;max-height:85vh;overflow-y:auto;
+    border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -8px 30px rgba(30,41,59,.25);}
+  .sheet-handle{width:40px;height:4px;background:var(--ledger-line);border-radius:999px;margin:0 auto 14px;}
+  .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .sheet-head h3{margin:0;font-size:16px;color:var(--ledger);}
+  .sheet-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink);opacity:.6;
+    min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;}
+  .sheet-field{display:flex;justify-content:space-between;gap:12px;padding:10px 0;
+    border-bottom:1px solid var(--ledger-line);font-size:14px;}
+  .sheet-field:last-of-type{border-bottom:none;}
+  .sheet-field-label{opacity:.6;flex:none;}
+  .sheet-field-value{text-align:right;overflow-wrap:anywhere;}
+  .sheet-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+  .sheet-actions .btn{flex:1;justify-content:center;}
   .num{text-align:right;}
   .row-actions{display:flex;gap:4px;}
   .row-actions button{background:none;border:none;cursor:pointer;opacity:.6;padding:2px;}
@@ -354,7 +449,8 @@
         <p class="sub">ถ่ายรูปบิล ระบบอ่านและกรอกให้อัตโนมัติจากประวัติผู้ขาย ก่อนบันทึกลงทะเบียน</p>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+    <button class="notif-btn hamburger-btn" id="hamburgerBtn" type="button" title="เมนู" aria-label="เปิดเมนู" aria-expanded="false">☰</button>
+    <div class="header-actions" id="headerActions">
       <button class="notif-btn" type="button" title="การแจ้งเตือน"><span class="notif-dot"></span>🔔</button>
       <span class="user-chip"><span class="avatar">👤</span><span class="key-status" id="userBadge"></span></span>
       <button class="btn btn-ghost" id="logoutBtn" type="button">ออกจากระบบ</button>
@@ -362,7 +458,7 @@
   </header>
 
   <div class="app-shell">
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebarNav">
     <div class="tab-nav">
       <button class="tab-btn active" id="tabLedgerBtn" type="button">📒 สมุดบันทึกบิลซื้อ</button>
       <div class="side-steps">
@@ -493,28 +589,29 @@
       </div>
     </div>
 
-    <!-- API key panel -->
+    <!-- API key panel — the whole body is an accordion on mobile (collapsed by default there),
+         always-open on desktop; #keyDetailsToggle drives the show/hide either way. -->
     <div class="card" id="keyCard">
-      <div class="card-head">
+      <div class="card-head" id="keyCardHead" style="cursor:pointer;">
         <span class="icon-badge blue">🔑</span><span class="card-head-title" id="keyCardTitle">Anthropic API Key</span>
-        <button type="button" class="card-menu-btn" id="keyDetailsToggle" title="รายละเอียดเพิ่มเติม">⋮</button>
+        <button type="button" class="card-menu-btn" id="keyDetailsToggle" title="แสดง/ซ่อนการตั้งค่า AI"><span id="keyDetailsChevron">▾</span></button>
       </div>
-      <div class="key-row">
-        <strong style="color:var(--ledger);font-size:14px;white-space:nowrap;">ผู้ให้บริการ AI</strong>
-        <select id="providerSelect" style="flex:1;min-width:160px;">
-          <option value="anthropic">Anthropic (Claude)</option>
-          <option value="gemini">Google (Gemini)</option>
-        </select>
-      </div>
-      <div class="key-row" style="margin-top:10px;">
-        <strong style="color:var(--ledger);font-size:14px;" id="apiKeyLabel">Anthropic API Key</strong>
-        <input type="password" id="apiKeyInput" placeholder="sk-ant-..." style="flex:1;min-width:160px;">
-        <button class="btn btn-ghost" id="toggleKeyBtn" type="button">👁</button>
-        <button class="btn btn-primary" id="saveKeyBtn" type="button">บันทึกคีย์</button>
-        <span class="key-status" id="keyStatus"></span>
-      </div>
-      <div id="keyDetailsBody" class="hidden" style="margin-top:10px;">
-        <div style="font-size:11px;opacity:.55;"><span id="apiKeyWarnText">คีย์ถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น (localStorage) ไม่ถูกส่งไปที่ใดนอกจาก Anthropic API โดยตรง</span> — ขอคีย์ได้ที่ <a href="https://console.anthropic.com/settings/keys" id="apiKeyHelpLink" target="_blank" style="color:var(--rust);">console.anthropic.com</a></div>
+      <div id="keyCardBody">
+        <div class="key-row">
+          <strong style="color:var(--ledger);font-size:14px;white-space:nowrap;">ผู้ให้บริการ AI</strong>
+          <select id="providerSelect" style="flex:1;min-width:160px;">
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="gemini">Google (Gemini)</option>
+          </select>
+        </div>
+        <div class="key-row" style="margin-top:10px;">
+          <strong style="color:var(--ledger);font-size:14px;" id="apiKeyLabel">Anthropic API Key</strong>
+          <input type="password" id="apiKeyInput" placeholder="sk-ant-..." style="flex:1;min-width:160px;">
+          <button class="btn btn-ghost" id="toggleKeyBtn" type="button">👁</button>
+          <button class="btn btn-primary" id="saveKeyBtn" type="button">บันทึกคีย์</button>
+          <span class="key-status" id="keyStatus"></span>
+        </div>
+        <div style="font-size:11px;opacity:.55;margin-top:8px;"><span id="apiKeyWarnText">คีย์ถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น (localStorage) ไม่ถูกส่งไปที่ใดนอกจาก Anthropic API โดยตรง</span> — ขอคีย์ได้ที่ <a href="https://console.anthropic.com/settings/keys" id="apiKeyHelpLink" target="_blank" style="color:var(--rust);">console.anthropic.com</a></div>
         <div class="flag-note" style="margin-top:6px;">⚠ ใครก็ตามที่ใช้เบราว์เซอร์/โปรไฟล์นี้ต่อจากคุณจะเห็นและใช้คีย์นี้ได้ด้วย — อย่าใส่คีย์ไว้ในเครื่องสาธารณะ คีย์ของแต่ละผู้ให้บริการเก็บแยกกัน สลับไปมาได้โดยไม่ต้องกรอกใหม่</div>
         <div class="key-row" style="margin-top:12px;">
           <strong style="color:var(--ledger);font-size:14px;white-space:nowrap;">โมเดลที่ใช้อ่านบิล</strong>
@@ -2051,7 +2148,8 @@ function renderLedger(){
     return;
   }
   const total = filtered.reduce((s,e)=>s+(Number(e.amount)||0),0);
-  let rows = filtered.map(e => {
+  let rows = "", cards = "";
+  filtered.forEach(e => {
     let complianceCell = "";
     if(hasVat(e)){
       const { ok, issues } = check864(e);
@@ -2060,9 +2158,10 @@ function renderLedger(){
       const text = ok ? "ผ่าน" : "ไม่ผ่าน — " + issues.join(" · ");
       complianceCell = `<span class="status-pill ${ok?"ok":"bad"}" title="${esc(text)}">${icon} ${short}</span>`;
     }
-    return `
+    const checked = selectedLedgerNos.has(e.no) ? "checked" : "";
+    rows += `
     <tr data-no="${e.no}">
-      <td><input type="checkbox" class="ledger-row-chk" data-no="${e.no}" ${selectedLedgerNos.has(e.no)?"checked":""}></td>
+      <td><input type="checkbox" class="ledger-row-chk" data-no="${e.no}" ${checked}></td>
       <td class="mono">${e.no}</td>
       <td class="mono">${esc(e.code)}</td>
       <td class="clip" style="max-width:180px;" title="${esc(e.name)}">${esc(e.name)}</td>
@@ -2082,9 +2181,27 @@ function renderLedger(){
         <button data-del="${e.no}">🗑</button>
       </div></td>
     </tr>
-  `;}).join("");
+  `;
+    // Mobile card: vendor name, document number, date, total, status — everything else (code,
+    // description, chart-of-accounts, VAT, tax id, กรมสรรพากร status, transfer, actions) opens
+    // in the bottom sheet on tap instead of cramming a 15-column table onto a phone.
+    cards += `
+    <div class="ledger-card" data-open-sheet="${e.no}">
+      <input type="checkbox" class="ledger-row-chk" data-no="${e.no}" ${checked}>
+      <div class="ledger-card-body">
+        <div class="ledger-card-name">${esc(e.name || "(ไม่ระบุชื่อผู้ขาย)")}</div>
+        <div class="ledger-card-row"><span>${esc(e.billNo || "—")}</span><span>${esc(e.date || "—")}</span></div>
+        <div class="ledger-card-row">
+          <span class="ledger-card-amount">${fmtMoney(e.amount)} บาท</span>
+          ${complianceCell || `<span class="status-pill neutral">— ไม่มี VAT</span>`}
+        </div>
+        <div class="ledger-card-more">แตะเพื่อดูรายละเอียดเพิ่มเติม ›</div>
+      </div>
+    </div>
+  `;
+  });
   ledgerWrap.innerHTML = `
-    <div style="overflow-x:auto;">
+    <div class="ledger-table-view" style="overflow-x:auto;">
     <table>
       <thead><tr>
         <th><input type="checkbox" id="ledgerSelectAllChk" title="เลือกทั้งหมดที่แสดงอยู่"></th>
@@ -2098,6 +2215,11 @@ function renderLedger(){
         <td colspan="5"></td>
       </tr></tfoot>
     </table>
+    </div>
+    <div class="ledger-card-view">
+      <label class="ledger-select-all-row"><input type="checkbox" id="ledgerSelectAllChkMobile"> เลือกทั้งหมดที่แสดงอยู่</label>
+      ${cards}
+      <div style="text-align:right;font-weight:700;color:var(--ledger);padding:10px 4px 0;">รวมทั้งหมด${ledgerVatFilter!=="all" ? " (เฉพาะหมวดที่กรอง)" : ""}: ${fmtMoney(total)} บาท</div>
     </div>
   `;
   ledgerWrap.querySelectorAll("[data-rd-recheck]").forEach(el=>{
@@ -2118,34 +2240,39 @@ function renderLedger(){
       renderLedger();
     });
   });
-  const ledgerSelectAllChk = ledgerWrap.querySelector("#ledgerSelectAllChk");
   function syncLedgerSelectAllState(){
-    const all = ledgerWrap.querySelectorAll(".ledger-row-chk");
-    const checkedCount = ledgerWrap.querySelectorAll(".ledger-row-chk:checked").length;
-    if(ledgerSelectAllChk){
-      ledgerSelectAllChk.checked = all.length>0 && checkedCount===all.length;
-      ledgerSelectAllChk.indeterminate = checkedCount>0 && checkedCount<all.length;
-    }
+    const totalVisible = filtered.length;
+    const checkedCount = filtered.filter(e=>selectedLedgerNos.has(e.no)).length;
+    [document.getElementById("ledgerSelectAllChk"), document.getElementById("ledgerSelectAllChkMobile")].forEach(el=>{
+      if(!el) return;
+      el.checked = totalVisible>0 && checkedCount===totalVisible;
+      el.indeterminate = checkedCount>0 && checkedCount<totalVisible;
+    });
     const countEl = document.getElementById("certSelCount");
     if(countEl) countEl.textContent = selectedLedgerNos.size;
   }
+  // Every entry now has TWO checkboxes (table row + mobile card) — only one view is ever visible
+  // at a time via CSS, but keep both in sync anyway so a window resize across 768px never shows
+  // a stale checked state in the view that just became visible.
   ledgerWrap.querySelectorAll(".ledger-row-chk").forEach(chk=>{
     chk.addEventListener("change", ()=>{
       const no = Number(chk.getAttribute("data-no"));
       if(chk.checked) selectedLedgerNos.add(no); else selectedLedgerNos.delete(no);
+      ledgerWrap.querySelectorAll(`.ledger-row-chk[data-no="${no}"]`).forEach(other=>{ other.checked = chk.checked; });
       syncLedgerSelectAllState();
     });
   });
-  if(ledgerSelectAllChk){
-    ledgerSelectAllChk.addEventListener("change", ()=>{
+  [document.getElementById("ledgerSelectAllChk"), document.getElementById("ledgerSelectAllChkMobile")].forEach(selAll=>{
+    if(!selAll) return;
+    selAll.addEventListener("change", ()=>{
       ledgerWrap.querySelectorAll(".ledger-row-chk").forEach(chk=>{
-        chk.checked = ledgerSelectAllChk.checked;
+        chk.checked = selAll.checked;
         const no = Number(chk.getAttribute("data-no"));
-        if(ledgerSelectAllChk.checked) selectedLedgerNos.add(no); else selectedLedgerNos.delete(no);
+        if(selAll.checked) selectedLedgerNos.add(no); else selectedLedgerNos.delete(no);
       });
       syncLedgerSelectAllState();
     });
-  }
+  });
   syncLedgerSelectAllState();
   ledgerWrap.querySelectorAll("[data-edit]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
@@ -2158,6 +2285,12 @@ function renderLedger(){
       showPhotoLightbox(btn.getAttribute("data-photo"));
     });
   });
+  ledgerWrap.querySelectorAll("[data-open-sheet]").forEach(card=>{
+    card.addEventListener("click", (ev)=>{
+      if(ev.target.closest("input[type=checkbox]")) return; // let the checkbox toggle on its own
+      openLedgerSheet(Number(card.getAttribute("data-open-sheet")));
+    });
+  });
 }
 
 function showPhotoLightbox(url){
@@ -2166,6 +2299,116 @@ function showPhotoLightbox(url){
   overlay.innerHTML = `<img src="${esc(url)}" style="max-width:100%;max-height:100%;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.5);">`;
   overlay.addEventListener("click", ()=>overlay.remove());
   document.body.appendChild(overlay);
+}
+
+/* ---------------- Ledger bottom sheet (mobile card list "แตะเพื่อดูรายละเอียดเพิ่มเติม") ----------------
+   Holds every ledger field NOT already shown on the compact card: รหัส, คำอธิบาย, ผังบัญชี, VAT,
+   เลขผู้เสียภาษี, สถานะจดทะเบียน VAT, โอน — plus ดูรูปบิล/แก้ไข/ลบ actions. */
+function closeLedgerSheet(){
+  const el = document.getElementById("ledgerSheetBackdrop");
+  if(el) el.remove();
+}
+
+function openLedgerSheet(no){
+  const entry = entries.find(e=>e.no===no);
+  if(!entry) return;
+  closeLedgerSheet();
+  const backdrop = document.createElement("div");
+  backdrop.className = "sheet-backdrop";
+  backdrop.id = "ledgerSheetBackdrop";
+  backdrop.addEventListener("click", (ev)=>{ if(ev.target===backdrop) closeLedgerSheet(); });
+  document.body.appendChild(backdrop);
+  renderLedgerSheetView(entry);
+}
+
+function renderLedgerSheetView(e){
+  const backdrop = document.getElementById("ledgerSheetBackdrop");
+  if(!backdrop) return;
+  let complianceLine = `<span class="status-pill neutral">— ไม่มี VAT</span>`;
+  if(hasVat(e)){
+    const { ok, issues } = check864(e);
+    complianceLine = ok
+      ? `<span class="status-pill ok">✅ ผ่าน</span>`
+      : `<span class="status-pill bad" title="${esc(issues.join(" · "))}">⚠️ ไม่ผ่าน</span>`;
+  }
+  backdrop.innerHTML = `
+    <div class="sheet-card" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><h3>${esc(e.name || "รายการ")}</h3><button class="sheet-close" id="sheetCloseBtn" type="button">✕</button></div>
+      <div class="sheet-field"><span class="sheet-field-label">รหัส</span><span class="sheet-field-value mono">${esc(e.code || "—")}</span></div>
+      <div class="sheet-field"><span class="sheet-field-label">คำอธิบาย</span><span class="sheet-field-value">${esc(e.desc || "—")}</span></div>
+      <div class="sheet-field"><span class="sheet-field-label">ผังบัญชี</span><span class="sheet-field-value mono">${esc(e.acct || "—")}</span></div>
+      <div class="sheet-field"><span class="sheet-field-label">VAT</span><span class="sheet-field-value mono">${e.vat!=null && e.vat!=="" ? fmtMoney(e.vat) : "—"}</span></div>
+      <div class="sheet-field"><span class="sheet-field-label">เลขผู้เสียภาษี (ม.86/4)</span><span class="sheet-field-value mono">${esc(e.taxId || "—")}</span></div>
+      <div class="sheet-field"><span class="sheet-field-label">ผ่านตรวจสอบ ม.86/4</span><span class="sheet-field-value">${complianceLine}</span></div>
+      <div class="sheet-field"><span class="sheet-field-label">จดทะเบียน VAT (กรมสรรพากร)</span><span class="sheet-field-value">${rdStatusCell(e) || "—"}</span></div>
+      <div class="sheet-field"><span class="sheet-field-label">โอน</span><span class="sheet-field-value mono">${fmtMoney(e.transfer)}</span></div>
+      <div class="sheet-actions">
+        ${e.photoUrl ? `<button class="btn btn-ghost" id="sheetPhotoBtn" type="button">🖼️ ดูรูปบิล</button>` : ""}
+        <button class="btn btn-ghost" id="sheetEditBtn" type="button">✏️ แก้ไข</button>
+        <button class="btn btn-ghost" id="sheetDelBtn" type="button">🗑 ลบ</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("sheetCloseBtn").addEventListener("click", closeLedgerSheet);
+  const photoBtn = document.getElementById("sheetPhotoBtn");
+  if(photoBtn) photoBtn.addEventListener("click", ()=> showPhotoLightbox(e.photoUrl));
+  document.getElementById("sheetEditBtn").addEventListener("click", ()=> renderLedgerSheetEditView(e.no));
+  document.getElementById("sheetDelBtn").addEventListener("click", ()=>{
+    if(!confirm(`ลบรายการ "${e.name || e.billNo || e.no}" ออกจากทะเบียน?`)) return;
+    entries = entries.filter(x=>x.no!==e.no).map((x,i)=>({...x, no:i+1}));
+    selectedLedgerNos.clear(); // row numbers get renumbered above — stale ticks would point at the wrong rows
+    persistEntries();
+    closeLedgerSheet();
+    renderLedger();
+  });
+}
+
+// Table-row editing (startEditRow) only makes sense in the desktop table, which is hidden on
+// mobile — this is the equivalent lightweight edit form rendered inside the bottom sheet instead,
+// writing back the same fields via the same parsing rules.
+function renderLedgerSheetEditView(no){
+  const entry = entries.find(e=>e.no===no);
+  const backdrop = document.getElementById("ledgerSheetBackdrop");
+  if(!entry || !backdrop) return;
+  const card = backdrop.querySelector(".sheet-card");
+  if(!card) return;
+  card.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>แก้ไขรายการ</h3><button class="sheet-close" id="sheetCloseBtn" type="button">✕</button></div>
+    <div class="sheet-field"><span class="sheet-field-label">รหัส</span><input class="edit-input es-code" type="text" style="width:60%;" value="${esc(entry.code)}"></div>
+    <div class="sheet-field"><span class="sheet-field-label">ชื่อผู้ขาย</span><input class="edit-input es-name" type="text" style="width:60%;" value="${esc(entry.name)}"></div>
+    <div class="sheet-field"><span class="sheet-field-label">เลขที่เอกสาร</span><input class="edit-input es-billno" type="text" style="width:60%;" value="${esc(entry.billNo)}"></div>
+    <div class="sheet-field"><span class="sheet-field-label">คำอธิบาย</span><input class="edit-input es-desc" type="text" style="width:60%;" value="${esc(entry.desc)}"></div>
+    <div class="sheet-field"><span class="sheet-field-label">วันที่</span><input class="edit-input es-date" type="text" style="width:60%;" value="${esc(entry.date)}"></div>
+    <div class="sheet-field"><span class="sheet-field-label">ผังบัญชี</span><input class="edit-input es-acct" type="text" list="acctDatalist" style="width:60%;" value="${esc(entry.acct)}"></div>
+    <div class="sheet-field"><span class="sheet-field-label">จำนวนเงิน</span><input class="edit-input es-amount" type="number" step="0.01" style="width:60%;" value="${entry.amount}"></div>
+    <div class="sheet-field"><span class="sheet-field-label">VAT</span><input class="edit-input es-vat" type="number" step="0.01" style="width:60%;" placeholder="ไม่มี" value="${entry.vat!=null?entry.vat:''}"></div>
+    <div class="sheet-field"><span class="sheet-field-label">เลขผู้เสียภาษี</span><input class="edit-input es-taxid mono" type="text" maxlength="13" style="width:60%;" placeholder="13 หลัก" value="${esc(entry.taxId||'')}"></div>
+    <div class="sheet-field"><span class="sheet-field-label">โอน</span><input class="edit-input es-transfer" type="number" step="0.01" style="width:60%;" value="${entry.transfer}"></div>
+    <div class="sheet-actions">
+      <button class="btn btn-primary" id="sheetSaveBtn" type="button">✓ บันทึก</button>
+      <button class="btn btn-ghost" id="sheetCancelBtn" type="button">ยกเลิก</button>
+    </div>
+  `;
+  document.getElementById("sheetCloseBtn").addEventListener("click", closeLedgerSheet);
+  document.getElementById("sheetCancelBtn").addEventListener("click", ()=> renderLedgerSheetView(entry));
+  document.getElementById("sheetSaveBtn").addEventListener("click", ()=>{
+    entry.code = card.querySelector(".es-code").value.trim();
+    entry.name = card.querySelector(".es-name").value.trim();
+    entry.billNo = card.querySelector(".es-billno").value.trim();
+    entry.desc = card.querySelector(".es-desc").value.trim();
+    entry.date = card.querySelector(".es-date").value.trim();
+    entry.acct = card.querySelector(".es-acct").value.trim();
+    entry.amount = parseFloat(card.querySelector(".es-amount").value) || 0;
+    const vatVal = card.querySelector(".es-vat").value;
+    entry.vat = vatVal==="" ? "" : (parseFloat(vatVal)||0);
+    entry.taxId = card.querySelector(".es-taxid").value.trim().replace(/\D/g,"");
+    entry.transfer = parseFloat(card.querySelector(".es-transfer").value) || 0;
+    persistEntries();
+    closeLedgerSheet();
+    renderLedger();
+  });
 }
 
 function startEditRow(no){
@@ -2227,9 +2470,8 @@ document.getElementById("vendorAdminToggle").addEventListener("click", ()=>{
   vendorAdminChevron.textContent = hidden ? "▾ แสดง" : "▴ ซ่อน";
 });
 
-// "⋮" menu buttons on the setup cards — collapsed by default so the card shows only the
-// controls needed day-to-day; the rest (secondary actions, help text, less-used settings)
-// stays one click away instead of always taking up space.
+// "⋮" menu button on the company card — collapsed by default so the card shows only the
+// controls needed day-to-day; the rest (secondary actions, help text) stays one click away.
 function wireCardDetailsToggle(toggleId, bodyId){
   const toggle = document.getElementById(toggleId);
   const body = document.getElementById(bodyId);
@@ -2237,7 +2479,28 @@ function wireCardDetailsToggle(toggleId, bodyId){
   toggle.addEventListener("click", ()=> body.classList.toggle("hidden"));
 }
 wireCardDetailsToggle("companyDetailsToggle", "companyDetailsBody");
-wireCardDetailsToggle("keyDetailsToggle", "keyDetailsBody");
+
+// #keyCard is a full accordion: collapsed by default only on mobile (≤768px) so the whole
+// "ตั้งค่า API" section doesn't eat the screen before the user has even picked a company —
+// stays open by default on desktop, same as before. The click listener lives on the whole
+// card-head row (not the chevron button alone) so the tap target is the full-width header,
+// not just the small ⋮ icon — the button is a descendant of the head so this single listener
+// (not a second one on the button) is what fires when either is tapped.
+function setKeyCardCollapsed(collapsed){
+  const body = document.getElementById("keyCardBody");
+  const chevron = document.getElementById("keyDetailsChevron");
+  if(!body) return;
+  body.classList.toggle("hidden", collapsed);
+  if(chevron) chevron.textContent = collapsed ? "▾" : "▴";
+}
+const keyCardHead = document.getElementById("keyCardHead");
+if(keyCardHead){
+  keyCardHead.addEventListener("click", ()=>{
+    const body = document.getElementById("keyCardBody");
+    if(body) setKeyCardCollapsed(!body.classList.contains("hidden"));
+  });
+}
+setKeyCardCollapsed(window.matchMedia("(max-width:768px)").matches);
 
 function renderAcctDatalist(){
   const uniqueAccts = [...new Set(vendors.map(v=>v.acct).filter(Boolean))].sort();
@@ -3375,10 +3638,36 @@ function showTab(which){
     document.getElementById(panel).classList.toggle("hidden", k!==which);
   });
   if(which === "dash") renderDashboard();
+  document.body.classList.remove("mobile-nav-open"); // picking a tab closes the hamburger drawer too
 }
 document.getElementById("tabLedgerBtn").addEventListener("click", ()=>showTab("ledger"));
 document.getElementById("tabDashBtn").addEventListener("click", ()=>showTab("dash"));
 document.getElementById("tabCertBtn").addEventListener("click", ()=>showTab("cert"));
+
+/* ---------------- Hamburger menu (≤768px) ----------------
+   Toggling body.mobile-nav-open reveals both the sidebar nav and the header's account/
+   notification/logout cluster in normal document flow (see the ≤768px CSS query) — no fixed/
+   floating panel, so nothing needs a hard-coded height to reflow correctly. */
+const hamburgerBtn = document.getElementById("hamburgerBtn");
+if(hamburgerBtn){
+  hamburgerBtn.addEventListener("click", ()=>{
+    const open = document.body.classList.toggle("mobile-nav-open");
+    hamburgerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+}
+document.getElementById("logoutBtn").addEventListener("click", ()=>{
+  document.body.classList.remove("mobile-nav-open");
+}, { capture:true }); // capture: run before logoutBtn's own click handler navigates away
+// Tap outside the open drawer (sidebar / header-actions / hamburger button itself) closes it.
+document.addEventListener("click", (ev)=>{
+  if(!document.body.classList.contains("mobile-nav-open")) return;
+  const sidebarEl = document.getElementById("sidebarNav");
+  const actionsEl = document.getElementById("headerActions");
+  if(sidebarEl && sidebarEl.contains(ev.target)) return;
+  if(actionsEl && actionsEl.contains(ev.target)) return;
+  if(hamburgerBtn && hamburgerBtn.contains(ev.target)) return;
+  document.body.classList.remove("mobile-nav-open");
+});
 document.getElementById("certCompanyInput").addEventListener("change", (e)=>{
   try{ localStorage.setItem("bl_cert_company", e.target.value.trim()); }catch(err){}
 });
