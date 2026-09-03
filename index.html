@@ -713,7 +713,8 @@
       <span id="vendorAdminChevron" style="color:var(--ledger);font-size:13px;">▾ แสดง</span>
     </div>
     <div id="vendorAdminBody" class="hidden" style="margin-top:12px;">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;">
+        <button class="btn btn-ghost" id="repairVendorTextBtn" title="ซ่อมชื่อ/คำอธิบาย/ผังบัญชีที่เพี้ยนจากการนำเข้า CSV ก่อนหน้านี้">🩹 ซ่อมข้อความเพี้ยน</button>
         <label class="btn btn-ghost filebtn" for="importVendorFile">📥 นำเข้าผังบัญชีจาก Excel/CSV</label>
         <input type="file" id="importVendorFile" accept=".xlsx,.xls,.csv" class="hidden">
       </div>
@@ -2754,6 +2755,51 @@ document.getElementById("importVendorFile").addEventListener("change", async (e)
   }catch(err){
     showToast("นำเข้าไฟล์ไม่สำเร็จ: " + err.message, "warn");
   }
+});
+
+// One-time repair for vendor rows corrupted by the pre-fix CSV import bug:
+// (1) Thai text that was read as Windows-874 bytes through a UTF-8/Latin-1 decoder
+//     comes out with each byte mapped 1:1 to a Latin-1 char — re-encoding those
+//     chars back to bytes and decoding them as windows-874 recovers the original text.
+// (2) Account codes like "5300-01" got misread as an "YYYY-MM" date and turned into
+//     an Excel date-serial number — recoverable by reversing that same date math.
+const EXCEL_EPOCH_MS = Date.UTC(1899,11,30);
+function looksMojibake(s){
+  return /[-ÿ]/.test(s) && !/[฀-๿]/.test(s);
+}
+function repairMojibakeText(s){
+  const bytes = Uint8Array.from([...s].map(ch=>ch.charCodeAt(0) & 0xFF));
+  const recovered = new TextDecoder("windows-874").decode(bytes);
+  return /[฀-๿]/.test(recovered) ? recovered : null;
+}
+function repairAcctSerial(s){
+  if(!/^\d+\.\d+$/.test(s)) return null;
+  const days = Math.floor(Number(s));
+  const d = new Date(EXCEL_EPOCH_MS + days*86400000);
+  if(isNaN(d.getTime())) return null;
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth()+1).padStart(2,"0");
+  return `${y}-${m}`;
+}
+document.getElementById("repairVendorTextBtn").addEventListener("click", ()=>{
+  let fixed = 0;
+  vendors.forEach(v=>{
+    ["code","name","desc"].forEach(field=>{
+      const val = v[field];
+      if(val && looksMojibake(val)){
+        const recovered = repairMojibakeText(val);
+        if(recovered){ v[field] = recovered; fixed++; }
+      }
+    });
+    if(v.acct){
+      const recoveredAcct = repairAcctSerial(v.acct);
+      if(recoveredAcct){ v.acct = recoveredAcct; fixed++; }
+    }
+  });
+  if(fixed===0){ showToast("ไม่พบข้อความที่เพี้ยน — ข้อมูลปกติดีแล้ว"); return; }
+  persistVendors();
+  renderVendorAdmin();
+  showToast(`ซ่อมข้อความเพี้ยนแล้ว ${fixed} จุด — กรุณาตรวจสอบรายการก่อนใช้งานต่อ`);
 });
 
 document.getElementById("clearBtn").addEventListener("click", ()=>{
