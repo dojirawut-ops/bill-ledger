@@ -713,7 +713,9 @@
       <span id="vendorAdminChevron" style="color:var(--ledger);font-size:13px;">▾ แสดง</span>
     </div>
     <div id="vendorAdminBody" class="hidden" style="margin-top:12px;">
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <button class="btn btn-ghost hidden" id="deleteSelectedVendorsBtn" type="button">🗑 ลบที่เลือก (<span id="vendorSelCount">0</span>)</button>
+        <button class="btn btn-ghost" id="downloadVendorTemplateBtn" type="button" title="ดาวน์โหลดไฟล์ Excel เปล่าที่มีหัวตารางถูกต้อง กรอกแล้วนำเข้ากลับได้เลย">📄 แม่แบบนำเข้า</button>
         <button class="btn btn-ghost" id="repairVendorTextBtn" title="ซ่อมชื่อ/คำอธิบาย/ผังบัญชีที่เพี้ยนจากการนำเข้า CSV ก่อนหน้านี้">🩹 ซ่อมข้อความเพี้ยน</button>
         <label class="btn btn-ghost filebtn" for="importVendorFile">📥 นำเข้าผังบัญชีจาก Excel/CSV</label>
         <input type="file" id="importVendorFile" accept=".xlsx,.xls,.csv" class="hidden">
@@ -721,7 +723,7 @@
       <div style="overflow-x:auto;margin-bottom:14px;">
         <table id="vendorTable">
           <thead><tr>
-            <th>รหัส</th><th>ชื่อผู้ขาย</th><th>คำอธิบาย</th><th>ผังบัญชี</th><th></th>
+            <th><input type="checkbox" id="vendorSelectAllChk" title="เลือกทั้งหมดที่แสดงอยู่"></th><th>รหัส</th><th>ชื่อผู้ขาย</th><th>คำอธิบาย</th><th>ผังบัญชี</th><th></th>
           </tr></thead>
           <tbody id="vendorTableBody"></tbody>
         </table>
@@ -2563,13 +2565,20 @@ function renderAcctDatalist(){
   document.getElementById("acctDatalist").innerHTML = uniqueAccts.map(a=>`<option value="${esc(a)}">`).join("");
 }
 
+let selectedVendorCodes = new Set(); // ticked in the vendor admin table, for bulk delete
+
 function renderVendorAdmin(){
   document.getElementById("vendorCount").textContent = vendors.length;
   renderAcctDatalist();
   const tbody = document.getElementById("vendorTableBody");
   const sorted = vendors.slice().sort((a,b)=>(a.code||"").localeCompare(b.code||"", "th"));
+
+  const liveCodes = new Set(sorted.map(v=>v.code));
+  for(const code of [...selectedVendorCodes]) if(!liveCodes.has(code)) selectedVendorCodes.delete(code);
+
   tbody.innerHTML = sorted.map(v => `
     <tr data-code="${esc(v.code)}">
+      <td><input type="checkbox" class="vendor-row-chk" data-code="${esc(v.code)}" ${selectedVendorCodes.has(v.code)?"checked":""}></td>
       <td class="mono">${esc(v.code)}</td>
       <td>${esc(v.name)}</td>
       <td>${esc(v.desc)}</td>
@@ -2579,13 +2588,14 @@ function renderVendorAdmin(){
         <button data-vdel="${esc(v.code)}">🗑</button>
       </div></td>
     </tr>
-  `).join("") || `<tr><td colspan="5" style="opacity:.5;padding:10px 0;">ยังไม่มีผู้ขายในบริษัทนี้ — เพิ่มด้านล่าง หรือปล่อยให้ระบบเรียนรู้จากการถ่ายรูปบิลครั้งแรก</td></tr>`;
+  `).join("") || `<tr><td colspan="6" style="opacity:.5;padding:10px 0;">ยังไม่มีผู้ขายในบริษัทนี้ — เพิ่มด้านล่าง หรือปล่อยให้ระบบเรียนรู้จากการถ่ายรูปบิลครั้งแรก</td></tr>`;
 
   tbody.querySelectorAll("[data-vdel]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const code = btn.getAttribute("data-vdel");
       if(!confirm(`ลบผู้ขายรหัส ${code} ออกจากประวัติ?`)) return;
       vendors = vendors.filter(v=>v.code!==code);
+      selectedVendorCodes.delete(code);
       persistVendors();
       renderVendorAdmin();
     });
@@ -2596,7 +2606,60 @@ function renderVendorAdmin(){
       startEditVendorRow(code);
     });
   });
+  tbody.querySelectorAll(".vendor-row-chk").forEach(chk=>{
+    chk.addEventListener("change", ()=>{
+      const code = chk.getAttribute("data-code");
+      if(chk.checked) selectedVendorCodes.add(code); else selectedVendorCodes.delete(code);
+      updateVendorSelectionUI();
+    });
+  });
+  updateVendorSelectionUI();
 }
+
+function updateVendorSelectionUI(){
+  const count = selectedVendorCodes.size;
+  document.getElementById("vendorSelCount").textContent = count;
+  document.getElementById("deleteSelectedVendorsBtn").classList.toggle("hidden", count===0);
+  const selectAllChk = document.getElementById("vendorSelectAllChk");
+  const rowChks = document.querySelectorAll(".vendor-row-chk");
+  selectAllChk.checked = rowChks.length>0 && count===rowChks.length;
+  selectAllChk.indeterminate = count>0 && count<rowChks.length;
+}
+
+document.getElementById("vendorSelectAllChk").addEventListener("change", (e)=>{
+  document.querySelectorAll(".vendor-row-chk").forEach(chk=>{
+    chk.checked = e.target.checked;
+    const code = chk.getAttribute("data-code");
+    if(e.target.checked) selectedVendorCodes.add(code); else selectedVendorCodes.delete(code);
+  });
+  updateVendorSelectionUI();
+});
+
+document.getElementById("deleteSelectedVendorsBtn").addEventListener("click", ()=>{
+  const count = selectedVendorCodes.size;
+  if(count===0) return;
+  if(!confirm(`ลบผู้ขาย ${count} รายการที่เลือกไว้ออกจากประวัติ? ทำแล้วกู้คืนไม่ได้`)) return;
+  vendors = vendors.filter(v=>!selectedVendorCodes.has(v.code));
+  selectedVendorCodes.clear();
+  persistVendors();
+  renderVendorAdmin();
+  showToast(`ลบผู้ขาย ${count} รายการแล้ว`);
+});
+
+document.getElementById("downloadVendorTemplateBtn").addEventListener("click", ()=>{
+  const rows = [
+    ["รหัส","ชื่อผู้ขาย","คำอธิบาย","ผังบัญชี"],
+    ["วร-001","ตัวอย่าง ชื่อผู้ขาย จำกัด","ตัวอย่างคำอธิบาย เช่น ซื้อวัตถุดิบ","5110-01"],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{wch:10},{wch:28},{wch:28},{wch:12}];
+  // Force the code/acct columns to text so codes like "5110-01" never get
+  // re-read as a date when the filled-in template comes back through import.
+  ["A2","D2"].forEach(addr=>{ if(ws[addr]) ws[addr].t = "s"; });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "ผังบัญชี");
+  XLSX.writeFile(wb, "แม่แบบนำเข้าผู้ขาย.xlsx");
+});
 
 function startEditVendorRow(code){
   const v = vendors.find(x=>x.code===code);
