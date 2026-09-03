@@ -2700,7 +2700,20 @@ document.getElementById("importVendorFile").addEventListener("change", async (e)
   if(!companyName){ showToast("กรุณาเลือกบริษัทก่อนนำเข้าข้อมูล", "warn"); return; }
   try{
     const buf = await file.arrayBuffer();
-    const wb = XLSX.read(buf, { type: "array" });
+    let wb;
+    if(/\.csv$/i.test(file.name)){
+      // Excel on Thai Windows saves "CSV (Comma delimited)" as Windows-874 (Thai ANSI),
+      // not UTF-8. Reading those bytes as UTF-8 mojibakes every Thai character, so detect
+      // a UTF-8 BOM first and fall back to windows-874 when it's missing.
+      const bytes = new Uint8Array(buf);
+      const hasUtf8Bom = bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF;
+      const text = new TextDecoder(hasUtf8Bom ? "utf-8" : "windows-874").decode(hasUtf8Bom ? bytes.subarray(3) : bytes);
+      // raw:true stops SheetJS from guessing that hyphenated codes like "5300-01"
+      // are dates and rewriting them as date-serial numbers.
+      wb = XLSX.read(text, { type: "string", raw: true });
+    } else {
+      wb = XLSX.read(buf, { type: "array", raw: true });
+    }
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
     if(rows.length < 2){ showToast("ไม่พบข้อมูลในไฟล์นี้", "warn"); return; }
