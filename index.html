@@ -2778,39 +2778,47 @@ document.getElementById("importVendorFile").addEventListener("change", async (e)
     } else {
       wb = XLSX.read(buf, { type: "array", raw: true });
     }
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-    if(rows.length < 2){ showToast("ไม่พบข้อมูลในไฟล์นี้", "warn"); return; }
+    let added=0, updated=0, skipped=0, sheetsWithData=0;
+    // A workbook can have more than one sheet (e.g. the user pastes their full vendor
+    // list into a new sheet but leaves the original template sheet in place) — import
+    // every sheet that has data, not just the first one.
+    wb.SheetNames.forEach(sheetName=>{
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+      if(rows.length < 2) return;
 
-    const header = rows[0];
-    let codeCol = findCol(header, ["รหัส","code"]);
-    let nameCol = findCol(header, ["ชื่อ","name","ผู้ขาย"]);
-    let descCol = findCol(header, ["คำอธิบาย","desc","รายละเอียด"]);
-    let acctCol = findCol(header, ["ผังบัญชี","บัญชี","acct","account"]);
+      const header = rows[0];
+      let codeCol = findCol(header, ["รหัส","code"]);
+      let nameCol = findCol(header, ["ชื่อ","name","ผู้ขาย"]);
+      let descCol = findCol(header, ["คำอธิบาย","desc","รายละเอียด"]);
+      let acctCol = findCol(header, ["ผังบัญชี","บัญชี","acct","account"]);
 
-    // fallback: if header row doesn't look like a header at all, assume fixed column order code,name,desc,acct
-    let dataRows = rows.slice(1);
-    if(codeCol===-1 && nameCol===-1 && descCol===-1 && acctCol===-1){
-      codeCol=0; nameCol=1; descCol=2; acctCol=3;
-      dataRows = rows; // no real header, treat every row as data
-    }
-
-    let added=0, updated=0, skipped=0;
-    dataRows.forEach(r=>{
-      const code = String(r[codeCol]||"").trim();
-      const name = String(nameCol>=0 ? r[nameCol]||"" : "").trim();
-      const desc = String(descCol>=0 ? r[descCol]||"" : "").trim();
-      const acct = String(acctCol>=0 ? r[acctCol]||"" : "").trim();
-      if(!code || !name){ skipped++; return; }
-      const existing = vendors.find(v=>v.code===code);
-      if(existing){
-        existing.name = name; existing.desc = desc; existing.acct = acct;
-        updated++;
-      } else {
-        vendors.push({ code, name, desc, acct });
-        added++;
+      // fallback: if header row doesn't look like a header at all, assume fixed column order code,name,desc,acct
+      let dataRows = rows.slice(1);
+      if(codeCol===-1 && nameCol===-1 && descCol===-1 && acctCol===-1){
+        codeCol=0; nameCol=1; descCol=2; acctCol=3;
+        dataRows = rows; // no real header, treat every row as data
       }
+
+      sheetsWithData++;
+      dataRows.forEach(r=>{
+        const code = String(r[codeCol]||"").trim();
+        const name = String(nameCol>=0 ? r[nameCol]||"" : "").trim();
+        const desc = String(descCol>=0 ? r[descCol]||"" : "").trim();
+        const acct = String(acctCol>=0 ? r[acctCol]||"" : "").trim();
+        if(!code || !name){ skipped++; return; }
+        const existing = vendors.find(v=>v.code===code);
+        if(existing){
+          existing.name = name; existing.desc = desc; existing.acct = acct;
+          updated++;
+        } else {
+          vendors.push({ code, name, desc, acct });
+          added++;
+        }
+      });
     });
+
+    if(sheetsWithData===0){ showToast("ไม่พบข้อมูลในไฟล์นี้", "warn"); return; }
 
     persistVendors();
     renderVendorAdmin();
