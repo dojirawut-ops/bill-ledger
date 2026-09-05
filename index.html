@@ -24,7 +24,7 @@
   body{margin:0;max-width:100%;overflow-x:hidden;overflow-wrap:anywhere;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;}
   .display{font-family:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;font-weight:600;}
   .mono{font-family:'JetBrains Mono',monospace;}
-  .wrap{max-width:1320px;margin:0 auto;padding:0 0 60px;}
+  .wrap{max-width:100%;width:100%;margin:0;padding:0 0 60px;}
   @media(min-width:640px){ .new-vendor-grid{grid-template-columns:repeat(4,1fr) !important;} }
   header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
     background:var(--cream-card);border-bottom:1px solid var(--ledger-line);padding:14px 24px;}
@@ -70,6 +70,12 @@
       padding:10px 12px;overflow-x:auto;}
     .sidebar .side-steps{display:none;}
     .sidebar .tab-nav{flex-direction:row;gap:6px;}
+    /* Narrow-tablet inline sidebar has no room for the company card or group headers —
+       collapse to a flat scrollable row of nav-item buttons (full layout returns in the
+       ≤768px hamburger drawer below, where .sidebar is a normal in-flow block again). */
+    .sidebar .side-company-card{display:none;}
+    .sidebar .nav-group{display:contents;}
+    .sidebar .nav-group-label{display:none;}
   }
   /* Desktop/tablet default: table visible, card list off — MUST come before the ≤768px media
      query below. A plain (non-media) rule beats a media-query rule of equal specificity once the
@@ -255,6 +261,88 @@
   #ledgerWrap table{width:max-content;min-width:100%;}
   #ledgerWrap td,#ledgerWrap th{white-space:nowrap;}
   #ledgerWrap td.clip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* ---------------- Ledger table: dense fixed layout, sticky columns, fullscreen, column chooser ----------------
+     table-layout:fixed + explicit per-column widths below keep every column exactly the width the
+     spec calls for regardless of cell content length; long content is handled by .clip's
+     ellipsis+title-tooltip instead of ever stretching the column. */
+  .ledger-table-card{width:100%;}
+  /* width:auto (overriding the generic #ledgerWrap table{width:max-content;min-width:100%} rule
+     above) is essential here: with table-layout:fixed, "min-width:100%" would otherwise force the
+     table to fill the whole (now unconstrained, full-page-width) container, and fixed-layout tables
+     respond to that by stretching every declared column width proportionally to fill the gap —
+     silently ignoring the exact px widths below. width:auto sizes the table to exactly the sum of
+     its declared column widths instead, so those widths are the real, final widths. */
+  #ledgerWrap.ledger-table-fixed table{table-layout:fixed;width:auto;min-width:0;}
+  /* overflow-wrap:anywhere lets a header label break mid-word if it must — without it, a long
+     unbroken Thai label (e.g. "เลขที่บิล") can force its column past its declared fixed width
+     instead of just wrapping onto a second line. */
+  #ledgerWrap.ledger-table-fixed thead th{white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;vertical-align:bottom;}
+  #ledgerWrap.ledger-table-fixed th,#ledgerWrap.ledger-table-fixed td{padding:6px 8px;font-size:12.5px;}
+  /* Truncation lives on an inner <div>, not the <td> itself: Chromium's table-layout:fixed still
+     lets an unbroken long string (e.g. a 20-character bill number) grow a column past its declared
+     width even with overflow:hidden;text-overflow:ellipsis set directly on the cell — wrapping the
+     text in a block-level child sidesteps that table-specific sizing quirk entirely. */
+  #ledgerWrap.ledger-table-fixed .clip-inner{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* sticky left columns: checkbox / ลำดับ / รหัส / ชื่อ, so they stay visible while scrolling right */
+  #ledgerWrap.ledger-table-fixed .stick{position:sticky;z-index:2;background:#fff;}
+  #ledgerWrap.ledger-table-fixed thead th.stick{z-index:3;background:var(--blue-bg);}
+  #ledgerWrap.ledger-table-fixed tbody tr:nth-child(even) td.stick{background:#F5F8FD;}
+  #ledgerWrap.ledger-table-fixed .stick-0{left:0;width:36px;}
+  #ledgerWrap.ledger-table-fixed .stick-1{left:36px;width:45px;}
+  #ledgerWrap.ledger-table-fixed .stick-2{left:81px;width:75px;}
+  #ledgerWrap.ledger-table-fixed .stick-3{left:156px;width:150px;box-shadow:2px 0 4px rgba(30,41,59,.08);}
+
+  /* Fallback widths only — shown for one frame before JS runs, then overwritten by
+     applyLedgerColumnWidths() below, which grows these proportionally (by LEDGER_COL_WEIGHT) to
+     fill the full card width when there's room, and holds them at these minimums (letting the
+     table overflow into horizontal scroll) when there isn't. Real invoice numbers can be 20
+     unbroken characters, so col-billno's minimum is sized for that rather than a token width. */
+  #ledgerWrap.ledger-table-fixed .col-billno{width:140px;}
+  #ledgerWrap.ledger-table-fixed .col-desc{width:140px;}
+  #ledgerWrap.ledger-table-fixed .col-date{width:90px;}
+  #ledgerWrap.ledger-table-fixed .col-acct{width:75px;}
+  #ledgerWrap.ledger-table-fixed .col-amount{width:90px;}
+  #ledgerWrap.ledger-table-fixed .col-vat{width:65px;}
+  #ledgerWrap.ledger-table-fixed .col-taxid{width:110px;}
+  #ledgerWrap.ledger-table-fixed .col-compliance{width:95px;}
+  #ledgerWrap.ledger-table-fixed .col-rdstatus{width:90px;}
+  #ledgerWrap.ledger-table-fixed .col-transfer{width:85px;}
+  #ledgerWrap.ledger-table-fixed .col-actions{width:55px;}
+
+  /* column show/hide, toggled from the "☰ เลือกคอลัมน์" panel and persisted to localStorage */
+  #ledgerTableCard.hide-col-billno .col-billno,
+  #ledgerTableCard.hide-col-desc .col-desc,
+  #ledgerTableCard.hide-col-date .col-date,
+  #ledgerTableCard.hide-col-acct .col-acct,
+  #ledgerTableCard.hide-col-vat .col-vat,
+  #ledgerTableCard.hide-col-taxid .col-taxid,
+  #ledgerTableCard.hide-col-compliance .col-compliance,
+  #ledgerTableCard.hide-col-rdstatus .col-rdstatus,
+  #ledgerTableCard.hide-col-transfer .col-transfer{display:none;}
+
+  /* a second scrollbar mirrored above the table, synced to the real one below via JS */
+  .table-scroll-mirror{overflow-x:auto;overflow-y:hidden;height:14px;margin-bottom:2px;}
+  .table-scroll-mirror > div{height:1px;}
+  @media(max-width:768px){ .table-scroll-mirror{display:none;} }
+
+  /* column-chooser dropdown */
+  .col-chooser-panel{position:absolute;top:calc(100% + 6px);right:0;background:var(--cream-card);
+    border:1px solid var(--ledger-line);border-radius:12px;box-shadow:0 10px 28px rgba(30,41,59,.15);
+    padding:10px;min-width:230px;z-index:50;max-height:320px;overflow-y:auto;text-align:left;}
+  .col-chooser-row{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;white-space:nowrap;}
+
+  /* fullscreen table mode: hide everything on the page except the ledger table card */
+  body.ledger-fullscreen .sidebar,
+  body.ledger-fullscreen header,
+  body.ledger-fullscreen .kpi-grid,
+  body.ledger-fullscreen .company-scope-banner,
+  body.ledger-fullscreen #ledgerPanel .card:not(#ledgerTableCard){display:none !important;}
+  body.ledger-fullscreen .main-col{padding:12px;}
+  body.ledger-fullscreen #ledgerTableCard{margin-bottom:0;}
+  body.ledger-fullscreen #ledgerExpandBtn{display:none;}
+  body.ledger-fullscreen #ledgerExitFullscreenBtn{display:inline-flex !important;}
   /* Both views render on every renderLedger() call; CSS (not JS) decides which is visible, so
      there's no resize-triggered re-render to keep in sync — see the ≤768px query above for the
      swap, and the .ledger-card-view{display:none} base rule near the top of this stylesheet. */
@@ -457,6 +545,89 @@
   .login-error{background:var(--orange-bg);color:var(--rust-dark);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:12px;text-align:left;}
   .login-submit{width:100%;justify-content:center;margin-top:4px;}
   .login-footnote{font-size:11px;opacity:.55;margin-top:18px;margin-bottom:0;}
+
+  /* ---------------- New grouped sidebar (multi-company IA) ---------------- */
+  .side-company-card{background:var(--blue-bg);border:1px solid var(--ledger-line);border-radius:14px;padding:12px 12px 10px;margin-bottom:14px;}
+  .side-company-label{font-size:10.5px;font-weight:700;color:var(--ledger);opacity:.75;letter-spacing:.02em;margin-bottom:6px;}
+  .side-company-name{font-size:13px;font-weight:700;color:var(--ink);line-height:1.35;display:flex;align-items:flex-start;gap:6px;}
+  .side-company-meta{font-size:11px;color:var(--ink);opacity:.6;margin:4px 0 0 20px;line-height:1.5;}
+  .side-company-switch{width:100%;margin-top:10px;font-size:12px;padding:7px 10px;min-height:0;}
+  .side-company-empty{font-size:12px;opacity:.65;line-height:1.5;}
+  .nav-group{margin-top:14px;}
+  .nav-group-label{font-size:10.5px;font-weight:700;color:var(--ink);opacity:.5;letter-spacing:.04em;text-transform:uppercase;margin:0 8px 4px;}
+  .nav-item{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;border-left:3px solid transparent;
+    padding:9px 11px;font-size:13.5px;font-weight:600;color:var(--ink);opacity:.72;cursor:pointer;border-radius:0 10px 10px 0;
+    font-family:inherit;text-align:left;}
+  .nav-item:hover{background:var(--blue-bg);opacity:1;}
+  .nav-item.active{opacity:1;color:var(--ledger);background:var(--blue-bg);border-left-color:var(--ledger);font-weight:700;}
+  .nav-item .nav-ico{flex:none;width:18px;text-align:center;}
+
+  /* ---------------- Company switcher modal ---------------- */
+  .modal-card.modal-card-lg{max-width:520px;}
+  .switcher-search{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--ledger-line);font-size:14px;margin-bottom:12px;}
+  .switcher-section-label{font-size:11px;font-weight:700;color:var(--ink);opacity:.55;letter-spacing:.02em;margin:12px 0 6px;}
+  .switcher-list{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin:0 -8px;}
+  .switcher-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 8px;border-radius:9px;cursor:pointer;background:none;border:none;width:calc(100% + 0px);text-align:left;font-family:inherit;}
+  .switcher-row:hover{background:var(--blue-bg);}
+  .switcher-row.is-current{background:var(--success-bg);}
+  .switcher-row-name{font-size:13.5px;font-weight:600;color:var(--ink);}
+  .switcher-row-sub{font-size:11px;opacity:.6;margin-top:1px;}
+  .switcher-row-star{background:none;border:none;cursor:pointer;font-size:14px;opacity:.4;padding:2px 4px;}
+  .switcher-row-star.is-starred{opacity:1;}
+  .switcher-empty{font-size:12.5px;opacity:.6;padding:14px 4px;text-align:center;}
+
+  /* ---------------- Office-wide dashboard ---------------- */
+  .kpi-grid-5{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:stretch;margin-bottom:18px;}
+  .office-dash-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .office-dash-cols{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;}
+  @media(max-width:980px){ .office-dash-cols{grid-template-columns:1fr;} }
+  .task-list{display:flex;flex-direction:column;gap:2px;}
+  .task-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--ledger-line);
+    background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font-family:inherit;cursor:pointer;}
+  .task-row:last-child{border-bottom:none;}
+  .task-row:hover{background:var(--blue-bg);border-radius:8px;}
+  .task-row-label{font-size:13px;color:var(--ink);opacity:.85;}
+  .task-row-count{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13.5px;color:var(--ledger);
+    background:var(--blue-bg);border-radius:999px;padding:2px 10px;min-width:28px;text-align:center;}
+  .task-row-count.warn{color:var(--rust-dark);background:var(--orange-bg);}
+  .tax-cal-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--ledger-line);}
+  .tax-cal-row:last-child{border-bottom:none;}
+  .tax-cal-name{font-size:13px;font-weight:700;color:var(--ink);}
+  .tax-cal-date{font-size:11.5px;opacity:.6;margin-top:1px;}
+  .tax-badge{font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap;}
+  .tax-badge.due-soon{background:#FEE2E2;color:#B91C1C;}
+  .tax-badge.due-prep{background:var(--orange-bg);color:var(--rust-dark);}
+  .tax-badge.due-ok{background:var(--success-bg);color:var(--ledger);}
+  /* Bounded-height scroll area — keeps the two dashboard columns visually balanced regardless of
+     how many companies/tax rows exist (30-100 companies would otherwise make one column run on
+     far past the other), and satisfies the "รองรับ Scroll" requirement for the company list. */
+  .scroll-list-md{max-height:300px;overflow-y:auto;}
+  .company-status-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .company-status-table th{text-align:left;font-size:11px;opacity:.55;font-weight:700;padding:0 10px 8px;border-bottom:1px solid var(--ledger-line);}
+  .company-status-table td{padding:10px;border-bottom:1px solid var(--ledger-line);vertical-align:middle;}
+  .company-status-table tr:last-child td{border-bottom:none;}
+  .company-status-table td.num{text-align:right;font-family:'JetBrains Mono',monospace;}
+  .status-dot-row{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;}
+  .status-dot{width:8px;height:8px;border-radius:999px;flex:none;}
+  .status-dot.ok{background:var(--success);} .status-dot.warn{background:var(--gold);} .status-dot.bad{background:var(--rust);}
+
+  /* ---------------- Company-scoped safety banner ---------------- */
+  .company-scope-banner{display:flex;align-items:center;gap:10px;background:var(--blue-bg);border:1px solid var(--ledger-line);
+    border-radius:12px;padding:10px 14px;margin-bottom:16px;font-size:13px;}
+  .company-scope-banner b{color:var(--ledger);}
+  .company-scope-banner .taxid{opacity:.65;font-family:'JetBrains Mono',monospace;font-size:12px;}
+
+  /* ---------------- Chart-of-accounts / expense-category view ---------------- */
+  .coa-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .coa-table th{text-align:left;font-size:11px;opacity:.55;font-weight:700;padding:0 10px 8px;border-bottom:1px solid var(--ledger-line);}
+  .coa-table td{padding:9px 10px;border-bottom:1px solid var(--ledger-line);}
+
+  /* ---------------- Cert document status pills ---------------- */
+  .cert-status{font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap;display:inline-block;}
+  .cert-status.draft{background:var(--gold-bg);color:var(--rust-dark);}
+  .cert-status.complete{background:var(--success-bg);color:var(--ledger);}
+  .cert-status.reviewed{background:var(--blue-bg);color:var(--ledger);}
+  .cert-status.needs-fix{background:#FEE2E2;color:#B91C1C;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -510,17 +681,39 @@
 
   <div class="app-shell">
   <aside class="sidebar" id="sidebarNav">
+    <div class="side-company-card" id="sideCompanyCard"><!-- filled by renderSideCompanyCard() --></div>
     <div class="tab-nav">
-      <button class="tab-btn active" id="tabLedgerBtn" type="button">📒 สมุดบันทึกบิลซื้อ</button>
-      <div class="side-steps">
-        <a href="#companyCard"><b>1</b> ตั้งค่าบริษัท</a>
-        <a href="#keyCard"><b>2</b> ตั้งค่า AI</a>
-        <a href="#dropzone"><b>3</b> อัปโหลดเอกสาร</a>
-        <a href="#ledgerWrap"><b>4</b> ตรวจสอบข้อมูล</a>
+      <button class="nav-item active" id="navOfficeDashBtn" type="button" data-nav="office-dash"><span class="nav-ico">📊</span> แดชบอร์ด</button>
+      <button class="nav-item" id="navCertBtn" type="button" data-nav="cert"><span class="nav-ico">🧾</span> ใบรับรองแทนใบเสร็จ</button>
+
+      <div class="nav-group">
+        <div class="nav-group-label">งานเอกสาร</div>
+        <button class="nav-item" id="navImportBtn" type="button" data-nav="ledger-import"><span class="nav-ico">📥</span> นำเข้าเอกสาร</button>
+        <button class="nav-item" id="navRegistryBtn" type="button" data-nav="ledger-registry"><span class="nav-ico">📋</span> ทะเบียนเอกสาร</button>
+        <button class="nav-item" id="navCheckBtn" type="button" data-nav="ledger-check"><span class="nav-ico">🔍</span> ตรวจสอบเอกสาร</button>
+        <button class="nav-item" id="navReconcileBtn" type="button" data-nav="reconcile"><span class="nav-ico">🔄</span> กระทบยอดธนาคาร</button>
       </div>
-      <div class="side-divider"></div>
-      <button class="tab-btn" id="tabDashBtn" type="button">📊 แดชบอร์ด</button>
-      <button class="tab-btn" id="tabCertBtn" type="button">🧾 ใบรับรองแทนใบเสร็จ</button>
+
+      <div class="nav-group">
+        <div class="nav-group-label">ข้อมูลหลัก</div>
+        <button class="nav-item" id="navVendorsBtn" type="button" data-nav="ledger-vendors"><span class="nav-ico">👥</span> ผู้ขาย</button>
+        <button class="nav-item" id="navCoaBtn" type="button" data-nav="coa"><span class="nav-ico">📒</span> ผังบัญชี</button>
+        <button class="nav-item" id="navCategoryBtn" type="button" data-nav="coa"><span class="nav-ico">🏷</span> หมวดค่าใช้จ่าย</button>
+        <button class="nav-item" id="navMappingBtn" type="button" data-nav="ledger-vendors"><span class="nav-ico">⚙</span> Mapping ผู้ขาย</button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">รายงาน</div>
+        <button class="nav-item" id="navReportBtn" type="button" data-nav="report-overview"><span class="nav-ico">📊</span> รายงานภาพรวม</button>
+        <button class="nav-item" id="navExportBtn" type="button" data-nav="export-excel"><span class="nav-ico">📤</span> Export Excel</button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">ตั้งค่า</div>
+        <button class="nav-item" id="navSettingsCompanyBtn" type="button" data-nav="ledger-company"><span class="nav-ico">🏢</span> ตั้งค่าบริษัท</button>
+        <button class="nav-item" id="navSettingsAiBtn" type="button" data-nav="ledger-ai"><span class="nav-ico">🤖</span> AI &amp; API</button>
+        <button class="nav-item" id="navSettingsUsersBtn" type="button" data-nav="users"><span class="nav-ico">👤</span> ผู้ใช้งาน</button>
+      </div>
     </div>
   </aside>
   <div class="main-col">
@@ -593,7 +786,89 @@
 
   <div id="modalHost" class="hidden"></div>
 
-  <div id="ledgerPanel">
+  <div id="officeDashPanel">
+    <div class="card">
+      <div class="office-dash-head">
+        <div style="min-width:0;">
+          <h2 class="display" style="font-size:20px;color:var(--ledger);margin:0 0 4px;">📊 แดชบอร์ด</h2>
+          <p style="font-size:12.5px;opacity:.62;margin:0;">ภาพรวมการจัดการเอกสารบัญชีของสำนักงาน — รวมทุกบริษัท</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-ghost" id="officeDashRefreshBtn" type="button">↻ รีเฟรช</button>
+          <button class="btn btn-primary" id="officeDashAddCompanyBtn" type="button">+ เพิ่มบริษัท</button>
+        </div>
+      </div>
+      <div id="officeDashNote" style="font-size:11.5px;opacity:.55;line-height:1.5;"></div>
+    </div>
+    <div id="officeDashBody"></div>
+  </div>
+
+  <div id="coaPanel" class="hidden">
+    <div class="card">
+      <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0 0 4px;">📒 ผังบัญชี / หมวดค่าใช้จ่าย</h2>
+      <p style="font-size:12px;opacity:.6;margin:0 0 4px;">บริษัทปัจจุบัน: <strong id="coaCompanyName" style="color:var(--ledger);"></strong></p>
+      <p style="font-size:11.5px;opacity:.5;margin:0;">รวบรวมจากรหัสผังบัญชีที่ผูกไว้กับผู้ขายในทะเบียนนี้ — แก้ไขรหัสผังบัญชีของผู้ขายแต่ละรายได้ที่หน้า "ผู้ขาย"</p>
+    </div>
+    <div id="coaBody"></div>
+  </div>
+
+  <div id="usersPanel" class="hidden">
+    <div class="card">
+      <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0 0 10px;">👤 ผู้ใช้งาน</h2>
+      <div class="key-row">
+        <strong style="color:var(--ledger);font-size:14px;">กำลังเข้าสู่ระบบเป็น</strong>
+        <span class="key-status" id="usersCurrentUser"></span>
+        <span class="status-pill" id="usersCurrentRolePill" style="margin-left:6px;"></span>
+      </div>
+      <div class="flag-note" style="margin-top:14px;">⚠ การสร้าง/ลบบัญชีผู้ใช้งาน (username/รหัสผ่าน) ยังต้องทำผ่าน Firebase Console โดยตรง — หน้านี้จัดการได้แค่ "สิทธิ์" (แอดมิน/พนักงาน และบริษัทที่เข้าได้) ของบัญชีที่มีอยู่แล้วเท่านั้น</div>
+      <div class="flag-note" style="margin-top:8px;">⚠ นี่คือการซ่อน/กรองเมนูเท่านั้น ยังไม่ใช่การล็อกที่ปลอดภัยจริงระดับฐานข้อมูล (ต้องตั้ง Firebase Security Rules เพิ่ม — ดูรายละเอียดในแชท) อย่าใช้แทนการรักษาความปลอดภัยจริงจนกว่าจะตั้ง Rules เสร็จ</div>
+    </div>
+    <div class="card" id="usersAdminOnlyCard">
+      <div class="card-head"><span class="card-head-title">จัดการสิทธิ์ผู้ใช้งาน (เฉพาะแอดมิน)</span></div>
+      <p style="font-size:11.5px;opacity:.55;margin:0 0 12px;">หา UID ของผู้ใช้ได้ที่ <a href="https://console.firebase.google.com/project/bill-ledger/authentication/users" target="_blank" style="color:var(--rust);">Firebase Console → Authentication → Users</a> (คอลัมน์ "User UID")</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <input type="text" id="userAccessUidInput" placeholder="User UID (จาก Firebase Console)">
+        <select id="userAccessRoleSelect">
+          <option value="admin">แอดมิน — เข้าได้ทุกบริษัท</option>
+          <option value="staff">พนักงาน — เข้าได้เฉพาะบริษัทที่เลือก</option>
+        </select>
+      </div>
+      <div id="userAccessCompanyPicker" style="display:none;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:600;color:var(--ledger);margin-bottom:6px;">บริษัทที่ให้เข้าได้</div>
+        <div id="userAccessCompanyList" style="display:flex;flex-wrap:wrap;gap:8px;max-height:160px;overflow-y:auto;"></div>
+      </div>
+      <button class="btn btn-primary" id="userAccessSaveBtn" type="button">บันทึกสิทธิ์</button>
+      <div style="margin-top:18px;border-top:1px solid var(--ledger-line);padding-top:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--ledger);margin-bottom:8px;">รายชื่อสิทธิ์ที่ตั้งไว้</div>
+        <div id="userAccessListBody"><div style="font-size:12px;opacity:.55;">กำลังโหลด...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="reconcilePanel" class="hidden">
+    <div class="company-scope-banner" id="reconcileScopeBanner"></div>
+    <div class="card">
+      <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0 0 4px;">🔄 กระทบยอดสเตทเมนต์ธนาคาร</h2>
+      <p style="font-size:12px;opacity:.6;margin:0;">นำเข้าสเตทเมนต์ธนาคาร (CSV/Excel) แล้วจับคู่รายการถอนเงินกับบิลในทะเบียน — ช่วยตรวจว่าบิลที่บันทึกไว้มีรายการจ่ายเงินจริงตรงกันหรือไม่</p>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="icon-badge orange">📥</span><span class="card-head-title">นำเข้าสเตทเมนต์</span></div>
+      <div class="dropzone" id="reconcileDropzone">
+        <div class="dz-title">ลากไฟล์สเตทเมนต์มาวางที่นี่</div>
+        <div class="dz-sub">รองรับ .csv, .xlsx, .xls ที่ดาวน์โหลด/ส่งออกจากระบบธนาคารออนไลน์</div>
+        <div class="dropzone-actions" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+          <label class="btn btn-primary filebtn" for="reconcileFileInput">📄 เลือกไฟล์สเตทเมนต์</label>
+          <input type="file" id="reconcileFileInput" accept=".csv,.xlsx,.xls" class="hidden">
+        </div>
+        <div class="dz-hint">ต้องมีคอลัมน์ วันที่ / รายการ / จำนวนเงินที่ถอน (หรือคอลัมน์จำนวนเงินเดียว)</div>
+      </div>
+    </div>
+    <div id="reconcileBody"></div>
+  </div>
+
+  <div id="ledgerPanel" class="hidden">
+
+  <div class="company-scope-banner" id="ledgerScopeBanner"></div>
 
   <!-- KPI summary row -->
   <div class="kpi-grid" style="margin-bottom:20px;">
@@ -637,6 +912,22 @@
           <button class="btn btn-ghost btn-sm" id="copyCompanyLinkBtn" type="button">🔗 คัดลอกลิงก์</button>
         </div>
         <div style="font-size:11px;opacity:.55;margin-top:8px;">แต่ละบริษัทมีทะเบียนบิลและประวัติผู้ขายแยกจากกัน — พิมพ์ชื่อจะมีรายชื่อเดิมให้เลือก เครื่องอื่นที่เลือกชื่อเดียวกันเห็นข้อมูลเดียวกันแบบ real-time</div>
+        <div style="border-top:1px solid var(--ledger-line);margin-top:12px;padding-top:12px;">
+          <div style="font-size:12px;font-weight:600;color:var(--ledger);margin-bottom:8px;">ข้อมูลบริษัท (แสดงในแถบด้านข้างและตัวช่วยค้นหา)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <input type="text" id="companyTaxIdInput" placeholder="เลขผู้เสียภาษี 13 หลัก">
+            <input type="text" id="companyBranchInput" placeholder="สำนักงาน/สาขา เช่น สำนักงานใหญ่">
+            <input type="text" id="companyCodeInput" placeholder="รหัสบริษัทภายใน (ถ้ามี)" style="grid-column:1/-1;">
+          </div>
+          <button class="btn btn-ghost btn-sm" id="saveCompanyMetaBtn" type="button" style="margin-top:8px;">บันทึกข้อมูลบริษัท</button>
+        </div>
+        <div style="border-top:1px solid var(--ledger-line);margin-top:12px;padding-top:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="font-size:12px;font-weight:600;color:var(--ledger);">📅 ปฏิทินภาษีของบริษัทนี้</div>
+            <button class="btn btn-ghost btn-sm" id="companyTaxCalAddBtn" type="button">+ เพิ่มรายการภาษี</button>
+          </div>
+          <div id="companyTaxCalBody"></div>
+        </div>
       </div>
     </div>
 
@@ -758,7 +1049,7 @@
   </div>
 
   <!-- Ledger -->
-  <div class="card">
+  <div class="card ledger-table-card" id="ledgerTableCard">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;">
       <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">ทะเบียนที่บันทึกแล้ว — <span id="ledgerCompanyName">ยังไม่ได้เลือกบริษัท</span> (<span id="entryCount">0</span> รายการ)</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -766,6 +1057,12 @@
         <button class="btn btn-ghost" id="rdCheckBtn" type="button" title="ส่งเลขผู้เสียภาษี 13 หลักของทุกบิลที่มี VAT ไปตรวจสอบกับเว็บกรมสรรพากรจริง">🔎 ตรวจสอบกับกรมสรรพากร</button>
         <button class="btn btn-primary" id="exportBtn">⬇ Export Excel</button>
         <button class="btn btn-ghost" id="clearBtn">↻ ล้างทั้งหมด</button>
+        <span style="position:relative;display:inline-block;">
+          <button class="btn btn-ghost" id="columnChooserBtn" type="button">☰ เลือกคอลัมน์</button>
+          <div class="col-chooser-panel hidden" id="columnChooserPanel"></div>
+        </span>
+        <button class="btn btn-ghost" id="ledgerExpandBtn" type="button">⛶ ขยายตาราง</button>
+        <button class="btn btn-ghost hidden" id="ledgerExitFullscreenBtn" type="button">✕ ออกจากโหมดเต็มจอ</button>
       </div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="ledgerVatFilterRow">
@@ -773,7 +1070,8 @@
       <button class="btn btn-ghost" data-vat-filter="vat" type="button">มี VAT</button>
       <button class="btn btn-ghost" data-vat-filter="novat" type="button">ไม่มี VAT</button>
     </div>
-    <div id="ledgerWrap"></div>
+    <div class="table-scroll-mirror" id="ledgerScrollTop"><div id="ledgerScrollTopInner"></div></div>
+    <div id="ledgerWrap" class="ledger-table-fixed"></div>
   </div>
 
   <p style="font-size:12px;opacity:.5;text-align:center;">ข้อมูลถูกเก็บไว้ในเบราว์เซอร์นี้อย่างต่อเนื่อง กด Export Excel เพื่อดาวน์โหลดหรือรวมเข้ากับไฟล์บัญชีหลักได้ทุกเมื่อ</p>
@@ -1293,10 +1591,28 @@ firebase.auth().onAuthStateChanged((user)=>{
     loginScreen.classList.add("hidden");
     appRoot.classList.remove("hidden");
     document.getElementById("userBadge").textContent = "👤 " + (user.email||"").replace(AUTH_EMAIL_DOMAIN, "");
-    if(!appInitialized){
-      appInitialized = true;
-      initAppAfterLogin();
-    }
+    const usersCurrentUserEl = document.getElementById("usersCurrentUser");
+    if(usersCurrentUserEl) usersCurrentUserEl.textContent = "👤 " + (user.email||"").replace(AUTH_EMAIL_DOMAIN, "");
+    currentUid = user.uid;
+    // A user with no userAccess/{uid} record is treated as admin (full access) — this is the
+    // pre-existing behavior for every account created before roles existed, so adding roles never
+    // silently locks an existing teammate out; only accounts explicitly given role:"staff" are limited.
+    db.ref("userAccess/" + currentUid).once("value").then(snap=>{
+      const v = snap.val();
+      currentUserRole = (v && v.role === "staff") ? "staff" : "admin";
+      currentUserCompanies = (v && v.companies) ? v.companies : null;
+      if(!appInitialized){
+        appInitialized = true;
+        initAppAfterLogin();
+      } else {
+        renderCompanyChips();
+        if(typeof renderSideCompanyCard === "function") renderSideCompanyCard();
+      }
+    }).catch(()=>{
+      currentUserRole = "admin";
+      currentUserCompanies = null;
+      if(!appInitialized){ appInitialized = true; initAppAfterLogin(); }
+    });
   } else {
     appRoot.classList.add("hidden");
     loginScreen.classList.remove("hidden");
@@ -1305,6 +1621,18 @@ firebase.auth().onAuthStateChanged((user)=>{
 });
 
 /* ---------------- State ---------------- */
+// Access control — see userAccess/{uid} in Firebase (role:"admin"|"staff", companies:{slug:true}).
+// This is a CLIENT-SIDE convenience filter only (hides companies a staff account shouldn't be
+// working in) — it is NOT a real security boundary by itself. Real enforcement has to live in
+// Firebase Security Rules, which is a separate, deliberately-not-yet-deployed change (see chat).
+let currentUid = null;
+let currentUserRole = "admin"; // "admin" = sees/does everything; "staff" = limited to currentUserCompanies
+let currentUserCompanies = null; // null = no restriction; {slug:true,...} = allow-list when role is "staff"
+function hasCompanyAccess(name){
+  if(currentUserRole !== "staff") return true;
+  const slug = companySlug(name);
+  return !!(currentUserCompanies && currentUserCompanies[slug]);
+}
 let vendors = [];
 let entries = [];
 let apiKeys = { anthropic:"", gemini:"" };
@@ -1339,6 +1667,10 @@ let processingCount = 0;
 let firebaseReady = false;
 let entriesRef = null;
 let vendorsRef = null;
+let taxCalItemsRef = null;
+let companyTaxCalItems = []; // the CURRENTLY open company's tax-deadline items — see switchCompany()
+let bankTxRef = null;
+let bankTx = []; // the CURRENTLY open company's imported bank-statement rows — see switchCompany()
 /* ---------- dashboard state (per company, monthly budget shared via Firebase) ---------- */
 let settingsRef = null;
 let dashRange = "12";              // "3" | "6" | "12" | "fy" | "all" | "custom"
@@ -1363,8 +1695,9 @@ let knownCompanies = [];
 function renderCompanyChips(){
   const chipRow = document.getElementById("companyListRow");
   if(!chipRow) return; // share-link mode replaces the whole card, so there is nothing to draw
-  if(knownCompanies.length === 0){ chipRow.innerHTML = ""; return; }
-  chipRow.innerHTML = knownCompanies.map(c=>{
+  const visible = knownCompanies.filter(c=>hasCompanyAccess(c.name));
+  if(visible.length === 0){ chipRow.innerHTML = ""; return; }
+  chipRow.innerHTML = visible.map(c=>{
     const active = companySlug(c.name) === companySlug(companyName) ? " is-active" : "";
     return `<span class="company-chip-wrap${active}">`
       + `<button type="button" class="btn btn-ghost company-chip" data-company="${esc(c.name)}">${esc(c.name)}</button>`
@@ -1391,6 +1724,186 @@ function renderCompanyChips(){
 function isKnownCompany(name){
   const slug = companySlug(name);
   return knownCompanies.some(c => companySlug(c.name) === slug);
+}
+
+/* ---------------- Sidebar "current company" mini-card + company-meta form ---------------- */
+function currentCompanyRecord(){
+  const slug = companySlug(companyName);
+  return knownCompanies.find(c => companySlug(c.name) === slug) || null;
+}
+
+function renderScopeBanners(){
+  const rec = currentCompanyRecord();
+  ["ledgerScopeBanner","reconcileScopeBanner"].forEach(elId=>{
+    const el = document.getElementById(elId);
+    if(!el) return;
+    if(!companyName){
+      el.innerHTML = `⚠️ <b>ยังไม่ได้เลือกบริษัท</b> — เลือกบริษัทก่อนอัปโหลด/บันทึกรายการ`;
+      return;
+    }
+    el.innerHTML = `🏢 กำลังทำงานกับบริษัท: <b>${esc(companyName)}</b>`
+      + (rec && rec.taxId ? ` <span class="taxid">${esc(rec.taxId)}</span>` : "");
+  });
+}
+
+function renderSideCompanyCard(){
+  renderScopeBanners();
+  const host = document.getElementById("sideCompanyCard");
+  if(!host) return;
+  const rec = currentCompanyRecord();
+  if(!companyName){
+    host.innerHTML = `
+      <div class="side-company-empty">ยังไม่ได้เลือกบริษัท</div>
+      <button class="btn btn-primary side-company-switch" id="sideCompanySwitchBtn" type="button">▼ เลือกบริษัท</button>`;
+  } else {
+    const metaBits = [];
+    if(rec && rec.taxId) metaBits.push(`เลขผู้เสียภาษี ${esc(rec.taxId)}`);
+    if(rec && rec.branch) metaBits.push(esc(rec.branch));
+    host.innerHTML = `
+      <div class="side-company-label">บริษัทปัจจุบัน</div>
+      <div class="side-company-name">🏢 <span>${esc(companyName)}</span></div>
+      ${metaBits.length ? `<div class="side-company-meta">${metaBits.join(" · ")}</div>` : ""}
+      <button class="btn btn-ghost side-company-switch" id="sideCompanySwitchBtn" type="button">▼ เปลี่ยนบริษัท</button>`;
+  }
+  document.getElementById("sideCompanySwitchBtn")?.addEventListener("click", openCompanySwitcher);
+
+  // keep the "ตั้งค่าบริษัท" meta form in sync with the record we just rendered
+  const taxEl = document.getElementById("companyTaxIdInput");
+  const branchEl = document.getElementById("companyBranchInput");
+  const codeEl = document.getElementById("companyCodeInput");
+  if(taxEl && document.activeElement !== taxEl) taxEl.value = (rec && rec.taxId) || "";
+  if(branchEl && document.activeElement !== branchEl) branchEl.value = (rec && rec.branch) || "";
+  if(codeEl && document.activeElement !== codeEl) codeEl.value = (rec && rec.code) || "";
+}
+
+document.getElementById("saveCompanyMetaBtn")?.addEventListener("click", ()=>{
+  if(!companyName){ showToast("กรุณาเลือกบริษัทก่อน", "warn"); return; }
+  const slug = companySlug(companyName);
+  const taxId = document.getElementById("companyTaxIdInput").value.trim();
+  const branch = document.getElementById("companyBranchInput").value.trim();
+  const code = document.getElementById("companyCodeInput").value.trim();
+  db.ref("companyIndex/" + slug).update({ taxId, branch, code }).then(()=>{
+    officeDashCache = null; // taxId shown in the office-wide company table is now stale
+    showToast("บันทึกข้อมูลบริษัทแล้ว");
+  }).catch(err=>{
+    showToast("บันทึกไม่สำเร็จ: " + err.message, "warn");
+  });
+});
+
+document.getElementById("companyTaxCalAddBtn")?.addEventListener("click", ()=>{
+  if(typeof addTaxCalendarItemPrompt === "function") addTaxCalendarItemPrompt();
+});
+
+/* ---------------- Company switcher (searchable — scales to 30-100 companies) ---------------- */
+const STARRED_COMPANIES_KEY = "bl_starred_companies";
+function getStarredSlugs(){
+  try{ return JSON.parse(localStorage.getItem(STARRED_COMPANIES_KEY) || "[]"); }catch(e){ return []; }
+}
+function toggleStarredSlug(slug){
+  const set = new Set(getStarredSlugs());
+  if(set.has(slug)) set.delete(slug); else set.add(slug);
+  try{ localStorage.setItem(STARRED_COMPANIES_KEY, JSON.stringify([...set])); }catch(e){}
+  return set.has(slug);
+}
+
+function companySwitcherRowHtml(c, opts){
+  opts = opts || {};
+  const slug = companySlug(c.name);
+  const isCurrent = slug === companySlug(companyName);
+  const starred = getStarredSlugs().includes(slug);
+  const subBits = [];
+  if(c.taxId) subBits.push(esc(c.taxId));
+  if(c.branch) subBits.push(esc(c.branch));
+  return `<div class="switcher-row${isCurrent ? " is-current" : ""}" data-switch-company="${esc(c.name)}">
+      <button type="button" class="switcher-row-star${starred ? " is-starred" : ""}" data-star-company="${esc(c.name)}" title="ปักหมุด">★</button>
+      <div style="flex:1;min-width:0;">
+        <div class="switcher-row-name">${esc(c.name)}${isCurrent ? " <span style=\"color:var(--success);font-weight:400;\">(กำลังใช้งาน)</span>" : ""}</div>
+        ${subBits.length ? `<div class="switcher-row-sub">${subBits.join(" · ")}</div>` : ""}
+      </div>
+    </div>`;
+}
+
+function refreshCompanySwitcherList(){
+  const modal = document.getElementById("modalHost");
+  if(!modal || !modal.querySelector("#switcherSearchInput")) return; // switcher not open
+  const q = (document.getElementById("switcherSearchInput").value || "").trim().toLowerCase();
+  const starredSlugs = new Set(getStarredSlugs());
+  const matches = c => !q
+    || c.name.toLowerCase().includes(q)
+    || (c.taxId||"").includes(q)
+    || (c.code||"").toLowerCase().includes(q);
+  const accessible = knownCompanies.filter(c=>hasCompanyAccess(c.name));
+  const filtered = accessible.filter(matches);
+  const recent = filtered.filter(c=>starredSlugs.has(companySlug(c.name)));
+  const rest = filtered.filter(c=>!starredSlugs.has(companySlug(c.name)));
+
+  const body = document.getElementById("switcherListBody");
+  if(!body) return;
+  if(accessible.length === 0){
+    body.innerHTML = knownCompanies.length === 0
+      ? `<div class="switcher-empty">ยังไม่มีบริษัทในระบบ — เพิ่มบริษัทแรกได้ที่ปุ่ม "เพิ่มบริษัทใหม่" ด้านล่าง</div>`
+      : `<div class="switcher-empty">บัญชีนี้ยังไม่ได้รับสิทธิ์เข้าใช้งานบริษัทใด ๆ — ติดต่อผู้ดูแลระบบ</div>`;
+    return;
+  }
+  if(filtered.length === 0){
+    body.innerHTML = `<div class="switcher-empty">ไม่พบบริษัทที่ตรงกับ "${esc(q)}"</div>`;
+    return;
+  }
+  let html = "";
+  if(recent.length){
+    html += `<div class="switcher-section-label">ปักหมุดไว้</div><div class="switcher-list">${recent.map(c=>companySwitcherRowHtml(c)).join("")}</div>`;
+  }
+  html += `<div class="switcher-section-label">บริษัททั้งหมด (${filtered.length})</div><div class="switcher-list">${rest.map(c=>companySwitcherRowHtml(c)).join("")}</div>`;
+  body.innerHTML = html;
+
+  body.querySelectorAll("[data-switch-company]").forEach(row=>{
+    row.addEventListener("click", (ev)=>{
+      if(ev.target.closest("[data-star-company]")) return;
+      const name = row.getAttribute("data-switch-company");
+      const inp = document.getElementById("companyInput");
+      if(inp) inp.value = name;
+      switchCompany(name);
+      showToast("เข้าใช้งานทะเบียนของ: " + name);
+      closeModal();
+    });
+  });
+  body.querySelectorAll("[data-star-company]").forEach(btn=>{
+    btn.addEventListener("click", (ev)=>{
+      ev.stopPropagation();
+      toggleStarredSlug(companySlug(btn.getAttribute("data-star-company")));
+      refreshCompanySwitcherList();
+    });
+  });
+}
+
+function openCompanySwitcher(){
+  const host = document.getElementById("modalHost");
+  host.classList.remove("hidden");
+  host.innerHTML = `
+    <div class="modal-backdrop" id="switcherBackdrop">
+      <div class="modal-card modal-card-lg" role="dialog" aria-modal="true">
+        <h3>เปลี่ยนบริษัท</h3>
+        <input type="text" id="switcherSearchInput" class="switcher-search" placeholder="🔎 ค้นหาชื่อบริษัท / เลขผู้เสียภาษี / รหัสบริษัท...">
+        <div id="switcherListBody"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="switcherCancelBtn">ปิด</button>
+          <button type="button" class="btn btn-primary" id="switcherAddCompanyBtn">➕ เพิ่มบริษัทใหม่</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("switcherCancelBtn").addEventListener("click", closeModal);
+  document.getElementById("switcherBackdrop").addEventListener("click", (ev)=>{
+    if(ev.target.id === "switcherBackdrop") closeModal();
+  });
+  document.getElementById("switcherAddCompanyBtn").addEventListener("click", ()=>{
+    const name = (prompt("ชื่อบริษัท/ลูกค้าที่ต้องการเพิ่ม:", "") || "").trim();
+    if(!name) return;
+    addCompany(name);
+    closeModal();
+  });
+  document.getElementById("switcherSearchInput").addEventListener("input", refreshCompanySwitcherList);
+  refreshCompanySwitcherList();
+  document.getElementById("switcherSearchInput").focus();
 }
 
 function addCompany(rawName){
@@ -1511,18 +2024,31 @@ function deleteCompanyData(name, slug, isCurrent){
 function switchCompany(name){
   const slug = companySlug(name);
   if(!slug){ return; }
+  // Client-side convenience guard only — the real access boundary must be Firebase Security
+  // Rules (not yet deployed as of this feature; see chat). This just avoids a staff account
+  // opening a company its "companies" allow-list doesn't include.
+  if(!hasCompanyAccess(name)){
+    showToast("บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานบริษัทนี้", "warn");
+    return;
+  }
   // detach previous listeners so we don't keep syncing the old company's data
   if(entriesRef) entriesRef.off();
   if(vendorsRef) vendorsRef.off();
+  if(taxCalItemsRef) taxCalItemsRef.off();
+  if(bankTxRef) bankTxRef.off();
 
   companyName = name.trim();
   try{ localStorage.setItem("bl_company_name", companyName); }catch(err){}
   entries = [];
   const seed = seedVendorsFor(companyName);
   vendors = seed.slice();
+  companyTaxCalItems = [];
+  bankTx = [];
   firebaseReady = false;
   renderLedger();
   renderVendorAdmin();
+  if(typeof renderCompanyTaxCalSettings === "function") renderCompanyTaxCalSettings();
+  if(typeof reconcilePanelVisible === "function" && reconcilePanelVisible() && typeof renderReconcile === "function") renderReconcile();
 
   const path = "companies/" + slug;
   entriesRef = db.ref(path + "/entries");
@@ -1530,6 +2056,21 @@ function switchCompany(name){
   // additive node — the existing entries/vendors structure is untouched
   if(settingsRef) settingsRef.off();
   settingsRef = db.ref(path + "/settings");
+  // additive node — imported bank-statement rows for reconciliation, wholesale array like entries/vendors
+  bankTxRef = db.ref(path + "/bankTx");
+  bankTxRef.on("value", (snap)=>{
+    const val = snap.val();
+    bankTx = val ? Object.values(val) : [];
+    if(typeof reconcilePanelVisible === "function" && reconcilePanelVisible() && typeof renderReconcile === "function") renderReconcile();
+  }, ()=>{});
+  // additive node — per-company tax-deadline list, entirely user-entered (no auto-seeded
+  // defaults, no recurring "day of month" — each entry is a specific date the bookkeeper types in)
+  taxCalItemsRef = db.ref(path + "/taxCalendarItems");
+  taxCalItemsRef.on("value", (snap)=>{
+    const val = snap.val();
+    companyTaxCalItems = val ? Object.entries(val).map(([id,v])=>({ id, name:v.name||"", date:v.date||"" })) : [];
+    if(typeof renderCompanyTaxCalSettings === "function") renderCompanyTaxCalSettings();
+  }, ()=>{});
   monthlyBudget = 0;
   const budgetEl = document.getElementById("dashBudget");
   if(budgetEl) budgetEl.value = "";
@@ -1559,10 +2100,13 @@ function switchCompany(name){
     [...seed, ...learned].forEach(x=>byCode[x.code]=x);
     vendors = Object.values(byCode);
     renderVendorAdmin();
+    if(typeof coaPanelVisible === "function" && coaPanelVisible() && typeof renderCoaView === "function") renderCoaView();
   });
 
-  // register this company in the shared index so it shows up as a suggestion next time
-  db.ref("companyIndex/" + slug).set({ name: companyName, updatedAt: Date.now() });
+  // register this company in the shared index so it shows up as a suggestion next time —
+  // update() (not set()) so it merges with, rather than wipes, any taxId/branch/code already
+  // saved on this record from "ตั้งค่าบริษัท".
+  db.ref("companyIndex/" + slug).update({ name: companyName, updatedAt: Date.now() });
 
   const statusEl = document.getElementById("companyStatus");
   if(statusEl){
@@ -1570,6 +2114,8 @@ function switchCompany(name){
     statusEl.style.color = "var(--ledger)";
   }
   renderCompanyChips(); // move the highlight to the company we just opened
+  if(typeof renderSideCompanyCard === "function") renderSideCompanyCard();
+  if(typeof renderCoaView === "function" && typeof coaPanelVisible === "function" && coaPanelVisible()) renderCoaView();
 }
 
 function loadStorage(){
@@ -1618,9 +2164,11 @@ function loadStorage(){
       const val = snap.val() || {};
       const list = Object.values(val).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
       const dl = document.getElementById("companyDatalist");
-      dl.innerHTML = list.map(c=>`<option value="${esc(c.name)}">`).join("");
+      dl.innerHTML = list.filter(c=>hasCompanyAccess(c.name)).map(c=>`<option value="${esc(c.name)}">`).join("");
       knownCompanies = list;
       renderCompanyChips();
+      if(typeof renderSideCompanyCard === "function") renderSideCompanyCard();
+      if(typeof refreshCompanySwitcherList === "function") refreshCompanySwitcherList();
     });
   }
 
@@ -1633,6 +2181,7 @@ function loadStorage(){
 }
 function persistEntries(){
   if(!entriesRef) return;
+  officeDashCache = null; // this company's doc counts changed — office-wide dashboard must refetch, not show stale totals
   // entriesRef.set() returns a Promise — Firebase write failures (offline, permission-denied)
   // reject asynchronously, so a plain try/catch around the call never sees them. Without this
   // .catch(), a failed save looks identical to a successful one and the bookkeeper has no way
@@ -2143,7 +2692,7 @@ document.getElementById("saveAllBtn").addEventListener("click", async ()=>{
         photoFailCount++; // non-fatal — entry still saves, just without a linked photo
       }
     }
-    entries.push({ no:startNo+i+1, code:r.code, name:r.name, billNo:r.billNo, desc:r.desc, date:r.date, acct:r.acct, amount:r.amount, vat:r.vat, taxId:r.taxId, transfer:r.transfer, photoUrl });
+    entries.push({ no:startNo+i+1, code:r.code, name:r.name, billNo:r.billNo, desc:r.desc, date:r.date, acct:r.acct, amount:r.amount, vat:r.vat, taxId:r.taxId, transfer:r.transfer, photoUrl, createdAt:Date.now() });
   }
   persistEntries();
   const committedIds = new Set(toCommit.map(r=>r._id));
@@ -2219,21 +2768,21 @@ function renderLedger(){
     const checked = selectedLedgerNos.has(e.no) ? "checked" : "";
     rows += `
     <tr data-no="${e.no}">
-      <td><input type="checkbox" class="ledger-row-chk" data-no="${e.no}" ${checked}></td>
-      <td class="mono">${e.no}</td>
-      <td class="mono">${esc(e.code)}</td>
-      <td class="clip" style="max-width:180px;" title="${esc(e.name)}">${esc(e.name)}</td>
-      <td class="clip" style="max-width:120px;" title="${esc(e.billNo)}">${esc(e.billNo)}</td>
-      <td class="clip" style="max-width:160px;" title="${esc(e.desc)}">${esc(e.desc)}</td>
-      <td class="mono">${esc(e.date)}</td>
-      <td class="mono">${esc(e.acct)}</td>
-      <td class="mono num">${fmtMoney(e.amount)}</td>
-      <td class="mono num">${e.vat!=null && e.vat!=="" ? fmtMoney(e.vat) : ""}</td>
-      <td class="mono">${esc(e.taxId||"")}</td>
-      <td class="clip" style="max-width:220px;">${complianceCell}</td>
-      <td class="clip" style="max-width:280px;">${rdStatusCell(e)}</td>
-      <td class="mono num">${fmtMoney(e.transfer)}</td>
-      <td><div class="row-actions">
+      <td class="stick stick-0"><input type="checkbox" class="ledger-row-chk" data-no="${e.no}" ${checked}></td>
+      <td class="mono stick stick-1">${e.no}</td>
+      <td class="mono stick stick-2"><div class="clip-inner" title="${esc(e.code)}">${esc(e.code)}</div></td>
+      <td class="stick stick-3"><div class="clip-inner" title="${esc(e.name)}">${esc(e.name)}</div></td>
+      <td class="col-billno"><div class="clip-inner" title="${esc(e.billNo)}">${esc(e.billNo)}</div></td>
+      <td class="col-desc"><div class="clip-inner" title="${esc(e.desc)}">${esc(e.desc)}</div></td>
+      <td class="mono col-date"><div class="clip-inner" title="${esc(e.date)}">${esc(e.date)}</div></td>
+      <td class="mono col-acct"><div class="clip-inner" title="${esc(e.acct)}">${esc(e.acct)}</div></td>
+      <td class="mono num col-amount">${fmtMoney(e.amount)}</td>
+      <td class="mono num col-vat">${e.vat!=null && e.vat!=="" ? fmtMoney(e.vat) : ""}</td>
+      <td class="mono col-taxid"><div class="clip-inner" title="${esc(e.taxId||"")}">${esc(e.taxId||"")}</div></td>
+      <td class="col-compliance"><div class="clip-inner">${complianceCell}</div></td>
+      <td class="col-rdstatus"><div class="clip-inner">${rdStatusCell(e)}</div></td>
+      <td class="mono num col-transfer">${fmtMoney(e.transfer)}</td>
+      <td class="col-actions"><div class="row-actions">
         ${e.photoUrl ? `<button data-photo="${esc(e.photoUrl)}" title="ดูรูปบิล">🖼️</button>` : ""}
         <button data-edit="${e.no}">✏️</button>
         <button data-del="${e.no}">🗑</button>
@@ -2261,16 +2810,26 @@ function renderLedger(){
   ledgerWrap.innerHTML = `
     <div class="ledger-table-view" style="overflow-x:auto;">
     <table>
+      <colgroup>
+        <col class="stick-0"><col class="stick-1"><col class="stick-2"><col class="stick-3">
+        <col class="col-billno"><col class="col-desc"><col class="col-date"><col class="col-acct">
+        <col class="col-amount"><col class="col-vat"><col class="col-taxid"><col class="col-compliance">
+        <col class="col-rdstatus"><col class="col-transfer"><col class="col-actions">
+      </colgroup>
       <thead><tr>
-        <th><input type="checkbox" id="ledgerSelectAllChk" title="เลือกทั้งหมดที่แสดงอยู่"></th>
-        <th>ลำดับ</th><th>รหัส</th><th>ชื่อ</th><th>เลขที่บิล</th><th>คำอธิบาย</th>
-        <th>วันที่</th><th>ผังบัญชี</th><th class="num">จำนวนเงิน</th><th class="num">VAT</th><th>เลขผู้เสียภาษี (ม.86/4)</th><th>ผ่านตรวจสอบ ม.86/4</th><th>จดทะเบียน VAT (กรมสรรพากร)</th><th class="num">โอน</th><th></th>
+        <th class="stick stick-0"><input type="checkbox" id="ledgerSelectAllChk" title="เลือกทั้งหมดที่แสดงอยู่"></th>
+        <th class="stick stick-1">ลำดับ</th><th class="stick stick-2">รหัส</th><th class="stick stick-3">ชื่อ</th>
+        <th class="col-billno">เลขที่บิล</th><th class="col-desc">คำอธิบาย</th>
+        <th class="col-date">วันที่</th><th class="col-acct">ผังบัญชี</th><th class="num col-amount">จำนวนเงิน</th><th class="num col-vat">VAT</th>
+        <th class="col-taxid">เลขผู้เสียภาษี (ม.86/4)</th><th class="col-compliance">ผ่านตรวจสอบ ม.86/4</th><th class="col-rdstatus">จดทะเบียน VAT (กรมสรรพากร)</th>
+        <th class="num col-transfer">โอน</th><th class="col-actions"></th>
       </tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr>
-        <td colspan="8" style="text-align:right;">รวมทั้งหมด${ledgerVatFilter!=="all" ? " (เฉพาะหมวดที่กรอง)" : ""}</td>
-        <td class="mono num">${fmtMoney(total)}</td>
-        <td colspan="5"></td>
+        <td colspan="4" style="text-align:right;position:sticky;left:0;background:#fff;z-index:2;">รวมทั้งหมด${ledgerVatFilter!=="all" ? " (เฉพาะหมวดที่กรอง)" : ""}</td>
+        <td class="col-billno"></td><td class="col-desc"></td><td class="col-date"></td><td class="col-acct"></td>
+        <td class="mono num col-amount">${fmtMoney(total)}</td>
+        <td class="col-vat"></td><td class="col-taxid"></td><td class="col-compliance"></td><td class="col-rdstatus"></td><td class="col-transfer"></td><td class="col-actions"></td>
       </tr></tfoot>
     </table>
     </div>
@@ -2348,6 +2907,158 @@ function renderLedger(){
       if(ev.target.closest("input[type=checkbox]")) return; // let the checkbox toggle on its own
       openLedgerSheet(Number(card.getAttribute("data-open-sheet")));
     });
+  });
+  applyLedgerColumnVisibility();
+  applyLedgerColumnWidths();
+  syncLedgerScrollMirror();
+}
+
+/* ---------------- Ledger table: column chooser, fullscreen, mirrored top scrollbar ----------------
+   All three are pure display/layout controls — none of them touch `entries` or any persisted data. */
+const LEDGER_COLUMNS = [
+  { key:"billno", label:"เลขที่บิล", defaultHidden:false },
+  { key:"desc", label:"คำอธิบาย", defaultHidden:false },
+  { key:"date", label:"วันที่", defaultHidden:false },
+  { key:"acct", label:"ผังบัญชี", defaultHidden:false },
+  { key:"vat", label:"VAT", defaultHidden:false },
+  { key:"taxid", label:"เลขผู้เสียภาษี (ม.86/4)", defaultHidden:true },
+  { key:"compliance", label:"ผ่านตรวจสอบ ม.86/4", defaultHidden:false },
+  { key:"rdstatus", label:"จดทะเบียน VAT (กรมสรรพากร)", defaultHidden:true },
+  { key:"transfer", label:"โอน", defaultHidden:true },
+];
+const LEDGER_HIDDEN_COLS_KEY = "bl_ledger_hidden_cols";
+function getLedgerHiddenCols(){
+  try{
+    const raw = localStorage.getItem(LEDGER_HIDDEN_COLS_KEY);
+    if(raw!=null) return JSON.parse(raw);
+  }catch(e){}
+  return LEDGER_COLUMNS.filter(c=>c.defaultHidden).map(c=>c.key);
+}
+function setLedgerHiddenCols(list){
+  try{ localStorage.setItem(LEDGER_HIDDEN_COLS_KEY, JSON.stringify(list)); }catch(e){}
+}
+function applyLedgerColumnVisibility(){
+  const card = document.getElementById("ledgerTableCard");
+  if(!card) return;
+  const hidden = new Set(getLedgerHiddenCols());
+  LEDGER_COLUMNS.forEach(c=> card.classList.toggle("hide-col-"+c.key, hidden.has(c.key)));
+}
+
+// Sticky columns (checkbox/ลำดับ/รหัส/ชื่อ) stay fixed-width — position:sticky needs a known
+// left offset, which a proportionally-resizing column can't provide without recalculating every
+// other sticky column's offset too. Every other column is free to grow: on a wide screen the
+// table should fill the card edge-to-edge (ชื่อ/เลขที่บิล/คำอธิบาย growing the most, per
+// LEDGER_COL_WEIGHT), and on a narrow one it should hold at these minimums and let the
+// .ledger-table-view wrapper's overflow-x:auto scroll instead of squeezing anything unreadable.
+const LEDGER_STICKY_WIDTHS = [36, 45, 75, 150]; // checkbox, ลำดับ, รหัส, ชื่อ
+const LEDGER_COL_MIN_WIDTH = { billno:140, desc:140, date:90, acct:75, amount:90, vat:65, taxid:110, compliance:95, rdstatus:90, transfer:85, actions:55 };
+const LEDGER_COL_WEIGHT    = { billno:3,   desc:3,   date:1,  acct:1,  amount:1.2, vat:0.6, taxid:1.3, compliance:1,  rdstatus:0.8, transfer:1,  actions:0.5 };
+
+function applyLedgerColumnWidths(){
+  const container = document.querySelector("#ledgerWrap .ledger-table-view");
+  if(!container) return;
+  const hidden = new Set(getLedgerHiddenCols());
+  const visible = LEDGER_COLUMNS.filter(c=>!hidden.has(c.key));
+  const stickyTotal = LEDGER_STICKY_WIDTHS.reduce((a,b)=>a+b, 0);
+  const minTotal = visible.reduce((s,c)=>s+LEDGER_COL_MIN_WIDTH[c.key], 0);
+  // clientWidth (not scrollWidth) — the visible width of the scroll container, unaffected by
+  // however wide the table inside it currently happens to be rendered.
+  const available = container.clientWidth;
+  const extra = Math.max(0, available - stickyTotal - minTotal);
+  const totalWeight = visible.reduce((s,c)=>s+LEDGER_COL_WEIGHT[c.key], 0) || 1;
+  visible.forEach(c=>{
+    const px = LEDGER_COL_MIN_WIDTH[c.key] + extra*(LEDGER_COL_WEIGHT[c.key]/totalWeight);
+    const col = document.querySelector("#ledgerWrap colgroup col.col-"+c.key);
+    if(col) col.style.width = px.toFixed(2)+"px";
+  });
+}
+let ledgerColResizeQueued = false;
+window.addEventListener("resize", ()=>{
+  if(ledgerColResizeQueued) return;
+  ledgerColResizeQueued = true;
+  requestAnimationFrame(()=>{ ledgerColResizeQueued = false; applyLedgerColumnWidths(); });
+});
+function renderColumnChooserPanel(){
+  const panel = document.getElementById("columnChooserPanel");
+  if(!panel) return;
+  const hidden = new Set(getLedgerHiddenCols());
+  panel.innerHTML = LEDGER_COLUMNS.map(c=>`
+    <label class="col-chooser-row">
+      <input type="checkbox" data-col-toggle="${c.key}" ${hidden.has(c.key) ? "" : "checked"}>
+      ${esc(c.label)}
+    </label>`).join("");
+  panel.querySelectorAll("[data-col-toggle]").forEach(chk=>{
+    chk.addEventListener("change", ()=>{
+      const key = chk.getAttribute("data-col-toggle");
+      const hiddenNow = new Set(getLedgerHiddenCols());
+      if(chk.checked) hiddenNow.delete(key); else hiddenNow.add(key);
+      setLedgerHiddenCols([...hiddenNow]);
+      applyLedgerColumnVisibility();
+      applyLedgerColumnWidths();
+      syncLedgerScrollMirror();
+    });
+  });
+}
+document.getElementById("columnChooserBtn")?.addEventListener("click", (ev)=>{
+  ev.stopPropagation();
+  const panel = document.getElementById("columnChooserPanel");
+  if(!panel) return;
+  const opening = panel.classList.contains("hidden");
+  if(opening) renderColumnChooserPanel();
+  panel.classList.toggle("hidden", !opening);
+});
+document.addEventListener("click", (ev)=>{
+  const panel = document.getElementById("columnChooserPanel");
+  if(!panel || panel.classList.contains("hidden")) return;
+  if(!panel.contains(ev.target) && ev.target.id !== "columnChooserBtn") panel.classList.add("hidden");
+});
+
+document.getElementById("ledgerExpandBtn")?.addEventListener("click", ()=>{
+  document.body.classList.add("ledger-fullscreen");
+  setTimeout(()=>{ applyLedgerColumnWidths(); syncLedgerScrollMirror(); }, 50);
+});
+document.getElementById("ledgerExitFullscreenBtn")?.addEventListener("click", ()=>{
+  document.body.classList.remove("ledger-fullscreen");
+  setTimeout(()=>{ applyLedgerColumnWidths(); syncLedgerScrollMirror(); }, 50);
+});
+
+// The real horizontal scrollbar sits below a wide table, easy to miss — mirror it in a thin bar
+// above the table too, keeping both in sync either direction the user drags.
+function syncLedgerScrollMirror(){
+  const top = document.getElementById("ledgerScrollTop");
+  const inner = document.getElementById("ledgerScrollTopInner");
+  const real = document.querySelector("#ledgerWrap .ledger-table-view");
+  if(!top || !inner || !real) return;
+  const table = real.querySelector("table");
+  inner.style.width = (table ? table.scrollWidth : 0) + "px";
+  // A plain two-way "scrollLeft = other.scrollLeft" mirror can ping-pong forever: the two elements
+  // rarely have identical scrollWidth/clientWidth, so each side's assignment gets clamped to a
+  // slightly different value than what was just read from the other side, which re-fires a scroll
+  // event on the side that "changed", forever. `top._ledgerSyncing` breaks that loop, and the
+  // equality checks avoid ever writing a value that isn't actually different.
+  if(top._ledgerSyncing === undefined) top._ledgerSyncing = false;
+  if(!top._ledgerSyncing && top.scrollLeft !== real.scrollLeft){
+    top._ledgerSyncing = true;
+    real.scrollLeft = top.scrollLeft; // keep new DOM in sync with wherever the mirror currently sits
+    top._ledgerSyncing = false;
+  }
+  if(!top._ledgerMirrorWired){
+    top._ledgerMirrorWired = true;
+    top.addEventListener("scroll", ()=>{
+      if(top._ledgerSyncing) return;
+      const r = document.querySelector("#ledgerWrap .ledger-table-view");
+      if(!r || r.scrollLeft === top.scrollLeft) return;
+      top._ledgerSyncing = true;
+      r.scrollLeft = top.scrollLeft;
+      top._ledgerSyncing = false;
+    });
+  }
+  real.addEventListener("scroll", ()=>{
+    if(top._ledgerSyncing) return;
+    if(top.scrollLeft === real.scrollLeft) return;
+    top._ledgerSyncing = true;
+    top.scrollLeft = real.scrollLeft;
+    top._ledgerSyncing = false;
   });
 }
 
@@ -2757,6 +3468,22 @@ function findCol(headerRow, candidates){
   return -1;
 }
 
+// Thai Windows commonly exports "CSV (Comma delimited)" as windows-874 with no BOM, but plenty of
+// other sources (Google Sheets, web bank portals, hand-edited files) export plain UTF-8 with no
+// BOM either — a fixed "no BOM = windows-874" assumption silently mojibakes those. Decoding as
+// strict UTF-8 (fatal:true) first is a reliable discriminator: real windows-874 Thai bytes almost
+// always contain byte sequences that are invalid UTF-8 and throw, so this only falls back to
+// windows-874 when the bytes truly aren't valid UTF-8.
+function decodeCsvBytes(bytes){
+  const hasUtf8Bom = bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF;
+  if(hasUtf8Bom) return new TextDecoder("utf-8").decode(bytes.subarray(3));
+  try{
+    return new TextDecoder("utf-8", { fatal:true }).decode(bytes);
+  }catch(e){
+    return new TextDecoder("windows-874").decode(bytes);
+  }
+}
+
 document.getElementById("importVendorFile").addEventListener("change", async (e)=>{
   const file = e.target.files[0];
   e.target.value = "";
@@ -2769,9 +3496,7 @@ document.getElementById("importVendorFile").addEventListener("change", async (e)
       // Excel on Thai Windows saves "CSV (Comma delimited)" as Windows-874 (Thai ANSI),
       // not UTF-8. Reading those bytes as UTF-8 mojibakes every Thai character, so detect
       // a UTF-8 BOM first and fall back to windows-874 when it's missing.
-      const bytes = new Uint8Array(buf);
-      const hasUtf8Bom = bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF;
-      const text = new TextDecoder(hasUtf8Bom ? "utf-8" : "windows-874").decode(hasUtf8Bom ? bytes.subarray(3) : bytes);
+      const text = decodeCsvBytes(new Uint8Array(buf));
       // raw:true stops SheetJS from guessing that hyphenated codes like "5300-01"
       // are dates and rewriting them as date-serial numbers.
       wb = XLSX.read(text, { type: "string", raw: true });
@@ -3745,6 +4470,743 @@ function dashboardVisible(){
   return !!p && !p.classList.contains("hidden");
 }
 
+/* ================= Office-wide (multi-company) dashboard =================
+   Unlike the per-company "รายงานภาพรวม" dashboard above (which reads the single
+   `entries` global for whichever company is currently open), this reads every
+   company's entries via one-time `.once("value")` reads off `companyIndex` — kept
+   out of the live `.on()` pattern used elsewhere so opening this page never leaves
+   30-100 open realtime listeners behind it. Results are cached in memory for the
+   session; use the "รีเฟรช" button to re-pull. */
+let officeDashCache = null;
+let officeDashLoading = false;
+
+// No persisted "status" field exists on an entry (see check864/hasVat) — bucket status is
+// always derived fresh from the same fields the per-company dashboard already checks.
+function classifyEntryStatus(e){
+  const hasCore = !!(e.date && e.name && Number(e.amount) > 0);
+  if(!hasCore) return "pending"; // missing core fields — needs a human to finish it
+  if(hasVat(e) && !check864(e).ok) return "issue"; // has VAT but fails มาตรา 86/4
+  return "ok";
+}
+
+// Each company keeps its own tax-deadline list at companies/{slug}/taxCalendarItems — not every
+// company files the same things (e.g. one not VAT-registered has no ภ.พ.30), so this is per
+// company rather than one shared office-wide list. Fully manual by design: no auto-seeded
+// defaults and no recurring "day of month" math — the user types both the name and the exact
+// date themselves for each entry (per explicit request), so a filed deadline can just be removed
+// rather than reappearing next month on its own. There is still no "filed" tracking anywhere —
+// this only ever shows a due date + urgency badge, it never claims a company has already filed.
+function taxDueBadge(diffDays){
+  if(diffDays < 0) return "due-soon"; // already overdue
+  return diffDays <= 7 ? "due-soon" : (diffDays <= 20 ? "due-prep" : "due-ok");
+}
+function taxDueLabel(date){
+  const dd = String(date.getDate()).padStart(2,"0");
+  return `${dd} ${THAI_MONTH_ABBR[date.getMonth()]} ${date.getFullYear()+543}`;
+}
+function taxDueDiffText(diffDays){
+  return diffDays < 0 ? `เลยกำหนดมาแล้ว ${Math.abs(diffDays)} วัน` : `อีก ${diffDays} วัน`;
+}
+function computeTaxCalRows(items){
+  const today = new Date(); today.setHours(0,0,0,0);
+  return (items||[])
+    .filter(it => /^\d{4}-\d{2}-\d{2}$/.test(it.date||"")) // drops legacy day-of-month rows saved by an older cached copy of this page
+    .map(it=>{
+      const d = new Date(it.date + "T00:00:00");
+      const diffDays = Math.round((d - today) / 86400000);
+      return { id:it.id, name:it.name, date:it.date, label:taxDueLabel(d), diffDays, badge:taxDueBadge(diffDays) };
+    });
+}
+
+function addTaxCalendarItemPrompt(){
+  if(!companyName){ showToast("กรุณาเลือกบริษัทก่อน", "warn"); return; }
+  const name = (prompt("ชื่อรายการภาษี เช่น ภ.พ.30, ภ.ง.ด.1", "") || "").trim();
+  if(!name) return;
+  const dateStr = (prompt("วันครบกำหนด (พิมพ์เป็น วว/ดด/ปปปป เช่น 15/10/2569 หรือ ปปปป-ดด-วว):", "") || "").trim();
+  const iso = parseStatementDate(dateStr);
+  if(!iso){ showToast("อ่านวันที่ไม่ได้ — พิมพ์เป็น วว/ดด/ปปปป หรือ ปปปป-ดด-วว", "warn"); return; }
+  db.ref("companies/" + companySlug(companyName) + "/taxCalendarItems").push({ name, date: iso });
+  officeDashCache = null; // the office-wide dashboard's cached tax feed is now stale — force a refetch next visit
+}
+function editTaxCalendarItemDate(id, currentIso){
+  if(!companyName) return;
+  const dateStr = (prompt("แก้วันครบกำหนด (วว/ดด/ปปปป หรือ ปปปป-ดด-วว):", isoToThaiDate(currentIso)) || "").trim();
+  if(!dateStr) return;
+  const iso = parseStatementDate(dateStr);
+  if(!iso){ showToast("อ่านวันที่ไม่ได้ — พิมพ์เป็น วว/ดด/ปปปป หรือ ปปปป-ดด-วว", "warn"); return; }
+  db.ref("companies/" + companySlug(companyName) + "/taxCalendarItems/" + id).update({ date: iso });
+  officeDashCache = null;
+}
+function removeTaxCalendarItem(id){
+  if(!companyName) return;
+  if(!confirm("ลบรายการนี้ออกจากปฏิทินภาษีของบริษัทนี้?")) return;
+  db.ref("companies/" + companySlug(companyName) + "/taxCalendarItems/" + id).remove();
+  officeDashCache = null;
+}
+
+function renderCompanyTaxCalSettings(){
+  const body = document.getElementById("companyTaxCalBody");
+  if(!body) return;
+  if(!companyName){ body.innerHTML = ""; return; }
+  const rows = computeTaxCalRows(companyTaxCalItems).sort((a,b)=>a.diffDays-b.diffDays);
+  body.innerHTML = (rows.map(r=>`
+    <div class="tax-cal-row">
+      <div><div class="tax-cal-name">${esc(r.name)}</div><div class="tax-cal-date">${esc(r.label)}</div></div>
+      <div style="display:flex;align-items:center;gap:2px;">
+        <span class="tax-badge ${r.badge}">${taxDueDiffText(r.diffDays)}</span>
+        <button type="button" class="card-menu-btn" data-taxcal-edit="${esc(r.id)}" data-taxcal-date="${esc(r.date)}" title="แก้วันครบกำหนด">✎</button>
+        <button type="button" class="card-menu-btn" data-taxcal-del="${esc(r.id)}" title="ลบรายการนี้">✕</button>
+      </div>
+    </div>`).join("")) || `<div style="font-size:12px;opacity:.55;">ยังไม่มีรายการ — กด "+ เพิ่มรายการภาษี" เพื่อเริ่มพิมพ์เอง</div>`;
+  body.querySelectorAll("[data-taxcal-edit]").forEach(btn=>{
+    btn.addEventListener("click", ()=> editTaxCalendarItemDate(btn.getAttribute("data-taxcal-edit"), btn.getAttribute("data-taxcal-date")));
+  });
+  body.querySelectorAll("[data-taxcal-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=> removeTaxCalendarItem(btn.getAttribute("data-taxcal-del")));
+  });
+}
+
+async function fetchOfficeDashboardData(){
+  const idxSnap = await db.ref("companyIndex").once("value");
+  const idx = idxSnap.val() || {};
+  // A staff account only pulls (and pays the Firebase bandwidth for) the companies it's allowed
+  // into — also keeps this office-wide view from ever showing a company it shouldn't see.
+  const allowedSlugs = Object.keys(idx).filter(slug => currentUserRole !== "staff" || (currentUserCompanies && currentUserCompanies[slug]));
+  const companies = await Promise.all(allowedSlugs.map(async slug=>{
+    const rec = idx[slug] || {};
+    let entriesArr = [];
+    let taxItems = [];
+    try{
+      const snap = await db.ref("companies/" + slug + "/entries").once("value");
+      const val = snap.val();
+      entriesArr = val ? Object.values(val) : [];
+    }catch(e){ /* this one company's read failed — leave it at 0 docs, the rest still render */ }
+    try{
+      const taxSnap = await db.ref("companies/" + slug + "/taxCalendarItems").once("value");
+      const taxVal = taxSnap.val();
+      if(taxVal) taxItems = Object.values(taxVal);
+    }catch(e){ /* leave this one with no tax items in the feed */ }
+    return { slug, name: rec.name || slug, taxId: rec.taxId || "", branch: rec.branch || "", entries: entriesArr, taxItems };
+  }));
+  return { companies, fetchedAt: Date.now() };
+}
+
+function renderOfficeMonthlyChart(monthKeys, byMonth){
+  const rows = monthKeys.map(k=>{
+    const b = byMonth[k] || { ok:0, pending:0, issue:0 };
+    return { key:k, label:monthLabel(k), labelFull:monthLabelFull(k), ok:b.ok, pending:b.pending, issue:b.issue, total:b.ok+b.pending+b.issue };
+  });
+  if(rows.every(r=>r.total===0)) return emptyState("ยังไม่มีเอกสารที่ระบุวันที่ได้ในช่วงที่แสดง","🗓️");
+
+  const W=760, padL=44, padR=16, padT=20, padB=34, rowH=200;
+  const H = padT+rowH+padB, plotW = W-padL-padR;
+  const max = Math.max(...rows.map(r=>r.total), 1);
+  const slot = plotW/rows.length, bw = Math.min(46, slot*0.55), y0 = padT+rowH;
+
+  const defs = `<defs>
+    ${linGrad("gOfOk", DASH_COLORS.greenFrom, DASH_COLORS.greenTo, "v")}
+    ${linGrad("gOfPend", DASH_COLORS.pendFrom, DASH_COLORS.pendTo, "v")}
+    ${linGrad("gOfIssue", DASH_COLORS.redFrom, DASH_COLORS.redTo, "v")}
+  </defs>`;
+  const grid = [0,.25,.5,.75,1].map(f=>{
+    const y = y0 - rowH*f;
+    return `<line class="chart-grid-line" x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}"${f===0?'':' stroke-dasharray="2 4"'} opacity="${f===0?1:.55}"/>`
+         + `<text class="chart-axis" x="${padL-8}" y="${(y+3.5).toFixed(1)}" text-anchor="end">${fmtCompact(max*f)}</text>`;
+  }).join("");
+
+  const bars = rows.map((r,i)=>{
+    const x = padL + slot*i + (slot-bw)/2;
+    const tip = `<strong>${esc(r.labelFull)}</strong><br>ทั้งหมด <b>${nfInt.format(r.total)}</b> รายการ<br>`
+      + `ผ่านตรวจสอบ <b>${nfInt.format(r.ok)}</b> · รอตรวจสอบ <b>${nfInt.format(r.pending)}</b> · พบปัญหา <b>${nfInt.format(r.issue)}</b>`;
+    let cursorY = y0;
+    const segs = [ [r.ok,"url(#gOfOk)"], [r.pending,"url(#gOfPend)"], [r.issue,"url(#gOfIssue)"] ];
+    const rects = segs.map(([v,fill])=>{
+      if(v<=0) return "";
+      const h = Math.max(2, rowH*(v/max));
+      cursorY -= h;
+      return `<rect class="bar-hit" x="${x.toFixed(1)}" y="${cursorY.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${fill}" data-tip="${tip}"/>`;
+    }).join("");
+    return rects + `<text class="chart-axis" x="${(x+bw/2).toFixed(1)}" y="${(y0+16).toFixed(1)}" text-anchor="middle">${esc(r.label)}</text>`;
+  }).join("");
+
+  return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img">${defs}${grid}${bars}</svg>`;
+}
+
+function companyStatusInfo(c){
+  if(c.issue > 0) return { label:"ต้องดำเนินการ", dot:"bad", rank:2 };
+  if(c.pending > 0) return { label:"มีงานค้าง", dot:"warn", rank:1 };
+  return { label:"ปกติ", dot:"ok", rank:0 };
+}
+
+function renderOfficeDashboard(force){
+  const bodyEl = document.getElementById("officeDashBody");
+  if(!bodyEl) return;
+  if(officeDashLoading) return;
+  if(officeDashCache && !force){ renderOfficeDashboardBody(officeDashCache); return; }
+  officeDashLoading = true;
+  bodyEl.innerHTML = emptyState("กำลังรวบรวมข้อมูลจากทุกบริษัท...","⏳");
+  fetchOfficeDashboardData().then(data=>{
+    officeDashCache = data;
+    officeDashLoading = false;
+    renderOfficeDashboardBody(data);
+  }).catch(err=>{
+    officeDashLoading = false;
+    bodyEl.innerHTML = emptyState("โหลดข้อมูลภาพรวมไม่สำเร็จ: " + err.message, "⚠️");
+  });
+}
+
+function renderOfficeDashboardBody(data){
+  const noteEl = document.getElementById("officeDashNote");
+  if(noteEl) noteEl.textContent = `อัปเดตล่าสุด ${new Date(data.fetchedAt).toLocaleString("th-TH")} · ${data.companies.length} บริษัท`;
+  const bodyEl = document.getElementById("officeDashBody");
+  if(!bodyEl) return;
+
+  if(data.companies.length === 0){
+    bodyEl.innerHTML = `<div class="card">${emptyState('ยังไม่มีบริษัทในระบบ — กด "+ เพิ่มบริษัท" ด้านบนเพื่อเริ่มต้น',"🏢")}</div>`;
+    return;
+  }
+
+  const now = new Date();
+  const curMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+
+  let totalDocsThisMonth=0, ok=0, pending=0, issue=0, newToday=0;
+  const byMonth = {};
+  const perCompany = data.companies.map(c=>{
+    let cOk=0, cPending=0, cIssue=0;
+    c.entries.forEach(e=>{
+      const status = classifyEntryStatus(e);
+      if(status==="ok"){ ok++; cOk++; } else if(status==="pending"){ pending++; cPending++; } else { issue++; cIssue++; }
+      const pd = parseBillDate(e.date);
+      if(pd){
+        if(pd.key === curMonthKey) totalDocsThisMonth++;
+        if(!byMonth[pd.key]) byMonth[pd.key] = { ok:0, pending:0, issue:0 };
+        byMonth[pd.key][status]++;
+      }
+      if(e.createdAt){
+        const d = new Date(e.createdAt);
+        const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+        if(iso === todayIso) newToday++;
+      }
+    });
+    return { ...c, docCount:c.entries.length, ok:cOk, pending:cPending, issue:cIssue };
+  });
+
+  const monthKeys = []; for(let i=8;i>=0;i--) monthKeys.push(shiftMonth(curMonthKey, -i));
+
+  const kpis = [
+    { icon:"🏢", cls:"blue", label:"จำนวนบริษัททั้งหมด", value:data.companies.length },
+    { icon:"📄", cls:"blue", label:"เอกสารเดือนนี้", value:totalDocsThisMonth },
+    { icon:"✅", styleBg:"var(--success-bg)", label:"ผ่านตรวจสอบ", value:ok, color:"var(--success)" },
+    { icon:"⏳", cls:"gold", label:"รอตรวจสอบ", value:pending, color:"var(--gold)" },
+    { icon:"⚠️", cls:"rust", label:"พบปัญหา", value:issue, color:"var(--rust)" },
+  ];
+  const kpiHtml = `<div class="kpi-grid-5">` + kpis.map(k=>`
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon ${esc(k.cls||"")}"${k.styleBg?` style="background:${k.styleBg};"`:""}>${k.icon}</span><span class="kpi-label">${esc(k.label)}</span></div>
+      <div class="kpi-value"${k.color?` style="color:${k.color};"`:""}>${nfInt.format(k.value)}</div>
+    </div>`).join("") + `</div>`;
+
+  const donutSegs = [
+    { label:"ผ่านตรวจสอบ", value:ok, from:DASH_COLORS.greenFrom, to:DASH_COLORS.greenTo },
+    { label:"รอตรวจสอบ", value:pending, from:DASH_COLORS.pendFrom, to:DASH_COLORS.pendTo },
+    { label:"พบปัญหา", value:issue, from:DASH_COLORS.redFrom, to:DASH_COLORS.redTo },
+  ];
+  const totalDocs = ok+pending+issue;
+
+  // Cross-company feed — each company keeps its own tax items (see computeTaxCalRows/renderCompanyTaxCalSettings),
+  // flattened here and sorted by urgency so the soonest deadline across ANY company surfaces first.
+  const dueFeed = [];
+  data.companies.forEach(c=>{
+    computeTaxCalRows(c.taxItems).forEach(r=> dueFeed.push({ ...r, companyName:c.name }));
+  });
+  dueFeed.sort((a,b)=>a.diffDays-b.diffDays);
+  const taxCalHtml = dueFeed.length ? dueFeed.slice(0,12).map(t=>`
+    <div class="tax-cal-row">
+      <div><div class="tax-cal-name">${esc(t.companyName)} — ${esc(t.name)}</div><div class="tax-cal-date">${esc(t.label)}</div></div>
+      <span class="tax-badge ${t.badge}">อีก ${t.diffDays} วัน</span>
+    </div>`).join("") : `<div style="font-size:12px;opacity:.55;padding:8px 0;">ยังไม่มีข้อมูล</div>`;
+  const dueSoonCompanyCount = new Set(dueFeed.filter(t=>t.badge==="due-soon").map(t=>t.companyName)).size;
+
+  const taskRows = [
+    { label:"เอกสารรอตรวจสอบ", count:pending, warn:pending>0 },
+    { label:"เอกสารพบปัญหา", count:issue, warn:issue>0 },
+    { label:"เอกสารใหม่ (วันนี้)", count:newToday, warn:false },
+    { label:"ใกล้ครบกำหนดภาษี (ภายใน 7 วัน)", count:dueSoonCompanyCount, warn:dueSoonCompanyCount>0 },
+    { label:"รอเอกสารจากลูกค้า", count:0, warn:false, note:"ยังไม่รองรับการติดตามอัตโนมัติในเวอร์ชันนี้" },
+  ];
+  const taskHtml = taskRows.map(t=>`
+    <div class="task-row"${t.note?` title="${esc(t.note)}"`:""}>
+      <span class="task-row-label">${esc(t.label)}</span>
+      <span class="task-row-count${t.warn?" warn":""}">${nfInt.format(t.count)}</span>
+    </div>`).join("");
+
+  const sortedCompanies = perCompany.slice().sort((a,b)=>{
+    const sa = companyStatusInfo(a), sb = companyStatusInfo(b);
+    if(sb.rank !== sa.rank) return sb.rank - sa.rank;
+    if(b.issue !== a.issue) return b.issue - a.issue;
+    return b.pending - a.pending;
+  });
+  const companyRowsHtml = sortedCompanies.map((c,i)=>{
+    const st = companyStatusInfo(c);
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${esc(c.name)}</td>
+      <td class="mono" style="opacity:.7;">${esc(c.taxId||"-")}</td>
+      <td class="num">${nfInt.format(c.docCount)}</td>
+      <td class="num" style="color:var(--gold);">${nfInt.format(c.pending)}</td>
+      <td class="num" style="color:var(--rust);">${nfInt.format(c.issue)}</td>
+      <td><span class="status-dot-row"><span class="status-dot ${st.dot}"></span>${esc(st.label)}</span></td>
+      <td><button class="btn btn-primary btn-sm" type="button" data-office-switch="${esc(c.name)}">เข้าใช้งาน</button></td>
+    </tr>`;
+  }).join("");
+
+  bodyEl.innerHTML = `
+    <div class="office-dash-cols">
+      <div>
+        <div class="card">
+          <div class="chart-head"><span class="chart-title">แนวโน้มเอกสารรายเดือน</span><span class="chart-note">9 เดือนล่าสุด</span></div>
+          <div class="chart-body">${kpiHtml}${renderOfficeMonthlyChart(monthKeys, byMonth)}</div>
+          ${renderLegend(donutSegs, totalDocs)}
+        </div>
+        <div class="card">
+          <div class="chart-head"><span class="chart-title">บริษัทที่ต้องดำเนินการ</span></div>
+          <div class="scroll-list-md" style="overflow-x:auto;"><table class="company-status-table">
+            <thead><tr><th>#</th><th>บริษัท</th><th>เลขผู้เสียภาษี</th><th>เอกสาร</th><th>รอตรวจ</th><th>ปัญหา</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+            <tbody>${companyRowsHtml}</tbody>
+          </table></div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="chart-head"><span class="chart-title">สัดส่วนเอกสาร</span></div>
+          ${renderDonut(donutSegs, nfInt.format(totalDocs), "เอกสารทั้งหมด")}
+        </div>
+        <div class="card">
+          <div class="chart-head"><span class="chart-title">📌 งานที่ต้องทำวันนี้</span></div>
+          <div class="task-list">${taskHtml}</div>
+        </div>
+        <div class="card">
+          <div class="chart-head"><span class="chart-title">📅 ปฏิทินภาษี</span><span class="chart-note">เรียงตามกำหนดใกล้สุดของทุกบริษัท · แก้รายการของแต่ละบริษัทได้ที่ "ตั้งค่าบริษัท"</span></div>
+          <div class="scroll-list-md">${taxCalHtml}</div>
+        </div>
+      </div>
+    </div>`;
+
+  bodyEl.querySelectorAll("[data-office-switch]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const name = btn.getAttribute("data-office-switch");
+      const inp = document.getElementById("companyInput");
+      if(inp) inp.value = name;
+      switchCompany(name);
+      showToast("เข้าใช้งานทะเบียนของ: " + name);
+      showView("ledger-registry", { navBtnId:"navRegistryBtn" });
+    });
+  });
+  bindTooltips(bodyEl);
+}
+
+/* ---------------- ผังบัญชี / หมวดค่าใช้จ่าย (built from the current company's vendor list) ---------------- */
+function coaPanelVisible(){
+  const p = document.getElementById("coaPanel");
+  return !!p && !p.classList.contains("hidden");
+}
+
+function renderCoaView(){
+  const nameEl = document.getElementById("coaCompanyName");
+  if(nameEl) nameEl.textContent = companyName || "(ยังไม่ได้เลือกบริษัท)";
+  const body = document.getElementById("coaBody");
+  if(!body) return;
+  if(!companyName){
+    body.innerHTML = `<div class="card">${emptyState("เลือกบริษัทก่อนเพื่อดูผังบัญชี","🏢")}</div>`;
+    return;
+  }
+  const byAcct = {};
+  vendors.forEach(v=>{
+    const code = (v.acct||"").trim() || "(ไม่ระบุ)";
+    if(!byAcct[code]) byAcct[code] = { code, count:0, sampleDesc:v.desc||"" };
+    byAcct[code].count++;
+    if(!byAcct[code].sampleDesc && v.desc) byAcct[code].sampleDesc = v.desc;
+  });
+  const rows = Object.values(byAcct).sort((a,b)=>a.code.localeCompare(b.code));
+  if(rows.length===0){
+    body.innerHTML = `<div class="card">${emptyState("ยังไม่มีรหัสผังบัญชีในทะเบียนผู้ขายของบริษัทนี้ — เพิ่มได้ที่หน้า 'ผู้ขาย'","📒")}</div>`;
+    return;
+  }
+  body.innerHTML = `<div class="card"><div style="overflow-x:auto;"><table class="coa-table">
+    <thead><tr><th>รหัสผังบัญชี</th><th>ใช้งานโดยผู้ขาย</th><th>ตัวอย่างคำอธิบาย</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td class="mono">${esc(r.code)}</td><td>${r.count} ราย</td><td style="opacity:.75;">${esc(r.sampleDesc)}</td></tr>`).join("")}</tbody>
+  </table></div></div>`;
+}
+
+/* ================= ผู้ใช้งาน / สิทธิ์ (userAccess/{uid}) =================
+   Client-side filter only — see the warning banners on the ผู้ใช้งาน page itself. Real
+   enforcement is a separate Firebase Security Rules change, deliberately not bundled here. */
+function renderUsersPanel(){
+  const rolePill = document.getElementById("usersCurrentRolePill");
+  if(rolePill){
+    rolePill.textContent = currentUserRole === "admin" ? "แอดมิน" : "พนักงาน";
+    rolePill.className = "status-pill " + (currentUserRole === "admin" ? "ok" : "neutral");
+  }
+  const adminCard = document.getElementById("usersAdminOnlyCard");
+  if(!adminCard) return;
+  if(currentUserRole !== "admin"){
+    adminCard.classList.add("hidden");
+    return;
+  }
+  adminCard.classList.remove("hidden");
+
+  const picker = document.getElementById("userAccessCompanyPicker");
+  const roleSelect = document.getElementById("userAccessRoleSelect");
+  const listDiv = document.getElementById("userAccessCompanyList");
+  if(listDiv && !listDiv.dataset.built){
+    listDiv.dataset.built = "1";
+    listDiv.innerHTML = knownCompanies.map(c=>`
+      <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;background:var(--paper);border-radius:8px;padding:5px 9px;">
+        <input type="checkbox" value="${esc(companySlug(c.name))}"> ${esc(c.name)}
+      </label>`).join("") || `<span style="font-size:12px;opacity:.55;">ยังไม่มีบริษัทในระบบ</span>`;
+  }
+  if(roleSelect && !roleSelect.dataset.wired){
+    roleSelect.dataset.wired = "1";
+    roleSelect.addEventListener("change", ()=>{
+      if(picker) picker.style.display = roleSelect.value === "staff" ? "block" : "none";
+    });
+  }
+
+  db.ref("userAccess").once("value").then(snap=>{
+    const val = snap.val() || {};
+    const rows = Object.entries(val);
+    const body = document.getElementById("userAccessListBody");
+    if(!body) return;
+    if(rows.length === 0){
+      body.innerHTML = `<div style="font-size:12px;opacity:.55;">ยังไม่มีการตั้งสิทธิ์ — บัญชีทั้งหมดที่ยังไม่มีรายการที่นี่ถือเป็นแอดมิน (เข้าได้ทุกบริษัท) โดยปริยาย</div>`;
+      return;
+    }
+    body.innerHTML = rows.map(([uid,v])=>{
+      const companiesTxt = v.role === "staff"
+        ? (v.companies ? Object.keys(v.companies).length + " บริษัท" : "0 บริษัท")
+        : "ทุกบริษัท";
+      return `<div class="tax-cal-row">
+        <div><div class="tax-cal-name mono" style="font-size:11.5px;">${esc(uid)}</div><div class="tax-cal-date">${v.role === "staff" ? "พนักงาน" : "แอดมิน"} · ${esc(companiesTxt)}</div></div>
+        <button type="button" class="card-menu-btn" data-useraccess-del="${esc(uid)}" title="ลบสิทธิ์ (กลับเป็นแอดมินโดยปริยาย)">✕</button>
+      </div>`;
+    }).join("");
+    body.querySelectorAll("[data-useraccess-del]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const uid = btn.getAttribute("data-useraccess-del");
+        if(!confirm("ลบการตั้งสิทธิ์ของ UID นี้? บัญชีนี้จะกลับไปเป็นแอดมิน (เข้าได้ทุกบริษัท) โดยปริยาย")) return;
+        db.ref("userAccess/" + uid).remove().then(()=>renderUsersPanel());
+      });
+    });
+  });
+}
+
+document.getElementById("userAccessSaveBtn")?.addEventListener("click", ()=>{
+  const uid = document.getElementById("userAccessUidInput").value.trim();
+  if(!uid){ showToast("กรุณาใส่ User UID", "warn"); return; }
+  const role = document.getElementById("userAccessRoleSelect").value;
+  const data = { role };
+  if(role === "staff"){
+    const companies = {};
+    document.querySelectorAll("#userAccessCompanyList input[type=checkbox]:checked").forEach(chk=>{ companies[chk.value] = true; });
+    if(Object.keys(companies).length === 0){ showToast("เลือกอย่างน้อย 1 บริษัทสำหรับพนักงาน", "warn"); return; }
+    data.companies = companies;
+  }
+  db.ref("userAccess/" + uid).set(data).then(()=>{
+    showToast("บันทึกสิทธิ์แล้ว — ผู้ใช้ต้องออกจากระบบแล้วเข้าใหม่เพื่อให้มีผล");
+    document.getElementById("userAccessUidInput").value = "";
+    renderUsersPanel();
+  }).catch(err=>{
+    showToast("บันทึกไม่สำเร็จ: " + err.message, "warn");
+  });
+});
+
+/* ================= กระทบยอดสเตทเมนต์ธนาคาร (bank statement reconciliation) =================
+   Imported rows live at companies/{slug}/bankTx — a separate, additive node (wholesale-array,
+   same persistence pattern as entries/vendors via bankTxRef.set()). Matching only ever writes
+   to bankTx (a tx row's matchedNo), never to the ledger `entries` themselves, so this feature
+   can't corrupt or alter any existing bill record. */
+function reconcilePanelVisible(){
+  const p = document.getElementById("reconcilePanel");
+  return !!p && !p.classList.contains("hidden");
+}
+
+function persistBankTx(){
+  if(!bankTxRef) return;
+  bankTxRef.set(bankTx);
+}
+
+// Bank statement dates are frequently dd/mm/yyyy (Buddhist or Gregorian year) or yyyy-mm-dd —
+// unlike parseBillDate() this doesn't assume the app's own display format.
+function parseStatementDate(raw){
+  const s = String(raw==null ? "" : raw).trim();
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
+  if(m){
+    let y=Number(m[1]); if(y>2400) y-=543;
+    return `${y}-${String(m[2]).padStart(2,"0")}-${String(m[3]).padStart(2,"0")}`;
+  }
+  m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s);
+  if(m){
+    let y=Number(m[3]); if(y>2400) y-=543;
+    return `${y}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
+  }
+  return null;
+}
+
+function parseMoneyCell(v){
+  const n = Number(String(v==null?"":v).replace(/,/g,"").trim());
+  return Number.isFinite(n) ? n : 0;
+}
+
+document.getElementById("reconcileFileInput").addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  e.target.value = "";
+  await handleReconcileFile(file);
+});
+const reconcileDropzone = document.getElementById("reconcileDropzone");
+reconcileDropzone.addEventListener("dragover", e=>e.preventDefault());
+reconcileDropzone.addEventListener("drop", e=>{ e.preventDefault(); handleReconcileFile(e.dataTransfer.files[0]); });
+
+async function handleReconcileFile(file){
+  if(!file) return;
+  if(!companyName){ showToast("กรุณาเลือกบริษัทก่อนนำเข้าสเตทเมนต์", "warn"); return; }
+  try{
+    const buf = await file.arrayBuffer();
+    let wb;
+    if(/\.csv$/i.test(file.name)){
+      const text = decodeCsvBytes(new Uint8Array(buf));
+      wb = XLSX.read(text, { type:"string", raw:true });
+    } else {
+      wb = XLSX.read(buf, { type:"array", raw:true });
+    }
+
+    let added = 0, skipped = 0;
+    wb.SheetNames.forEach(sheetName=>{
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header:1, defval:"" });
+      if(rows.length < 2) return;
+      const header = rows[0];
+      const dateCol = findCol(header, ["วันที่","date"]);
+      const descCol = findCol(header, ["รายการ","desc","description","รายละเอียด"]);
+      const debitCol = findCol(header, ["ถอน","เดบิต","debit","หัก"]);
+      const creditCol = findCol(header, ["ฝาก","เครดิต","credit"]);
+      const amountCol = debitCol===-1 ? findCol(header, ["จำนวนเงิน","amount"]) : -1;
+      if(dateCol===-1 || (debitCol===-1 && amountCol===-1)){ return; } // doesn't look like a statement sheet — skip it
+
+      rows.slice(1).forEach(r=>{
+        const iso = parseStatementDate(r[dateCol]);
+        let amount = 0;
+        if(debitCol !== -1){
+          amount = parseMoneyCell(r[debitCol]);
+          if(amount<=0 && creditCol!==-1 && parseMoneyCell(r[creditCol])>0) return; // a deposit row — not relevant to bill reconciliation
+        } else {
+          const raw = parseMoneyCell(r[amountCol]);
+          amount = raw < 0 ? Math.abs(raw) : 0; // a single signed column: only negative = money out
+        }
+        if(!iso || amount<=0){ skipped++; return; }
+        bankTx.push({
+          id: uid(),
+          date: iso,
+          desc: String(descCol>=0 ? r[descCol]||"" : "").trim(),
+          amount,
+          matchedNo: null,
+          status: "unmatched",
+        });
+        added++;
+      });
+    });
+
+    if(added===0){ showToast("ไม่พบรายการถอนเงินที่นำเข้าได้จากไฟล์นี้ — ตรวจสอบว่ามีคอลัมน์ วันที่/ถอน หรือ วันที่/จำนวนเงิน", "warn"); return; }
+    persistBankTx();
+    autoMatchBankTx();
+    showToast(`นำเข้าสเตทเมนต์แล้ว ${added} รายการ${skipped?`, ข้าม ${skipped} แถวที่อ่านวันที่/จำนวนเงินไม่ได้`:""}`);
+  }catch(err){
+    showToast("นำเข้าไฟล์ไม่สำเร็จ: " + err.message, "warn");
+  }
+}
+
+function autoMatchBankTx(){
+  const usedEntryNos = new Set(bankTx.filter(t=>t.status==="matched" && t.matchedNo!=null).map(t=>t.matchedNo));
+  bankTx.forEach(tx=>{
+    if(tx.status !== "unmatched") return;
+    let best = null, bestDiff = Infinity;
+    entries.forEach(e=>{
+      if(usedEntryNos.has(e.no)) return;
+      const amt = Number(e.amount)||0;
+      if(Math.abs(amt - tx.amount) > Math.max(1, tx.amount*0.005)) return; // exact-ish amount only
+      const ed = parseBillDate(e.date);
+      const dayDiff = ed ? Math.abs((new Date(tx.date) - new Date(ed.iso)) / 86400000) : 3.5; // no parseable ledger date — still eligible, just deprioritized
+      if(dayDiff <= 3 && dayDiff < bestDiff){ best = e; bestDiff = dayDiff; }
+    });
+    if(best){
+      tx.matchedNo = best.no;
+      tx.status = "matched";
+      usedEntryNos.add(best.no);
+    }
+  });
+  persistBankTx();
+}
+
+function renderReconcile(){
+  renderScopeBanners();
+  const body = document.getElementById("reconcileBody");
+  if(!body) return;
+  if(!companyName){
+    body.innerHTML = `<div class="card">${emptyState("เลือกบริษัทก่อนเพื่อกระทบยอดสเตทเมนต์","🏢")}</div>`;
+    return;
+  }
+  if(bankTx.length===0){
+    body.innerHTML = `<div class="card">${emptyState('ยังไม่ได้นำเข้าสเตทเมนต์ของบริษัทนี้ — เลือกไฟล์ด้านบนเพื่อเริ่มกระทบยอด',"🔄")}</div>`;
+    return;
+  }
+
+  const matched = bankTx.filter(t=>t.status==="matched");
+  const ignored = bankTx.filter(t=>t.status==="ignored");
+  const unmatched = bankTx.filter(t=>t.status==="unmatched");
+  const matchedTotal = matched.reduce((s,t)=>s+t.amount,0);
+
+  const matchedNos = new Set(matched.map(t=>t.matchedNo));
+  const unmatchedEntries = entries.filter(e=>!matchedNos.has(e.no));
+
+  const entryOptionsFor = (tx)=>{
+    const usedElsewhere = new Set(bankTx.filter(t=>t.id!==tx.id && t.status==="matched").map(t=>t.matchedNo));
+    const candidates = entries.filter(e=>!usedElsewhere.has(e.no));
+    return `<option value="">-- ยังไม่จับคู่ --</option>`
+      + `<option value="ignore"${tx.status==="ignored"?" selected":""}>ไม่เกี่ยวกับบิล (ข้าม)</option>`
+      + candidates.map(e=>`<option value="${e.no}"${tx.matchedNo===e.no && tx.status==="matched"?" selected":""}>เลขที่ ${e.no} — ${esc(e.name||"-")} — ${fmtMoney(e.amount)} บาท</option>`).join("");
+  };
+
+  const rowsHtml = bankTx.slice().sort((a,b)=> (a.date<b.date?-1:a.date>b.date?1:0)).map(tx=>{
+    const matchedEntry = tx.status==="matched" ? entries.find(e=>e.no===tx.matchedNo) : null;
+    const statusHtml = tx.status==="matched"
+      ? `<span class="status-dot-row"><span class="status-dot ok"></span>จับคู่แล้ว</span>`
+      : tx.status==="ignored"
+        ? `<span class="status-dot-row"><span class="status-dot warn"></span>ข้าม</span>`
+        : `<span class="status-dot-row"><span class="status-dot bad"></span>ยังไม่จับคู่</span>`;
+    return `<tr>
+      <td>${esc(isoToThaiDate(tx.date))}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(tx.desc)}">${esc(tx.desc||"-")}</td>
+      <td class="num mono">${fmtMoney(tx.amount)}</td>
+      <td>${statusHtml}${matchedEntry?`<div style="font-size:11px;opacity:.6;">${esc(matchedEntry.name||"")}</div>`:""}</td>
+      <td><select data-tx-match="${tx.id}" style="font-size:12px;max-width:220px;">${entryOptionsFor(tx)}</select></td>
+      <td><button class="btn btn-ghost btn-sm" data-tx-del="${tx.id}" type="button">✕</button></td>
+    </tr>`;
+  }).join("");
+
+  // Bill-centric view: EVERY ledger entry, tagged with whether a matched statement row points at
+  // it — unmatched ones sorted to the top so the gap is the first thing the eye lands on.
+  const entriesWithStatus = entries.map(e=>({ e, found: matchedNos.has(e.no) }));
+  const billsFoundCount = entriesWithStatus.filter(x=>x.found).length;
+  const billsNotFoundCount = entriesWithStatus.length - billsFoundCount;
+  const billsRowsHtml = entriesWithStatus.length ? entriesWithStatus
+    .sort((a,b)=> (a.found===b.found) ? 0 : (a.found ? 1 : -1))
+    .map(({e,found})=>`
+      <tr>
+        <td>${e.no}</td>
+        <td>${esc(e.name||"-")}</td>
+        <td>${esc(e.date||"-")}</td>
+        <td class="num mono">${fmtMoney(e.amount)}</td>
+        <td>${found
+          ? `<span class="status-dot-row"><span class="status-dot ok"></span>พบใน Statement</span>`
+          : `<span class="status-dot-row"><span class="status-dot bad"></span>ไม่พบใน Statement</span>`}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="5" style="text-align:center;opacity:.55;">ยังไม่มีบิลในทะเบียนของบริษัทนี้</td></tr>`;
+
+  const summaryBadge = (label, count, colorVar) =>
+    `<span style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:${colorVar};">
+      <span style="width:8px;height:8px;border-radius:999px;background:${colorVar};display:inline-block;"></span>${label} ${nfInt.format(count)}
+    </span>`;
+
+  const stmtDonutSegs = [
+    { label:"จับคู่แล้ว", value:matched.length, amount:matchedTotal, from:DASH_COLORS.greenFrom, to:DASH_COLORS.greenTo },
+    { label:"ยังไม่จับคู่", value:unmatched.length, from:DASH_COLORS.pendFrom, to:DASH_COLORS.pendTo },
+    { label:"ข้าม", value:ignored.length, from:"#94A3B8", to:"#CBD5E1" },
+  ];
+  const billDonutSegs = [
+    { label:"พบใน Statement", value:billsFoundCount, from:DASH_COLORS.greenFrom, to:DASH_COLORS.greenTo },
+    { label:"ไม่พบใน Statement", value:billsNotFoundCount, from:DASH_COLORS.redFrom, to:DASH_COLORS.redTo },
+  ];
+  const matchRatePct = bankTx.length ? Math.round(matched.length/bankTx.length*100) : 0;
+
+  body.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:20px;">
+      <div class="kpi"><div class="kpi-top"><span class="kpi-icon blue">📄</span><span class="kpi-label">รายการใน Statement</span></div><div class="kpi-value">${nfInt.format(bankTx.length)}</div></div>
+      <div class="kpi"><div class="kpi-top"><span class="kpi-icon" style="background:var(--success-bg);">✅</span><span class="kpi-label">จับคู่แล้ว</span></div><div class="kpi-value" style="color:var(--success);">${nfInt.format(matched.length)}</div><div class="kpi-sub">${fmtMoney(matchedTotal)} บาท</div></div>
+      <div class="kpi"><div class="kpi-top"><span class="kpi-icon gold">⏳</span><span class="kpi-label">ยังไม่จับคู่</span></div><div class="kpi-value" style="color:var(--gold);">${nfInt.format(unmatched.length)}</div></div>
+      <div class="kpi"><div class="kpi-top"><span class="kpi-icon rust">⚠️</span><span class="kpi-label">บิลที่ยังไม่พบใน Statement</span></div><div class="kpi-value" style="color:var(--rust);">${nfInt.format(unmatchedEntries.length)}</div></div>
+    </div>
+    <div class="card">
+      <div class="chart-head"><span class="chart-title">📊 แดชบอร์ดสรุปการกระทบยอด</span><span class="chart-note">อัตรากระทบยอดฝั่ง Statement ${matchRatePct}%</span></div>
+      <div class="dash-two">
+        <div>
+          <div style="text-align:center;font-size:12px;font-weight:600;color:var(--ledger);margin-bottom:8px;">ฝั่งสเตทเมนต์ธนาคาร</div>
+          ${renderDonut(stmtDonutSegs, nfInt.format(bankTx.length), "รายการ")}
+          ${renderLegend(stmtDonutSegs, bankTx.length)}
+        </div>
+        <div>
+          <div style="text-align:center;font-size:12px;font-weight:600;color:var(--ledger);margin-bottom:8px;">ฝั่งบิลในทะเบียน</div>
+          ${renderDonut(billDonutSegs, nfInt.format(entries.length), "บิล")}
+          ${renderLegend(billDonutSegs, entries.length)}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-head-title">🏦 สเตทเมนต์ธนาคาร → กระทบข้อมูลบิล</span>
+        <button class="btn btn-ghost btn-sm" id="reconcileAutoMatchBtn" type="button" style="margin-left:auto;">🔁 จับคู่อัตโนมัติ</button>
+        <button class="btn btn-ghost btn-sm" id="reconcileClearBtn" type="button" style="color:var(--rust);border-color:var(--rust);">ล้าง Statement</button>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+        ${summaryBadge("จับคู่แล้ว", matched.length, "var(--success)")}
+        ${summaryBadge("ยังไม่จับคู่", unmatched.length, "var(--gold)")}
+        ${summaryBadge("ข้าม", ignored.length, "var(--ink)")}
+      </div>
+      <div class="scroll-list-md" style="overflow-x:auto;"><table class="company-status-table">
+        <thead><tr><th>วันที่</th><th>รายการ</th><th>จำนวนเงิน</th><th>สถานะ</th><th>จับคู่กับบิล</th><th></th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-head-title">🧾 ข้อมูลบิล → กระทบสเตทเมนต์ธนาคาร</span></div>
+      <p style="font-size:11.5px;opacity:.55;margin:0 0 10px;">บิลที่ "ไม่พบใน Statement" อาจเป็นเพราะจ่ายด้วยเงินสด/ช่องทางอื่นที่ไม่ผ่านบัญชีนี้ ไม่จำเป็นต้องผิดปกติเสมอไป</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+        ${summaryBadge("พบใน Statement", billsFoundCount, "var(--success)")}
+        ${summaryBadge("ไม่พบใน Statement", billsNotFoundCount, "var(--rust)")}
+      </div>
+      <div class="scroll-list-md" style="overflow-x:auto;"><table class="company-status-table">
+        <thead><tr><th>เลขที่</th><th>ผู้ขาย</th><th>วันที่</th><th>จำนวนเงิน</th><th>สถานะ</th></tr></thead>
+        <tbody>${billsRowsHtml}</tbody>
+      </table></div>
+    </div>`;
+
+  document.getElementById("reconcileAutoMatchBtn")?.addEventListener("click", ()=>{ autoMatchBankTx(); renderReconcile(); showToast("จับคู่อัตโนมัติเสร็จแล้ว"); });
+  document.getElementById("reconcileClearBtn")?.addEventListener("click", ()=>{
+    if(!confirm(`ล้างสเตทเมนต์ทั้งหมดของบริษัท "${companyName}"? การจับคู่ที่ทำไว้จะหายไปด้วย (ไม่กระทบทะเบียนบิล)`)) return;
+    bankTx = [];
+    persistBankTx();
+    renderReconcile();
+  });
+  body.querySelectorAll("[data-tx-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      bankTx = bankTx.filter(t=>t.id !== btn.getAttribute("data-tx-del"));
+      persistBankTx();
+      renderReconcile();
+    });
+  });
+  body.querySelectorAll("[data-tx-match]").forEach(sel=>{
+    sel.addEventListener("change", ()=>{
+      const tx = bankTx.find(t=>t.id === sel.getAttribute("data-tx-match"));
+      if(!tx) return;
+      const val = sel.value;
+      if(val === ""){ tx.matchedNo = null; tx.status = "unmatched"; }
+      else if(val === "ignore"){ tx.matchedNo = null; tx.status = "ignored"; }
+      else { tx.matchedNo = Number(val); tx.status = "matched"; }
+      persistBankTx();
+      renderReconcile();
+    });
+  });
+  bindTooltips(body);
+}
+
 /* ---------- dashboard controls ---------- */
 
 const dashFromInput  = document.getElementById("dashFrom");
@@ -3812,22 +5274,98 @@ dashBudgetInput.addEventListener("input", ()=>{
 /* ==================================================================
    ใบรับรองแทนใบเสร็จรับเงิน (Certificate tool) — separate tab, no persistence
    ================================================================== */
-function showTab(which){
-  const map = {
-    ledger: ["tabLedgerBtn","ledgerPanel"],
-    dash:   ["tabDashBtn","dashPanel"],
-    cert:   ["tabCertBtn","certPanel"],
-  };
-  Object.entries(map).forEach(([k,[btn,panel]])=>{
-    document.getElementById(btn).classList.toggle("active", k===which);
-    document.getElementById(panel).classList.toggle("hidden", k!==which);
-  });
-  if(which === "dash") renderDashboard();
-  document.body.classList.remove("mobile-nav-open"); // picking a tab closes the hamburger drawer too
+/* ---------------- Sidebar navigation (grouped multi-view IA) ----------------
+   Several sidebar items (นำเข้าเอกสาร/ทะเบียนเอกสาร/ตรวจสอบเอกสาร/ผู้ขาย/Mapping ผู้ขาย/
+   ตั้งค่าบริษัท/AI & API) are all different slices of the one existing ledgerPanel workflow —
+   splitting that tightly-wired staging→save→check pipeline into separate physical pages would
+   risk breaking it, so instead they just reveal+scroll to the relevant existing section inside
+   the same panel. ผังบัญชี and หมวดค่าใช้จ่าย share one view since there's no separate
+   "expense category" concept in the data model — both just list the acct codes in use. */
+const NAV_PANELS = {
+  "office-dash": "officeDashPanel",
+  "cert": "certPanel",
+  "ledger-import": "ledgerPanel",
+  "ledger-registry": "ledgerPanel",
+  "ledger-check": "ledgerPanel",
+  "ledger-vendors": "ledgerPanel",
+  "ledger-company": "ledgerPanel",
+  "ledger-ai": "ledgerPanel",
+  "coa": "coaPanel",
+  "users": "usersPanel",
+  "reconcile": "reconcilePanel",
+  "report-overview": "dashPanel",
+};
+const NAV_ANCHORS = {
+  "ledger-import": "dropzone",
+  "ledger-registry": "ledgerWrap",
+  "ledger-check": "ledgerVatFilterRow",
+  "ledger-vendors": "vendorAdminToggle",
+  "ledger-company": "companyCard",
+  "ledger-ai": "keyCard",
+};
+const ALL_PANEL_IDS = ["officeDashPanel","ledgerPanel","dashPanel","certPanel","coaPanel","usersPanel","reconcilePanel"];
+
+// Some of the target sections are collapsed-by-default accordions — force them open before
+// scrolling so "click nav item" always actually shows something, not a collapsed shell.
+function revealNavSection(anchorId){
+  if(anchorId === "companyCard"){
+    document.getElementById("companyDetailsBody")?.classList.remove("hidden");
+  } else if(anchorId === "keyCard"){
+    if(typeof setKeyCardCollapsed === "function") setKeyCardCollapsed(false);
+  } else if(anchorId === "vendorAdminToggle"){
+    document.getElementById("vendorAdminBody")?.classList.remove("hidden");
+    const chev = document.getElementById("vendorAdminChevron");
+    if(chev) chev.textContent = "▴ ซ่อน";
+  }
+  const el = document.getElementById(anchorId);
+  if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
 }
-document.getElementById("tabLedgerBtn").addEventListener("click", ()=>showTab("ledger"));
-document.getElementById("tabDashBtn").addEventListener("click", ()=>showTab("dash"));
-document.getElementById("tabCertBtn").addEventListener("click", ()=>showTab("cert"));
+
+function setActiveNav(navBtnId, navId){
+  document.querySelectorAll(".nav-item[data-nav]").forEach(btn=>{
+    const isActive = navBtnId ? (btn.id === navBtnId) : (btn.dataset.nav === navId);
+    btn.classList.toggle("active", isActive);
+  });
+}
+
+function showView(navId, opts){
+  opts = opts || {};
+  if(navId === "export-excel"){
+    document.getElementById("exportBtn")?.click();
+    return;
+  }
+  const panelId = NAV_PANELS[navId] || "officeDashPanel";
+  ALL_PANEL_IDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle("hidden", id !== panelId);
+  });
+  setActiveNav(opts.navBtnId, navId);
+  if(panelId === "dashPanel") renderDashboard();
+  if(panelId === "officeDashPanel" && typeof renderOfficeDashboard === "function") renderOfficeDashboard();
+  if(panelId === "coaPanel" && typeof renderCoaView === "function") renderCoaView();
+  if(panelId === "reconcilePanel" && typeof renderReconcile === "function") renderReconcile();
+  if(panelId === "usersPanel" && typeof renderUsersPanel === "function") renderUsersPanel();
+  if(panelId === "ledgerPanel" && typeof applyLedgerColumnWidths === "function"){
+    // the table was originally rendered while this panel was display:none, so its container had
+    // 0 width back then — recompute now that it's actually visible and has a real layout width.
+    setTimeout(()=>{ applyLedgerColumnWidths(); syncLedgerScrollMirror(); }, 0);
+  }
+  const anchorId = NAV_ANCHORS[navId];
+  if(anchorId) revealNavSection(anchorId);
+  document.body.classList.remove("mobile-nav-open"); // picking a nav item closes the hamburger drawer too
+  if(!opts.skipHash){ try{ history.replaceState(null, "", "#/" + navId); }catch(e){} }
+}
+
+document.querySelectorAll(".nav-item[data-nav]").forEach(btn=>{
+  btn.addEventListener("click", ()=> showView(btn.dataset.nav, { navBtnId: btn.id }));
+});
+
+// Backward-compat: genCertFromSelectionBtn's handler (and anything similar) still calls
+// showTab("cert") to jump to the certificate tab after building rows from a ledger selection.
+function showTab(which){
+  const map = { ledger:"ledger-registry", dash:"report-overview", cert:"cert" };
+  showView(map[which] || which);
+}
 
 /* ---------------- Hamburger menu (≤768px) ----------------
    Toggling body.mobile-nav-open reveals both the sidebar nav and the header's account/
@@ -4233,6 +5771,19 @@ function initAppAfterLogin(){
   renderCertTable();
   loadStorage(); // also applies the saved provider/model/key to the API-key card UI
   renderLedger();
+  renderSideCompanyCard();
+
+  document.getElementById("officeDashRefreshBtn")?.addEventListener("click", ()=> renderOfficeDashboard(true));
+  document.getElementById("officeDashAddCompanyBtn")?.addEventListener("click", ()=> document.getElementById("addCompanyBtn")?.click());
+
+  // Land on whichever view the URL hash points to (e.g. a bookmarked #/report-overview),
+  // otherwise the office-wide dashboard — the sensible default for an office managing many companies.
+  const hashNav = (location.hash || "").replace(/^#\/?/, "");
+  if(hashNav && Object.prototype.hasOwnProperty.call(NAV_PANELS, hashNav)){
+    showView(hashNav, { skipHash:true });
+  } else {
+    renderOfficeDashboard();
+  }
   // Photo attachments on the main ledger only persist when PHOTO_STORAGE_ENABLED is true — surface
   // that up front instead of letting the user assume the photo they just reviewed got saved with
   // the entry (the certificate tab is unaffected: it embeds photos as data URLs, not Firebase Storage).
