@@ -4905,6 +4905,12 @@ document.getElementById("userAccessSaveBtn")?.addEventListener("click", ()=>{
   const uid = document.getElementById("userAccessUidInput").value.trim();
   if(!uid){ showToast("กรุณาใส่ User UID", "warn"); return; }
   const role = document.getElementById("userAccessRoleSelect").value;
+  // The Security Rules block a "staff" account from writing to userAccess at all, including its
+  // own record — so an admin who sets their OWN uid to staff here cannot undo it from the app
+  // afterward (would need Firebase Console/CLI access to fix). Warn hard before letting that happen.
+  if(role === "staff" && uid === currentUid){
+    if(!confirm('นี่คือ UID ของบัญชีที่คุณใช้อยู่ตอนนี้เอง — ถ้าตั้งเป็น "พนักงาน" คุณจะเปลี่ยนกลับเป็นแอดมินเองผ่านหน้าเว็บไม่ได้อีก (ต้องให้ผู้ดูแลระบบ Firebase แก้ให้) ยืนยันจะทำต่อหรือไม่?')) return;
+  }
   const data = { role };
   if(role === "staff"){
     const companies = {};

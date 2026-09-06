@@ -1,0 +1,23 @@
+{
+  "rules": {
+    "userAccess": {
+      ".read": "auth != null && root.child('userAccess').child(auth.uid).child('role').val() !== 'staff'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && root.child('userAccess').child(auth.uid).child('role').val() !== 'staff'"
+      }
+    },
+    "companyIndex": {
+      ".read": "auth != null",
+      "$slug": {
+        ".write": "auth != null && (root.child('userAccess').child(auth.uid).child('role').val() !== 'staff' || root.child('userAccess').child(auth.uid).child('companies').child($slug).val() === true)"
+      }
+    },
+    "companies": {
+      "$slug": {
+        ".read": "auth != null && (root.child('userAccess').child(auth.uid).child('role').val() !== 'staff' || root.child('userAccess').child(auth.uid).child('companies').child($slug).val() === true)",
+        ".write": "auth != null && (root.child('userAccess').child(auth.uid).child('role').val() !== 'staff' || root.child('userAccess').child(auth.uid).child('companies').child($slug).val() === true)"
+      }
+    }
+  }
+}
