@@ -65,7 +65,15 @@
      narrow screen is usable content, and buttons/labels wrap onto their own lines cleanly instead
      of squeezing sideways. */
   @media(max-width:900px){
-    .app-shell{flex-direction:column;}
+    /* align-items:stretch is the real fix, not a tidy-up: the base rule's align-items:flex-start
+       was written for the ROW layout (top-align sidebar next to main-col) — once flex-direction
+       flips to column here, align-items instead controls the CROSS axis, which is now horizontal.
+       flex-start there means "shrink each child to its own content width, left-aligned" instead
+       of "fill the screen width", so .main-col (and .sidebar) silently reverted to shrink-to-fit
+       sizing — wide enough to fit its widest unwrapped content — rather than the phone's actual
+       width, which is what kept leaving a stray ~30-60px of horizontal overflow even after
+       individual overflowing rows inside it were fixed. */
+    .app-shell{flex-direction:column;align-items:stretch;}
     .sidebar{width:100%;min-height:0;position:static;border-right:none;border-bottom:1px solid var(--ledger-line);
       padding:10px 12px;overflow-x:auto;}
     .sidebar .side-steps{display:none;}
@@ -99,6 +107,18 @@
        their own overflow-x:auto wrapper so that wrapper's internal horizontal scroll still works. */
     .main-col *:not(table):not(canvas){max-width:100%;}
     .main-col input,.main-col select,.main-col textarea,.main-col button,.main-col .btn{min-width:0 !important;}
+    /* Extra containment boundary on the company-selector card specifically: max-width:100% above
+       only caps a descendant's width relative to ITS PARENT — if that parent itself ever gets
+       transiently inflated (an in-flight accordion/animation frame, a flex item whose siblings
+       haven't finished laying out, etc.), "100% of an already-too-wide parent" is still too wide,
+       and the excess silently balloons the WHOLE page's scrollable width (invisible — overflow-x:
+       hidden on body clips it, so the bookkeeper just sees content cut off with no way to scroll
+       to the rest — this is what "เห็นครึ่งหน้า" turned out to be, traced to this card's row).
+       Scoped to just this card (not every .card) because setting overflow-x alone computes
+       overflow-y to auto per spec, which would clip #columnChooserPanel's dropdown on the ledger
+       table's toolbar if applied there. */
+    #companyCard{overflow-x:hidden;}
+    .key-row > *{max-width:100% !important;}
     /* Hamburger: the nav (sidebar) and the header's account/notification/logout cluster both
        collapse behind ☰ and reveal in normal document flow (not a floating overlay) when
        body.mobile-nav-open is toggled — see the hamburgerBtn click handler in the script. */
@@ -111,7 +131,16 @@
     }
     body.mobile-nav-open .header-actions .btn{width:100%;justify-content:center;}
     .sidebar{display:none;}
-    body.mobile-nav-open .sidebar{display:block;}
+    body.mobile-nav-open .sidebar{display:block;max-height:calc(100vh - 120px);overflow-y:auto;}
+    /* The ≤900px tablet rule above flattens the sidebar into a single horizontal scrolling row
+       of tabs (flex-direction:row + nav-group's display:contents) — that rule still matches here
+       too (media queries stack), so without this override the phone drawer inherits the tablet's
+       row layout: ~13 buttons squeezed onto one line, each label wrapping character-by-character.
+       Restore the intended full vertical drawer (grouped, labeled) at phone width instead. */
+    body.mobile-nav-open .sidebar .tab-nav{flex-direction:column;gap:2px;}
+    body.mobile-nav-open .sidebar .nav-group{display:block;}
+    body.mobile-nav-open .sidebar .nav-group-label{display:block;}
+    body.mobile-nav-open .sidebar .side-company-card{display:block;}
 
     /* Summary cards: exactly 2 columns (not auto-fit, which can give 1 or 3 depending on width).
        !important because this file's convention is to declare each component's base rule near
@@ -122,7 +151,13 @@
 
     /* All forms: 1 column, label above field, field full width — no fixed/min pixel widths. */
     .setup-grid{grid-template-columns:1fr !important;}
-    .key-row,.key-row-sub{flex-direction:column !important;align-items:stretch !important;}
+    /* flex-wrap:nowrap is the actual fix here, not just a tidy-up: the base (desktop) rule sets
+       flex-wrap:wrap for row-direction wrapping, which is harmless there — but flex-direction:
+       column + flex-wrap:wrap together makes overflowing items start a NEW COLUMN TO THE RIGHT
+       instead of stacking, which is exactly what was silently pushing #companyInput/
+       #switchCompanyBtn/#companyStatus far off-screen and ballooning the whole page's scrollable
+       width (traced from real bug reports of a phone screen showing content cut in half). */
+    .key-row,.key-row-sub{flex-direction:column !important;flex-wrap:nowrap !important;align-items:stretch !important;}
     .key-row strong{width:100%;}
     .key-row input,.key-row select{min-width:0 !important;width:100% !important;flex:1 1 100% !important;}
     .new-vendor-grid{grid-template-columns:1fr !important;}
@@ -152,13 +187,13 @@
     .cert-card-total-row{display:flex;}
 
     /* Upload dropzone actions stack full-width instead of sitting side by side. */
-    .dropzone-actions{flex-direction:column !important;align-items:stretch !important;}
+    .dropzone-actions{flex-direction:column !important;flex-wrap:nowrap !important;align-items:stretch !important;}
     .dropzone-actions .btn{width:100%;justify-content:center;}
     .dropzone{padding:16px !important;}
 
     /* "+ เพิ่มแถวเอง" moves under the "รายการ (N)" heading and goes full width, instead of
        sitting to the right of the heading where it could crowd/overflow on a narrow screen. */
-    .cert-toolbar{flex-direction:column !important;align-items:stretch !important;}
+    .cert-toolbar{flex-direction:column !important;flex-wrap:nowrap !important;align-items:stretch !important;}
     .cert-toolbar .btn{width:100%;}
   }
   @media(max-width:480px){
@@ -580,6 +615,10 @@
   .kpi-grid-5{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:stretch;margin-bottom:18px;}
   .office-dash-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
   .office-dash-cols{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;}
+  /* Grid items default to min-width:auto (= their content's min-content width) — without this,
+     the wide company-status table inside (even though IT has its own overflow-x:auto wrapper)
+     forces this whole grid track, and with it the page itself, wider than the viewport on phones. */
+  .office-dash-cols > div{min-width:0;}
   @media(max-width:980px){ .office-dash-cols{grid-template-columns:1fr;} }
   .task-list{display:flex;flex-direction:column;gap:2px;}
   .task-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--ledger-line);
@@ -1014,7 +1053,7 @@
       <div style="overflow-x:auto;margin-bottom:14px;">
         <table id="vendorTable">
           <thead><tr>
-            <th><input type="checkbox" id="vendorSelectAllChk" title="เลือกทั้งหมดที่แสดงอยู่"></th><th>รหัส</th><th>ชื่อผู้ขาย</th><th>คำอธิบาย</th><th>ผังบัญชี</th><th></th>
+            <th><input type="checkbox" id="vendorSelectAllChk" title="เลือกทั้งหมดที่แสดงอยู่"></th><th>รหัส</th><th>ชื่อผู้ขาย</th><th>ชื่อ EN</th><th>เลขบัญชี 4 หลัก</th><th>คำอธิบาย</th><th>ผังบัญชี</th><th></th>
           </tr></thead>
           <tbody id="vendorTableBody"></tbody>
         </table>
@@ -1024,6 +1063,8 @@
         <div class="new-vendor-grid" style="display:grid;grid-template-columns:1fr;gap:8px;">
           <input type="text" id="newVendorCode" placeholder="รหัส เช่น วร-003">
           <input type="text" id="newVendorName" placeholder="ชื่อผู้ขาย">
+          <input type="text" id="newVendorNameEn" placeholder="ชื่อ EN (ถ้ามี — ช่วยจับคู่สลิปที่มีแต่อังกฤษ)">
+          <input type="text" id="newVendorAcctLast4" placeholder="เลขบัญชี 4 หลักท้าย (คั่นด้วย , ถ้ามีหลายเลข)">
           <input type="text" id="newVendorDesc" placeholder="คำอธิบาย เช่น ซื้อวัตถุดิบ-อาหาร">
           <input type="text" id="newVendorAcct" list="acctDatalist" placeholder="ผังบัญชี เช่น 5110-01">
         </div>
@@ -1039,7 +1080,10 @@
   <!-- Staging area -->
   <div class="card hidden" id="stagingCard">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">ตรวจสอบก่อนบันทึก (<span id="stagingCount">0</span>)</h2>
+      <div>
+        <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">ตรวจสอบก่อนบันทึก (<span id="stagingCount">0</span>)</h2>
+        <div id="stagingCostTotal" style="font-size:11px;opacity:.6;margin-top:2px;"></div>
+      </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-ghost" id="stagingClearAllBtn" type="button">✕ ล้างทั้งหมด</button>
         <button class="btn btn-primary" id="saveAllBtn">✓ บันทึกทั้งหมดเข้าทะเบียน</button>
@@ -1065,10 +1109,15 @@
         <button class="btn btn-ghost hidden" id="ledgerExitFullscreenBtn" type="button">✕ ออกจากโหมดเต็มจอ</button>
       </div>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="ledgerVatFilterRow">
-      <button class="btn btn-ghost" data-vat-filter="all" type="button">ทั้งหมด</button>
-      <button class="btn btn-ghost" data-vat-filter="vat" type="button">มี VAT</button>
-      <button class="btn btn-ghost" data-vat-filter="novat" type="button">ไม่มี VAT</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+      <div id="ledgerVatFilterRow" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" data-vat-filter="all" type="button">ทั้งหมด</button>
+        <button class="btn btn-ghost" data-vat-filter="vat" type="button">มี VAT</button>
+        <button class="btn btn-ghost" data-vat-filter="novat" type="button">ไม่มี VAT</button>
+      </div>
+      <select id="ledgerMonthFilter" title="กรองตารางและ Export Excel ให้เหลือเฉพาะเดือนที่เลือก — ไม่กระทบข้อมูลเดือนอื่นที่บันทึกไว้"></select>
+      <input type="text" id="ledgerSearchInput" placeholder="🔍 ค้นหา ชื่อผู้ขาย / เลขที่บิล / รหัส / จำนวนเงิน / วันที่" style="flex:1;min-width:220px;">
+      <button class="btn btn-ghost hidden" id="ledgerSearchClearBtn" type="button" title="ล้างคำค้นหา">✕</button>
     </div>
     <div class="table-scroll-mirror" id="ledgerScrollTop"><div id="ledgerScrollTopInner"></div></div>
     <div id="ledgerWrap" class="ledger-table-fixed"></div>
@@ -1210,36 +1259,197 @@ const SEED_VENDORS = [
   { code:"กร-002", name:"กรมพัฒนาธุรกิจการค้า", desc:"ค่าใช้จ่ายเบ็ดเตล็ด", acct:"5370-05" },
 ];
 const SAEW_EMPORIUM_NAME = "บริษัท แซว เอ็มโพเรียม จำกัด";
-const STRIP_PREFIXES = ["บริษัท","บจก.","บจก","จำกัด (มหาชน)","จำกัด","ห้างหุ้นส่วนจำกัด","หจก.","ร้าน","นางสาว","น.ส.","นาง","นาย","คุณ"];
+// Prefixes/suffixes stripped from Thai vendor names before comparison — order matters
+// (longest/most-specific first) since they're removed with plain startsWith/endsWith loops.
+const VENDOR_NAME_PREFIXES = ["ห้างหุ้นส่วนจำกัด","ห้างหุ้นส่วนสามัญ","ห้างหุ้นส่วน","บริษัท","บจก.","บจก","หจก.","หจก","ร้าน","นางสาว","น.ส.","นาย","นาง","คุณ"];
+const VENDOR_NAME_SUFFIXES = ["จำกัด (มหาชน)","จำกัด(มหาชน)","มหาชน","จำกัด"];
 
 function companySlug(name){
   return String(name||"").trim().replace(/[.#$\[\]\/]/g, "_");
 }
 
-function normalizeVendor(raw){
-  if(!raw) return "";
-  let s = String(raw).replace(/\u00a0/g," ").trim();
-  STRIP_PREFIXES.forEach(p=>{ s = s.split(p).join(" "); });
-  s = s.replace(/[().,]/g," ").replace(/\s+/g,"").toLowerCase();
-  return s;
-}
-function matchVendor(rawName, vendorList){
-  const norm = normalizeVendor(rawName);
-  if(!norm) return null;
-  let best=null, bestScore=0;
-  for(const v of vendorList){
-    const vNorm = normalizeVendor(v.name);
-    if(!vNorm) continue;
-    let score=0;
-    if(vNorm===norm) score=100;
-    else if(vNorm.includes(norm)||norm.includes(vNorm)) score = Math.min(vNorm.length,norm.length)/Math.max(vNorm.length,norm.length)*90;
-    else{
-      let i=0; while(i<vNorm.length && i<norm.length && vNorm[i]===norm[i]) i++;
-      if(i>=3) score = (i/Math.max(vNorm.length,norm.length))*60;
+function hasThaiChars(s){ return /[฀-๿]/.test(String(s||"")); }
+
+// Strip company/personal-name prefixes and entity-type suffixes from a raw Thai vendor
+// name (e.g. "บริษัท เอบีซี จำกัด (มหาชน)" → "เอบีซี"), and drop bracketed text.
+function stripVendorAffixes(raw){
+  let s = String(raw||"").replace(/ /g," ").trim();
+  s = s.replace(/[(（][^)）]*[)）]/g, " ");
+  let changed = true;
+  while(changed){
+    changed = false;
+    for(const p of VENDOR_NAME_PREFIXES){
+      if(s.startsWith(p)){ s = s.slice(p.length).replace(/^\s+/,""); changed = true; }
     }
-    if(score>bestScore){bestScore=score;best=v;}
   }
-  return bestScore>=45 ? best : null;
+  changed = true;
+  while(changed){
+    changed = false;
+    for(const suf of VENDOR_NAME_SUFFIXES){
+      if(s.endsWith(suf)){ s = s.slice(0,-suf.length).replace(/\s+$/,""); changed = true; }
+    }
+  }
+  return s.trim();
+}
+
+// Folds Thai vowels/tone marks (unreliable in OCR/handwriting) and consonants that share a
+// sound (e.g. ษ/ศ/ส) into one canonical form, so near-homophone spellings compare equal.
+function foldThaiChars(s){
+  return String(s||"")
+    .replace(/[ัิ-ฺ็-๎]/g,"")
+    .replace(/[ษศ]/g,"ส").replace(/ณ/g,"น").replace(/[ฆฃค]/g,"ข").replace(/[ฏฐฑฒถ]/g,"ต").replace(/ฬ/g,"ล");
+}
+
+// Thai-side normalization: strips prefixes/suffixes/brackets, folds near-homophones, then
+// collapses everything to a single lowercase key with no whitespace/punctuation — used for
+// exact/prefix/fuzzy comparison where word boundaries no longer matter.
+function normalizeVendorName(raw){
+  const folded = foldThaiChars(stripVendorAffixes(raw));
+  return folded.replace(/[\s.,()]/g,"").toLowerCase();
+}
+// Same pipeline but keeps word boundaries — used only for the "any whole word matches
+// exactly" fuzzy-match bonus (e.g. "ประไพ" matching regardless of surname truncation).
+function vendorNameTokens(raw){
+  const stripped = stripVendorAffixes(raw).replace(/[.,()]/g," ");
+  return stripped.split(/\s+/).map(t=>foldThaiChars(t).toLowerCase()).filter(Boolean);
+}
+
+// English/romanized-side normalization: uppercase, drop common entity/honorific tokens, then
+// collapse whitespace/punctuation. Never compared against a Thai-normalized string — English OCR
+// text and Thai OCR text are always scored against a vendor's separate nameEn/name fields.
+function normalizeEn(raw){
+  let s = " " + String(raw||"").toUpperCase().replace(/[.,]/g," ") + " ";
+  ["CO","LTD","LIMITED","PCL","MR","MRS","MS"].forEach(w=>{ s = s.split(" "+w+" ").join(" "); });
+  return s.replace(/\s+/g,"");
+}
+
+// Dice coefficient over character bigrams — a standard fuzzy-string-similarity measure that
+// tolerates a few substituted/dropped characters (common in OCR misreads) far better than a
+// straight equality or substring check.
+function diceCoefficient(a, b){
+  if(!a || !b) return 0;
+  if(a===b) return 1;
+  if(a.length<2 || b.length<2) return 0;
+  const bigrams = (s)=>{ const m=new Map(); for(let i=0;i<s.length-1;i++){ const bg=s.substr(i,2); m.set(bg,(m.get(bg)||0)+1); } return m; };
+  const ba = bigrams(a), bb = bigrams(b);
+  let intersect = 0;
+  for(const [bg,count] of ba){ if(bb.has(bg)) intersect += Math.min(count, bb.get(bg)); }
+  return (2*intersect) / ((a.length-1) + (b.length-1));
+}
+
+// Bank-slip receiver names are frequently cut off mid-word — either by the slip layout itself
+// (marked with trailing ++ / … / , / ..) or, for the compact mobile-slip format, always (format
+// "B" never shows the full name even without a trailing marker).
+function isTruncated(raw, slipFormat){
+  if(slipFormat==="B") return true;
+  return /(\+\+|…|\.\.|,)\s*$/.test(String(raw||"").trim());
+}
+function stripTruncationMarker(raw){
+  return String(raw||"").trim().replace(/(\+\+|…|\.\.|,)+\s*$/,"").trim();
+}
+
+// Scores one OCR-read name against one vendor's name in a single language/normalizer. A
+// truncated query only ever needs to be a PREFIX of the real name — never penalized for the
+// part that was cut off — which is why that check is flat 0.90 rather than length-ratio based.
+function scoreNameMatch(queryRaw, candidateRaw, normalizeFn, tokenizeFn, truncated){
+  if(!queryRaw || !candidateRaw) return 0;
+  const qRaw = truncated ? stripTruncationMarker(queryRaw) : queryRaw;
+  const qNorm = normalizeFn(qRaw);
+  const cNorm = normalizeFn(candidateRaw);
+  if(!qNorm || !cNorm) return 0;
+  if(qNorm===cNorm) return 0.95;
+  if(truncated && qNorm.length>=2 && cNorm.startsWith(qNorm)) return 0.90;
+  let score = diceCoefficient(qNorm, cNorm) * 0.93;
+  if(tokenizeFn){
+    const qTokens = tokenizeFn(qRaw);
+    const cTokens = new Set(tokenizeFn(candidateRaw));
+    if(qTokens.some(t=>t.length>=2 && cTokens.has(t))) score += 0.15;
+  }
+  return Math.min(score, 0.93);
+}
+
+// Core vendor-matching logic — see the "จับคู่ผู้ขายอัตโนมัติจากสลิปโอนเงิน" spec in chat.
+// ocr = { nameTh, nameEn, acctLast4, slipFormat }. Priority order:
+//   a) destination account last-4 digits already bound to a vendor → 1.00, instant
+//   b) OCR text matches a previously-learned alias verbatim (after normalizing) → 1.00
+//   c) exact normalized Thai-name match → 0.95
+//   d) truncated-name prefix match → 0.90
+//   e) fuzzy (bigram Dice + whole-word bonus)
+//   f) Thai and English are scored independently against a vendor's name/nameEn and the
+//      higher score wins; if both land on the SAME vendor, +0.15 corroboration bonus; if they
+//      point at two DIFFERENT vendors, the result is capped below the auto-fill threshold so
+//      the bookkeeper has to pick — conflicting signals should never silently auto-fill.
+function matchVendor(ocr, vendorList){
+  const nameTh = (ocr && ocr.nameTh) || "";
+  const nameEn = (ocr && ocr.nameEn) || "";
+  const acctLast4 = (ocr && ocr.acctLast4) || "";
+  const slipFormat = (ocr && ocr.slipFormat) || "";
+  const empty = { vendor:null, confidence:0, reason:"none", candidates:[] };
+  if(!Array.isArray(vendorList) || vendorList.length===0) return empty;
+
+  if(acctLast4){
+    const hit = vendorList.find(v=>Array.isArray(v.acctLast4) && v.acctLast4.includes(acctLast4));
+    if(hit) return { vendor:hit, confidence:1.00, reason:"acctLast4", candidates:[] };
+  }
+
+  const aliasMatch = (raw)=>{
+    const trimmed = String(raw||"").trim();
+    if(!trimmed) return null;
+    const norm = hasThaiChars(trimmed) ? normalizeVendorName(trimmed) : normalizeEn(trimmed);
+    if(!norm) return null;
+    for(const v of vendorList){
+      const aliases = Array.isArray(v.aliases) ? v.aliases : [];
+      for(const a of aliases){
+        const aNorm = hasThaiChars(a) ? normalizeVendorName(a) : normalizeEn(a);
+        if(aNorm && aNorm===norm) return v;
+      }
+    }
+    return null;
+  };
+  const aliasHit = aliasMatch(nameTh) || aliasMatch(nameEn);
+  if(aliasHit) return { vendor:aliasHit, confidence:1.00, reason:"alias", candidates:[] };
+
+  const truncated = isTruncated(nameTh, slipFormat) || isTruncated(nameEn, slipFormat);
+  const scored = new Map(); // code -> best score seen (Thai or English)
+  let thaiBest=null, thaiScore=0, enBest=null, enScore=0;
+
+  if(nameTh){
+    for(const v of vendorList){
+      const s = scoreNameMatch(nameTh, v.name, normalizeVendorName, vendorNameTokens, truncated);
+      if(s>0) scored.set(v.code, Math.max(scored.get(v.code)||0, s));
+      if(s>thaiScore){ thaiScore=s; thaiBest=v; }
+    }
+  }
+  if(nameEn){
+    for(const v of vendorList){
+      if(!v.nameEn) continue;
+      const s = scoreNameMatch(nameEn, v.nameEn, normalizeEn, null, truncated);
+      if(s>0) scored.set(v.code, Math.max(scored.get(v.code)||0, s));
+      if(s>enScore){ enScore=s; enBest=v; }
+    }
+  }
+
+  let vendor = thaiScore>=enScore ? thaiBest : enBest;
+  let confidence = Math.max(thaiScore, enScore);
+  // Only treat the weaker-language score as real corroborating (or conflicting) evidence once
+  // it clears a floor — otherwise a coincidental near-zero bigram overlap on the side with no
+  // real signal could spuriously inflate or downgrade a confident single-language match.
+  if(thaiBest && enBest && thaiScore>=0.3 && enScore>=0.3){
+    if(thaiBest.code===enBest.code){
+      confidence = Math.min(1, Math.max(thaiScore,enScore) + 0.15);
+      vendor = thaiBest;
+    } else if(thaiScore>=0.5 && enScore>=0.5){
+      // two different vendors, both with real signal — force a manual choice
+      confidence = Math.min(confidence, 0.79);
+    }
+  }
+
+  const candidates = [...scored.entries()]
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,3)
+    .map(([code,s])=>{ const v=vendorList.find(x=>x.code===code); return { code, name:v?v.name:code, confidence:s }; });
+
+  return confidence>0 ? { vendor, confidence, reason:"fuzzy", candidates } : empty;
 }
 function fmtMoney(n){ const num=Number(n)||0; return num.toLocaleString("th-TH",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function todayThai(){ const d=new Date(); const dd=String(d.getDate()).padStart(2,"0"); const mm=String(d.getMonth()+1).padStart(2,"0"); return `${dd}/${mm}/${d.getFullYear()}`; }
@@ -1270,7 +1480,10 @@ async function splitPdfIntoPages(file){
 // Resize+compress the photo before OCR/upload: cuts Claude API image-token cost AND keeps
 // Firebase Storage usage small (a few hundred KB per bill instead of several MB from a raw phone photo).
 function resizeImageToJpegBlob(file, maxDim, quality){
-  maxDim = maxDim || 1280; quality = quality || 0.8;
+  // 1024 (was 1280) — vision API cost scales with pixel count (~width×height/750 tokens), so this
+  // cuts image tokens by roughly a third on every call. Printed slip/receipt text stays legible at
+  // this size; only worth raising back if dense small print starts getting misread.
+  maxDim = maxDim || 1024; quality = quality || 0.8;
   return new Promise((resolve, reject)=>{
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -1323,8 +1536,49 @@ function buildExtractPrompt(companyName){
 - ก่อนตอบ ให้ตรวจทานอีกครั้งว่าอ่านครบทุกหน้า/ทุกเอกสารที่ปรากฏในไฟล์แล้วจริง ๆ ห้ามข้ามหน้าใดหน้าหนึ่งไปเฉย ๆ จำนวน element ใน JSON array ที่ตอบกลับต้องครบเท่ากับจำนวนเอกสารที่แท้จริงทั้งหมดในไฟล์
 - ตอบสั้น กระชับ ห้ามใส่คำอธิบายเพิ่มเติมนอกเหนือจากข้อมูลที่ขอ
 
+กติกาเพิ่มเติมสำหรับ "สลิปโอนเงิน" (ชื่อผู้รับปลายทางมักถูกตัดไม่ครบ):
+- สลิป K BIZ และธนาคารอื่นมี 2 ฟอร์แมตหลัก: (A) เต็มหน้า A4 มักมีชื่อผู้รับทั้งภาษาไทยและอังกฤษ แต่ชื่อไทยอาจยังถูกตัดท้าย (สังเกตจากลงท้ายด้วย ++ หรือ , หรือ …) (B) ฟอร์แมตย่อ/สลิปมือถือ มักมีเฉพาะภาษาอังกฤษและตัดสั้นเสมอแม้ไม่มีสัญลักษณ์ต่อท้าย — ให้ระบุ slip_format เป็น "A" หรือ "B" ตามที่เห็น ถ้าเอกสารไม่ใช่สลิปโอนเงินให้ใส่ null
+- คัดลอกชื่อผู้รับตามที่เห็นจริงในภาพเสมอแม้จะดูไม่สมบูรณ์/ถูกตัด ห้ามเดาหรือเติมส่วนที่ขาดหายไปเอง — ใส่ชื่อภาษาไทยที่เห็นใน vendor_name และชื่อภาษาอังกฤษ/โรมันที่เห็นใน vendor_name_en (มีอย่างใดอย่างหนึ่งอย่างเดียวก็ได้ ไม่ต้องแปลข้ามภาษาเอง)
+- ถ้าเห็นเลขบัญชีปลายทาง (ช่อง ไปยัง/To มักมีรูปแบบประมาณ xxx-x-xxxxx-x) ให้อ่านเฉพาะ 4 หลักสุดท้ายใส่ dest_account_last4 (ตัวเลขล้วน 4 หลัก) ถ้าไม่เห็นเลขบัญชีให้ใส่ null
+
 ตอบกลับเป็น JSON array เท่านั้น (ต่อให้มีแค่ 1 เอกสารก็ต้องห่อด้วย array 1 element) ห้ามมีข้อความอื่นใด ห้ามใช้ markdown fence ตามรูปแบบนี้เป๊ะ — 1 element ต่อ 1 เอกสารที่พบ:
-[{"vendor_name": string|null, "bill_no": string|null, "date": string|null, "amount": number|null, "vat": number|null, "vendor_tax_id": string|null, "doc_type": string, "confidence": "high"|"medium"|"low", "note": string|null}]`;
+[{"vendor_name": string|null, "vendor_name_en": string|null, "dest_account_last4": string|null, "slip_format": "A"|"B"|null, "bill_no": string|null, "date": string|null, "amount": number|null, "vat": number|null, "vendor_tax_id": string|null, "doc_type": string, "confidence": "high"|"medium"|"low", "note": string|null}]`;
+}
+
+// Lightweight, TEXT-ONLY follow-up — only called when the deterministic matchVendor() in
+// applyExtractResultToRow found nothing usable (confidence < 0.50). Attaching the full vendor
+// list to the (expensive, image-carrying) extraction call above on every single bill was costing
+// real money on every bill regardless of whether it was ever needed — most bills already match
+// locally via acctLast4/alias/name, so this keeps that cost at zero for the common case and only
+// pays for AI-assisted phonetic matching on the rare bill that actually needs it.
+function buildVendorMatchPrompt(nameTh, nameEn, vendorList){
+  const list = vendorList.map(v=>{
+    const last4 = Array.isArray(v.acctLast4) && v.acctLast4.length ? v.acctLast4.join("/") : "-";
+    return `${v.code} | ${v.name}${v.nameEn ? " / " + v.nameEn : ""} | เลขบัญชีลงท้าย: ${last4}`;
+  }).join("\n");
+  return `ชื่อผู้รับโอนเงินที่อ่านได้จากสลิปธนาคาร (อาจถูกตัดไม่ครบ):
+ภาษาไทย: ${nameTh ? `"${nameTh}"` : "(ไม่มี)"}
+ภาษาอังกฤษ: ${nameEn ? `"${nameEn}"` : "(ไม่มี)"}
+
+รายชื่อผู้ขายในทะเบียนของบริษัทนี้ (รหัส | ชื่อไทย/อังกฤษ | เลขบัญชีลงท้าย):
+${list}
+
+ลองจับคู่ชื่อข้างต้นกับผู้ขายในทะเบียน โดยดูชื่อที่ขึ้นต้นตรงกัน (กรณีถูกตัดท้าย) หรือเสียงอ่านใกล้เคียงกันข้ามภาษา (เช่น ชื่ออังกฤษ "WANCHAROEN" ออกเสียงใกล้เคียงกับชื่อไทย "วันเจริญ") ถ้าพบผู้ขายที่น่าจะตรงกัน ให้ตอบรหัสใน code พร้อมความมั่นใจ 0-1 ใน confidence และเหตุผลสั้น ๆ (1 ประโยค) ใน reason ถ้าไม่มั่นใจหรือไม่พบให้ตอบ null ทั้งสามช่อง
+ตอบเป็น JSON เท่านั้น ไม่มีข้อความอื่น: {"code": string|null, "confidence": number|null, "reason": string|null}`;
+}
+async function suggestVendorMatch(nameTh, nameEn, vendorList, apiKey){
+  if(!vendorList.length || (!nameTh && !nameEn)) return null;
+  try{
+    const { text:raw, usage } = await callVisionAIRaw({ base64:null, mediaType:null, promptText:buildVendorMatchPrompt(nameTh, nameEn, vendorList), apiKey, maxTokens:256 });
+    // This call's own (small) cost still counts toward "real cost of this bill" even when it
+    // comes back empty — the caller adds aiCostThb into the row alongside the main call's cost.
+    const aiCostThb = calcAiCostThb(usage, selectedModel);
+    const cleaned = raw.replace(/```json|```/g,"").trim();
+    const parsed = JSON.parse(cleaned);
+    return { match: (parsed && parsed.code) ? parsed : null, aiCostThb };
+  }catch(e){
+    return null; // best-effort assist only — a failure here must never block saving the bill itself
+  }
 }
 
 /* ---------------- VAT compliance checks (มาตรา 86/4 + เลขผู้เสียภาษี 13 หลัก) ---------------- */
@@ -1469,7 +1723,7 @@ async function callAnthropicRaw({base64, mediaType, promptText, apiKey, maxToken
   if(data.stop_reason==="max_tokens"){
     throw new Error("คำตอบจาก AI ถูกตัดเพราะยาวเกินไป (max_tokens) — ลองอ่านใหม่อีกครั้ง หรือแยกไฟล์ให้เล็กลง");
   }
-  return textBlock.text;
+  return { text:textBlock.text, usage:data.usage || null };
 }
 
 async function callGeminiRaw({base64, mediaType, promptText, apiKey, maxTokens}){
@@ -1494,7 +1748,11 @@ async function callGeminiRaw({base64, mediaType, promptText, apiKey, maxTokens})
   }
   const textPart = (candidate.content?.parts || []).find(p=>typeof p.text === "string");
   if(!textPart) throw new Error("ไม่ได้รับข้อความตอบกลับจาก AI");
-  return textPart.text;
+  // Normalize to the same {input_tokens, output_tokens} shape callAnthropicRaw returns, so
+  // calcAiCostThb works identically regardless of provider.
+  const um = data.usageMetadata;
+  const usage = um ? { input_tokens: um.promptTokenCount||0, output_tokens: um.candidatesTokenCount||0 } : null;
+  return { text:textPart.text, usage };
 }
 
 async function callVisionAIRaw(args){
@@ -1502,7 +1760,7 @@ async function callVisionAIRaw(args){
 }
 
 async function callClaudeVision(base64, mediaType, apiKey, companyName){
-  const raw = await callVisionAIRaw({ base64, mediaType, promptText:buildExtractPrompt(companyName), apiKey, maxTokens:8192 });
+  const { text:raw, usage } = await callVisionAIRaw({ base64, mediaType, promptText:buildExtractPrompt(companyName), apiKey, maxTokens:8192 });
   const cleaned = raw.replace(/```json|```/g,"").trim();
   // Returns an array — one element per distinct document found in the file (a multi-page
   // PDF may contain several unrelated bills that each need their own ledger row).
@@ -1514,7 +1772,7 @@ async function callClaudeVision(base64, mediaType, apiKey, companyName){
   }
   const list = Array.isArray(parsed) ? parsed : [parsed];
   if(list.length===0) throw new Error("AI ไม่พบเอกสารในไฟล์นี้");
-  return list;
+  return { list, aiCostThb:calcAiCostThb(usage, selectedModel), tokensIn:usage&&usage.input_tokens, tokensOut:usage&&usage.output_tokens, model:selectedModel };
 }
 
 /* ---------------- Firebase (shared realtime storage, namespaced per client company) ---------------- */
@@ -1643,12 +1901,44 @@ const PROVIDER_MODELS = {
     { value:"claude-sonnet-4-6", label:"Claude Sonnet 4.6 — แม่นยำกว่า (~0.4-0.7 บาท/รูป)" },
     { value:"claude-haiku-4-5-20251001", label:"Claude Haiku 4.5 — ประหยัดกว่า (~0.15-0.25 บาท/รูป)" }
   ],
+  // gemini-2.5-flash/-pro (and the guessed gemini-3.6-pro) all 404'd as Google keeps bumping
+  // version numbers out from under hardcoded model IDs. Switched to Google's own "-latest" alias
+  // models instead — confirmed to exist and support generateContent via a live ListModels call —
+  // which Google itself keeps pointed at its current model, so this stops breaking on every future
+  // Gemini version bump instead of just moving the breakage to the next one.
   gemini: [
-    { value:"gemini-2.5-flash", label:"Gemini 2.5 Flash — เร็ว/ประหยัด" },
-    { value:"gemini-2.5-pro", label:"Gemini 2.5 Pro — แม่นยำกว่า" }
+    { value:"gemini-flash-latest", label:"Gemini Flash (latest) — เร็ว/ประหยัด" },
+    { value:"gemini-pro-latest", label:"Gemini Pro (latest) — แม่นยำกว่า" }
   ]
 };
-const PROVIDER_DEFAULT_MODEL = { anthropic:"claude-sonnet-4-6", gemini:"gemini-2.5-flash" };
+// Haiku default (was Sonnet) — ~3x cheaper per bill; still first-time users only, since anyone
+// who already picked a model has that saved in their own browser's localStorage untouched.
+const PROVIDER_DEFAULT_MODEL = { anthropic:"claude-haiku-4-5-20251001", gemini:"gemini-flash-latest" };
+// Real per-call cost, computed from the actual token usage each response reports — not the rough
+// "~0.4-0.7 บาท/รูป" estimate in the guide card, which is only a range for planning ahead of time.
+// Prices are USD per 1M tokens from each provider's published rate card at the time this was
+// written — check console.anthropic.com/settings/billing and ai.google.dev/pricing if these ever
+// look off, since neither provider is queried live for current pricing. The Gemini figures below
+// are CARRIED OVER from the older 2.5 models (no rate card is published per-alias, since "-latest"
+// can point to a different underlying model over time) — treat as a rough placeholder, not a
+// guaranteed real price.
+const AI_PRICE_USD_PER_M = {
+  "claude-sonnet-4-6": { input:3, output:15 },
+  "claude-haiku-4-5-20251001": { input:1, output:5 },
+  "gemini-flash-latest": { input:0.30, output:2.50 },
+  "gemini-pro-latest": { input:1.25, output:10 },
+};
+const THB_PER_USD = 35; // approximate — matches the rate already used in the guide's cost estimate
+const AI_MODEL_SHORT_LABEL = {
+  "claude-sonnet-4-6":"Sonnet 4.6", "claude-haiku-4-5-20251001":"Haiku 4.5",
+  "gemini-flash-latest":"Gemini Flash", "gemini-pro-latest":"Gemini Pro",
+};
+function calcAiCostThb(usage, model){
+  const price = AI_PRICE_USD_PER_M[model];
+  if(!price || !usage) return null;
+  const usd = (usage.input_tokens||0)/1e6*price.input + (usage.output_tokens||0)/1e6*price.output;
+  return usd * THB_PER_USD;
+}
 const PROVIDER_INFO = {
   anthropic: {
     label:"Anthropic API Key", placeholder:"sk-ant-...",
@@ -2325,22 +2615,100 @@ function updateProcessingNote(){
 
 const PDF_THUMB_SVG = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56"><rect width="56" height="56" rx="6" fill="#EA580C"/><text x="28" y="35" font-size="15" fill="white" text-anchor="middle" font-family="sans-serif" font-weight="bold">PDF</text></svg>');
 
-function applyExtractResultToRow(row, result, vendors){
-  const matched = matchVendor(result.vendor_name, vendors);
+async function applyExtractResultToRow(row, result, vendors, apiKey){
+  const nameTh = result.vendor_name || "";
+  const nameEn = result.vendor_name_en || "";
+  const acctLast4 = /^\d{4}$/.test(String(result.dest_account_last4||"")) ? String(result.dest_account_last4) : "";
+  const slipFormat = (result.slip_format==="A" || result.slip_format==="B") ? result.slip_format : "";
+  const ocr = { nameTh, nameEn, acctLast4, slipFormat };
+  const match = matchVendor(ocr, vendors);
+  // >=0.80 auto-fills (spec §6); anything the deterministic matcher itself resolved is
+  // trustworthy enough to fill the form without a click.
+  const isAuto = !!match.vendor && match.confidence>=0.80;
+
   row.status = "done";
-  row.vendorRaw = result.vendor_name || "";
-  row.code = matched ? matched.code : "";
-  row.name = matched ? matched.name : (result.vendor_name || "");
+  row.vendorRaw = nameTh || nameEn || "";
+  row.nameTh = nameTh;
+  row.nameEn = nameEn;
+  row.acctLast4 = acctLast4;
+  row.slipFormat = slipFormat;
+  row.code = isAuto ? match.vendor.code : "";
+  row.name = isAuto ? match.vendor.name : (nameTh || nameEn || "");
   row.billNo = result.bill_no || "";
-  row.desc = matched ? matched.desc : "";
-  row.acct = matched ? matched.acct : "";
+  row.desc = isAuto ? match.vendor.desc : "";
+  row.acct = isAuto ? match.vendor.acct : "";
   row.date = isoToThaiDate(result.date) || todayThai();
   row.amount = result.amount!=null ? Number(result.amount) : "";
   row.vat = result.vat!=null ? Number(result.vat) : "";
   row.transfer = result.amount!=null ? Number(result.amount) : "";
   row.taxId = result.vendor_tax_id ? String(result.vendor_tax_id).replace(/\D/g,"") : "";
-  row.matched = !!matched;
+  row.matched = isAuto;
   row.note = result.note || "";
+  // 0.50–0.79 tier: show the top matches as click-to-confirm chips instead of auto-filling.
+  row.candidates = (!isAuto && match.confidence>=0.50) ? match.candidates : [];
+  row.aiProposal = null;
+  // Only pay for an AI phonetic-matching assist when the deterministic matcher found NOTHING
+  // usable at all — this is the rare case (mainly English-only/format-B slips) it's actually
+  // needed for. Keeping the vendor list off the main (per-bill, image-carrying) extraction call
+  // above and only sending it here, on-demand, is what keeps this feature from costing money on
+  // every single bill regardless of whether the assist was ever needed (see chat: it used to add
+  // ~1 บาท/บิล to EVERY bill via a 100+ vendor list attached unconditionally).
+  if(!isAuto && match.confidence<0.50 && (nameTh||nameEn) && vendors.length && apiKey){
+    const assist = await suggestVendorMatch(nameTh, nameEn, vendors, apiKey);
+    if(assist){
+      // Counted separately from the main call's aiCostThb (set by the caller after this
+      // function returns) — renderStagingRow/updateStagingCount add both together.
+      row.aiAssistCostThb = assist.aiCostThb;
+      const guess = assist.match;
+      const guessVendor = guess && guess.code ? vendors.find(v=>v.code===String(guess.code)) : null;
+      // Always a proposal requiring a click, per spec §7 — never merged into row.matched even at
+      // high AI-reported confidence.
+      if(guessVendor) row.aiProposal = { code:guessVendor.code, name:guessVendor.name, confidence:typeof guess.confidence==="number"?guess.confidence:null, reason:guess.reason||"" };
+    }
+  }
+  // Yellow "unknown account" banner (spec §8): this destination account isn't bound to any
+  // vendor yet, regardless of whether the name itself happened to match something.
+  row.acctUnknown = !!acctLast4 && !vendors.some(v=>Array.isArray(v.acctLast4) && v.acctLast4.includes(acctLast4));
+}
+
+// Remembers a confirmed vendor↔slip binding (spec §9): the account's last-4 digits and the raw
+// OCR name(s) get attached to that vendor record so the next slip from the same account/name
+// matches instantly at confidence 1.00 (acctLast4 exact hit or alias exact hit). Only ever
+// called from an explicit user action (a manual pick or an actual save) — never automatically
+// while a row is just sitting in the staging list, so nothing is written without the bookkeeper
+// having acted on it.
+function learnVendorBinding(code, raw){
+  const v = vendors.find(x=>x.code===code);
+  if(!v) return;
+  let changed = false;
+  const acctLast4 = raw && raw.acctLast4;
+  if(acctLast4){
+    if(!Array.isArray(v.acctLast4)) v.acctLast4 = [];
+    if(!v.acctLast4.includes(acctLast4)){ v.acctLast4.push(acctLast4); changed = true; }
+  }
+  if(!Array.isArray(v.aliases)) v.aliases = [];
+  [raw && raw.nameTh, raw && raw.nameEn].forEach(n=>{
+    const trimmed = String(n||"").trim();
+    if(trimmed && !v.aliases.includes(trimmed)){ v.aliases.push(trimmed); changed = true; }
+  });
+  if(changed) persistVendors();
+}
+
+// Fills a staging row's form fields from a chosen vendor — used by the existing code <select>,
+// the 0.50–0.79 suggestion chips, and the AI-proposal chip. Always a direct user click, so this
+// is also where the vendor↔slip binding above gets learned.
+function applyVendorChoiceToRow(el, row, code, vendorList){
+  const v = vendorList.find(x=>x.code===code);
+  if(!v) return;
+  el.querySelector(".f-code").value = code;
+  el.querySelector(".f-name").value = v.name;
+  el.querySelector(".f-desc").value = v.desc;
+  el.querySelector(".f-acct").value = v.acct;
+  row.code = code;
+  row.matched = true;
+  el.classList.remove("new-vendor");
+  learnVendorBinding(code, { acctLast4: row.acctLast4, nameTh: row.nameTh, nameEn: row.nameEn });
+  el.querySelectorAll(".flag-note, .acct-unknown-warn").forEach(n=>n.remove());
 }
 
 async function handleFiles(fileList){
@@ -2384,13 +2752,16 @@ async function handleFiles(fileList){
         try{
           const photoBlob = pages[p];
           const base64 = await toBase64(photoBlob);
-          const results = await callClaudeVision(base64, "application/pdf", apiKey, companyName);
+          const { list:results, aiCostThb, tokensIn, tokensOut, model } = await callClaudeVision(base64, "application/pdf", apiKey, companyName);
           row.photoBlob = photoBlob;
-          applyExtractResultToRow(row, results[0], vendors);
+          await applyExtractResultToRow(row, results[0], vendors, apiKey);
+          const aiCallId = uid(); // shared by every row from this one call, so a batch total can dedupe
+          Object.assign(row, { aiCostThb, aiTokensIn:tokensIn, aiTokensOut:tokensOut, aiModel:model, aiCostShared:results.length>1, aiCallId });
           for(let i=1;i<results.length;i++){
             const extraRow = { id: uid(), status:"processing", photoName:`${pageLabel} · เอกสารที่ ${i+1}/${results.length} ในหน้านี้`, previewUrl, photoBlob };
             stagingRows.push(extraRow);
-            applyExtractResultToRow(extraRow, results[i], vendors);
+            await applyExtractResultToRow(extraRow, results[i], vendors, apiKey);
+            Object.assign(extraRow, { aiCostThb, aiTokensIn:tokensIn, aiTokensOut:tokensOut, aiModel:model, aiCostShared:true, aiCallId });
             renderStagingRow(extraRow);
           }
         }catch(err){
@@ -2410,17 +2781,20 @@ async function handleFiles(fileList){
         row.photoBlob = photoBlob;
         // A single photo can still contain several unrelated bills (e.g. a collage) —
         // callClaudeVision always returns an array, one entry per document it found.
-        const results = await callClaudeVision(base64, "image/jpeg", apiKey, companyName);
+        const { list:results, aiCostThb, tokensIn, tokensOut, model } = await callClaudeVision(base64, "image/jpeg", apiKey, companyName);
         const multi = results.length > 1;
         if(multi){
           row.photoName = `${file.name} (1/${results.length})`;
           showToast(`${file.name}: พบ ${results.length} บิลในไฟล์เดียว — แยกเป็น ${results.length} แถวให้แล้ว`, "ok");
         }
-        applyExtractResultToRow(row, results[0], vendors);
+        await applyExtractResultToRow(row, results[0], vendors, apiKey);
+        const aiCallId = uid(); // shared by every row from this one call, so a batch total can dedupe
+        Object.assign(row, { aiCostThb, aiTokensIn:tokensIn, aiTokensOut:tokensOut, aiModel:model, aiCostShared:multi, aiCallId });
         for(let i=1;i<results.length;i++){
           const extraRow = { id: uid(), status:"processing", photoName:`${file.name} (${i+1}/${results.length})`, previewUrl, photoBlob };
           stagingRows.push(extraRow);
-          applyExtractResultToRow(extraRow, results[i], vendors);
+          await applyExtractResultToRow(extraRow, results[i], vendors, apiKey);
+          Object.assign(extraRow, { aiCostThb, aiTokensIn:tokensIn, aiTokensOut:tokensOut, aiModel:model, aiCostShared:true, aiCallId });
           renderStagingRow(extraRow);
         }
       }catch(err){
@@ -2437,6 +2811,27 @@ async function handleFiles(fileList){
 function updateStagingCount(){
   stagingCountEl.textContent = stagingRows.length;
   if(kpiPendingCountEl) kpiPendingCountEl.textContent = stagingRows.length;
+  const costTotalEl = document.getElementById("stagingCostTotal");
+  if(costTotalEl){
+    // Sum the main extraction call once per distinct API call (aiCallId) — several rows can
+    // share one call's cost when a single photo/page contains multiple documents. The
+    // vendor-match assist cost, in contrast, is always genuinely per-row (it runs separately for
+    // each document), so it's added per row with no dedup.
+    const seen = new Set();
+    let total = 0, anyPriced = false, anyUnpriced = false;
+    stagingRows.forEach(r=>{
+      if(r.status!=="done") return;
+      if(r.aiCostThb == null){ anyUnpriced = true; }
+      else if(!r.aiCallId || !seen.has(r.aiCallId)){
+        if(r.aiCallId) seen.add(r.aiCallId);
+        total += r.aiCostThb; anyPriced = true;
+      }
+      if(r.aiAssistCostThb != null){ total += r.aiAssistCostThb; anyPriced = true; }
+    });
+    costTotalEl.textContent = anyPriced
+      ? `💰 รวมค่าใช้จ่าย AI จริงของชุดนี้: ${total.toFixed(3)} บาท${anyUnpriced ? " (บางรายการไม่มีตารางราคาสำหรับโมเดลนี้)" : ""}`
+      : "";
+  }
 }
 
 function renderStagingRow(row){
@@ -2458,12 +2853,18 @@ function renderStagingRow(row){
     return;
   }
   const vendorOptions = vendors.map(v=>`<option value="${esc(v.code)}" ${v.code===row.code?"selected":""}>${esc(v.code)} · ${esc(v.name)}</option>`).join("");
+  // Spec §8: this destination account isn't bound to any vendor yet — flag it above the form
+  // so picking a vendor below (which binds it via learnVendorBinding) is an obvious next step.
+  const acctWarnHtml = row.acctUnknown
+    ? `<div class="warn-box acct-unknown-warn" style="margin-bottom:8px;">⚠️ ไม่พบเลขบัญชี x${esc(row.acctLast4)} ในทะเบียน — เลือกผู้ขายด้านล่างเพื่อผูกเลขบัญชีนี้ไว้ใช้ครั้งถัดไป</div>`
+    : "";
   el.innerHTML = `
     <div class="staging-head">
       <img class="thumb" src="${row.previewUrl}">
       <span style="font-size:12px;opacity:.6;flex:1;">${esc(row.photoName)}</span>
       <button class="close-btn" data-remove="${row.id}">✕</button>
     </div>
+    ${acctWarnHtml}
     <div class="field-grid">
       <div class="field"><label>รหัส</label>
         <select class="f-code">
@@ -2522,39 +2923,62 @@ function renderStagingRow(row){
   codeSel.addEventListener("change", (e)=>{
     const v = vendors.find(x=>x.code===e.target.value);
     if(v){
-      el.querySelector(".f-name").value = v.name;
-      el.querySelector(".f-desc").value = v.desc;
-      el.querySelector(".f-acct").value = v.acct;
-      row.matched = true;
-      el.classList.remove("new-vendor");
+      applyVendorChoiceToRow(el, row, v.code, vendors);
     } else {
       row.matched = false;
     }
   });
   if(!row.matched){
-    const flagDiv = document.createElement("div");
-    flagDiv.className = "flag-note";
-    flagDiv.style.flexWrap = "wrap";
-    flagDiv.innerHTML = `⚠ ผู้ขายใหม่ ไม่พบในประวัติ — ตรวจสอบรหัส/คำอธิบาย/ผังบัญชีก่อนบันทึก (ระบบจะจำไว้ใช้ครั้งถัดไป)
-      <button class="btn btn-ghost ai-fill-desc-btn" type="button" style="font-size:11px;padding:4px 8px;margin-left:6px;">✨ AI ช่วยเติมคำอธิบาย/ผังบัญชี</button>`;
-    el.appendChild(flagDiv);
-    flagDiv.querySelector(".ai-fill-desc-btn").addEventListener("click", async (e)=>{
-      const btn = e.currentTarget;
-      const vname = el.querySelector(".f-name").value.trim();
-      if(!vname){ showToast("กรุณาพิมพ์ชื่อผู้ขายก่อน", "warn"); return; }
-      const original = btn.textContent;
-      btn.textContent = "⏳ กำลังคิด..."; btn.disabled = true;
-      try{
-        const result = await suggestVendorDescAcct(vname);
-        el.querySelector(".f-desc").value = result.desc || "";
-        el.querySelector(".f-acct").value = result.acct || "";
-        showToast(result.note ? "AI แนะนำ: " + result.note : "AI ช่วยเติมให้แล้ว ตรวจสอบก่อนบันทึก", "ok");
-      }catch(err){
-        showToast("AI ช่วยเติมไม่สำเร็จ: " + err.message, "warn");
-      }finally{
-        btn.textContent = original; btn.disabled = false;
-      }
-    });
+    // 0.50–0.79 tier (spec §6): click-to-confirm suggestions from the deterministic
+    // acct/alias/name matcher — never auto-filled, just one click away.
+    if(row.candidates && row.candidates.length){
+      const sugDiv = document.createElement("div");
+      sugDiv.className = "flag-note";
+      sugDiv.style.flexWrap = "wrap";
+      sugDiv.innerHTML = `ใกล้เคียง: ` + row.candidates.map(c=>
+        `<button type="button" class="btn btn-ghost suggest-vendor-btn" data-code="${esc(c.code)}" style="font-size:11px;padding:3px 8px;">${esc(c.code)} · ${esc(c.name)} (${Math.round(c.confidence*100)}%)</button>`
+      ).join(" ");
+      el.appendChild(sugDiv);
+      sugDiv.querySelectorAll(".suggest-vendor-btn").forEach(btn=>{
+        btn.addEventListener("click", ()=>applyVendorChoiceToRow(el, row, btn.getAttribute("data-code"), vendors));
+      });
+    }
+    // AI's own guess from the extraction call (spec §7) — mainly rescues English-only/format-B
+    // slips the deterministic matcher can't score confidently. Always a proposal, never auto-filled.
+    if(row.aiProposal){
+      const aiDiv = document.createElement("div");
+      aiDiv.className = "flag-note";
+      aiDiv.style.flexWrap = "wrap";
+      const pct = row.aiProposal.confidence!=null ? ` (${Math.round(row.aiProposal.confidence*100)}%)` : "";
+      aiDiv.innerHTML = `🤖 AI แนะนำ: <button type="button" class="btn btn-ghost suggest-vendor-btn" data-code="${esc(row.aiProposal.code)}" style="font-size:11px;padding:3px 8px;">${esc(row.aiProposal.code)} · ${esc(row.aiProposal.name)}${pct}</button>${row.aiProposal.reason ? " — " + esc(row.aiProposal.reason) : ""}`;
+      el.appendChild(aiDiv);
+      aiDiv.querySelector(".suggest-vendor-btn").addEventListener("click", ()=>applyVendorChoiceToRow(el, row, row.aiProposal.code, vendors));
+    }
+    if(!(row.candidates && row.candidates.length) && !row.aiProposal){
+      const flagDiv = document.createElement("div");
+      flagDiv.className = "flag-note";
+      flagDiv.style.flexWrap = "wrap";
+      flagDiv.innerHTML = `⚠ ผู้ขายใหม่ ไม่พบในประวัติ — ตรวจสอบรหัส/คำอธิบาย/ผังบัญชีก่อนบันทึก (ระบบจะจำไว้ใช้ครั้งถัดไป)
+        <button class="btn btn-ghost ai-fill-desc-btn" type="button" style="font-size:11px;padding:4px 8px;margin-left:6px;">✨ AI ช่วยเติมคำอธิบาย/ผังบัญชี</button>`;
+      el.appendChild(flagDiv);
+      flagDiv.querySelector(".ai-fill-desc-btn").addEventListener("click", async (e)=>{
+        const btn = e.currentTarget;
+        const vname = el.querySelector(".f-name").value.trim();
+        if(!vname){ showToast("กรุณาพิมพ์ชื่อผู้ขายก่อน", "warn"); return; }
+        const original = btn.textContent;
+        btn.textContent = "⏳ กำลังคิด..."; btn.disabled = true;
+        try{
+          const result = await suggestVendorDescAcct(vname);
+          el.querySelector(".f-desc").value = result.desc || "";
+          el.querySelector(".f-acct").value = result.acct || "";
+          showToast(result.note ? "AI แนะนำ: " + result.note : "AI ช่วยเติมให้แล้ว ตรวจสอบก่อนบันทึก", "ok");
+        }catch(err){
+          showToast("AI ช่วยเติมไม่สำเร็จ: " + err.message, "warn");
+        }finally{
+          btn.textContent = original; btn.disabled = false;
+        }
+      });
+    }
   }
   if(row.note){
     const noteDiv = document.createElement("div");
@@ -2562,6 +2986,29 @@ function renderStagingRow(row){
     noteDiv.textContent = "หมายเหตุจาก AI: " + row.note;
     el.appendChild(noteDiv);
   }
+  // Real cost of THIS bill, from the actual token usage the response(s) reported — not the
+  // rough "~0.4-0.7 บาท/รูป" planning estimate in the guide card. Two possible calls: the main
+  // extraction (always) and the vendor-matching assist (only when that fired — see
+  // applyExtractResultToRow), summed together.
+  const rowCost = rowTotalAiCost(row);
+  if(rowCost != null){
+    const costDiv = document.createElement("div");
+    costDiv.style.cssText = "font-size:11px;opacity:.6;margin-top:2px;";
+    const modelLabel = AI_MODEL_SHORT_LABEL[row.aiModel] || row.aiModel || "";
+    const tokenPart = (row.aiTokensIn!=null && row.aiTokensOut!=null)
+      ? ` (${modelLabel} · ${nfInt.format(row.aiTokensIn)} input / ${nfInt.format(row.aiTokensOut)} output tokens)` : "";
+    const assistPart = row.aiAssistCostThb!=null ? ` + ${row.aiAssistCostThb.toFixed(3)} บาท (ช่วยจับคู่ผู้ขาย)` : "";
+    const sharedPart = row.aiCostShared ? " — รวมทุกเอกสารในไฟล์/หน้านี้" : "";
+    costDiv.textContent = `💰 ค่าใช้จ่าย AI จริง: ${rowCost.toFixed(3)} บาท${tokenPart}${assistPart}${sharedPart}`;
+    el.appendChild(costDiv);
+  }
+}
+// Sums a row's main-call + vendor-match-assist costs (either may be absent/null). Returns null
+// only when NEITHER call produced a priced result (e.g. provider is Gemini for the main call and
+// the assist never fired), so the cost line/total can cleanly hide itself in that case.
+function rowTotalAiCost(row){
+  if(row.aiCostThb == null && row.aiAssistCostThb == null) return null;
+  return (row.aiCostThb||0) + (row.aiAssistCostThb||0);
 }
 
 // Flags a likely-duplicate bill: same vendor name + amount + date already in the saved ledger,
@@ -2635,12 +3082,17 @@ document.getElementById("saveAllBtn").addEventListener("click", async ()=>{
     const transferVal = el.querySelector(".f-transfer").value;
     const transfer = transferVal==="" ? amount : (parseFloat(transferVal)||0);
     if(!name || !amount){ continue; }
-    const candidate = { code, name, billNo, desc, date: date||todayThai(), acct, amount, vat, taxId, transfer, _id: row.id, _photoBlob: row.photoBlob };
+    const candidate = { code, name, billNo, desc, date: date||todayThai(), acct, amount, vat, taxId, transfer, _id: row.id, _photoBlob: row.photoBlob, aiCostThb: rowTotalAiCost(row) };
     toCommit.push(candidate);
     const dup = findDuplicateEntry(candidate);
     if(dup) dupWarnings.push(`${name} (เลขที่บิล ${billNo||"—"} / ${candidate.date} / ${amount.toLocaleString()} บาท ซ้ำกับรายการที่ ${dup.no})`);
     if(code && !vendors.find(v=>v.code===code)){
       newlyLearned.push({ code, name, desc, acct });
+    } else if(code){
+      // Covers rows auto-filled via name/prefix fuzzy matching (0.80–0.99, never the exact
+      // acctLast4/alias path) that the bookkeeper never had to click a suggestion for — saving
+      // is itself the confirming action, so the account/aliases still get bound going forward.
+      learnVendorBinding(code, { acctLast4: row.acctLast4, nameTh: row.nameTh, nameEn: row.nameEn });
     }
   }
   if(toCommit.length===0){
@@ -2692,7 +3144,7 @@ document.getElementById("saveAllBtn").addEventListener("click", async ()=>{
         photoFailCount++; // non-fatal — entry still saves, just without a linked photo
       }
     }
-    entries.push({ no:startNo+i+1, code:r.code, name:r.name, billNo:r.billNo, desc:r.desc, date:r.date, acct:r.acct, amount:r.amount, vat:r.vat, taxId:r.taxId, transfer:r.transfer, photoUrl, createdAt:Date.now() });
+    entries.push({ no:startNo+i+1, code:r.code, name:r.name, billNo:r.billNo, desc:r.desc, date:r.date, acct:r.acct, amount:r.amount, vat:r.vat, taxId:r.taxId, transfer:r.transfer, photoUrl, createdAt:Date.now(), aiCostThb:r.aiCostThb });
   }
   persistEntries();
   const committedIds = new Set(toCommit.map(r=>r._id));
@@ -2716,6 +3168,8 @@ const entryCountEl = document.getElementById("entryCount");
 const kpiTotalDocsEl = document.getElementById("kpiTotalDocs");
 const kpiPassCountEl = document.getElementById("kpiPassCount");
 let ledgerVatFilter = "all"; // all | vat | novat
+let ledgerMonthFilter = "all"; // "all" or a parseBillDate key like "2026-03" — keeps next month's entries from reading as mixed in with old ones
+let ledgerSearchQuery = ""; // free-text filter — helps spot a missing/duplicate bill in a long ledger
 let selectedLedgerNos = new Set(); // entries ticked for "สร้างใบรับรองแทนใบเสร็จจากรายการที่เลือก"
 
 document.querySelectorAll("#ledgerVatFilterRow [data-vat-filter]").forEach(btn=>{
@@ -2729,6 +3183,49 @@ document.querySelectorAll("#ledgerVatFilterRow [data-vat-filter]").forEach(btn=>
   });
 });
 document.querySelector('#ledgerVatFilterRow [data-vat-filter="all"]').classList.replace("btn-ghost","btn-primary");
+
+// Month filter — options are derived from whatever months actually have entries, so a fresh
+// month's bills automatically get their own option the moment the first one is saved.
+const ledgerMonthFilterEl = document.getElementById("ledgerMonthFilter");
+function refreshLedgerMonthOptions(){
+  const keys = new Set();
+  entries.forEach(e=>{ const d = parseBillDate(e.date); if(d) keys.add(d.key); });
+  const sorted = [...keys].sort().reverse();
+  const options = [`<option value="all">ทุกเดือน</option>`, ...sorted.map(k=>`<option value="${k}">${esc(monthLabelFull(k))}</option>`)];
+  if(ledgerMonthFilter!=="all" && !keys.has(ledgerMonthFilter)) ledgerMonthFilter = "all";
+  ledgerMonthFilterEl.innerHTML = options.join("");
+  ledgerMonthFilterEl.value = ledgerMonthFilter;
+}
+ledgerMonthFilterEl.addEventListener("change", ()=>{
+  ledgerMonthFilter = ledgerMonthFilterEl.value;
+  renderLedger();
+});
+
+// Free-text search across the fields a bookkeeper would actually search by when hunting for a
+// missing or possibly-duplicate bill: vendor code/name, bill number, description, chart-of-
+// accounts code, exact-ish amount, and date — matched as independent words (all must match
+// somewhere, in any field) so "ประไพ 7350" finds a ประไพ bill for 7,350 without needing the exact
+// phrase or field order.
+const ledgerSearchInput = document.getElementById("ledgerSearchInput");
+const ledgerSearchClearBtn = document.getElementById("ledgerSearchClearBtn");
+function entryMatchesSearch(e, query){
+  if(!query) return true;
+  const haystack = [e.code, e.name, e.billNo, e.desc, e.acct, e.date, fmtMoney(e.amount), String(e.amount||"")]
+    .map(v=>String(v||"").toLowerCase()).join("   ");
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  return words.every(w=>haystack.includes(w));
+}
+ledgerSearchInput.addEventListener("input", ()=>{
+  ledgerSearchQuery = ledgerSearchInput.value.trim();
+  ledgerSearchClearBtn.classList.toggle("hidden", !ledgerSearchQuery);
+  renderLedger();
+});
+ledgerSearchClearBtn.addEventListener("click", ()=>{
+  ledgerSearchInput.value = "";
+  ledgerSearchQuery = "";
+  ledgerSearchClearBtn.classList.add("hidden");
+  renderLedger();
+});
 
 function renderLedger(){
   if(typeof dashboardVisible === "function" && dashboardVisible()) renderDashboard();
@@ -2745,13 +3242,15 @@ function renderLedger(){
     ledgerWrap.innerHTML = `<div class="empty">ยังไม่มีรายการ — ถ่ายรูปบิลด้านบนเพื่อเริ่มบันทึก</div>`;
     return;
   }
+  refreshLedgerMonthOptions();
   const filtered = entries.filter(e=>{
-    if(ledgerVatFilter==="vat") return hasVat(e);
-    if(ledgerVatFilter==="novat") return !hasVat(e);
-    return true;
+    if(ledgerVatFilter==="vat" && !hasVat(e)) return false;
+    if(ledgerVatFilter==="novat" && hasVat(e)) return false;
+    if(ledgerMonthFilter!=="all" && (parseBillDate(e.date)||{}).key!==ledgerMonthFilter) return false;
+    return entryMatchesSearch(e, ledgerSearchQuery);
   });
   if(filtered.length===0){
-    ledgerWrap.innerHTML = `<div class="empty">ไม่มีรายการในหมวดนี้</div>`;
+    ledgerWrap.innerHTML = `<div class="empty">${ledgerSearchQuery ? `ไม่พบรายการที่ตรงกับ "${esc(ledgerSearchQuery)}" — ลองคำค้นอื่น หรือกด ✕ เพื่อล้างคำค้นหา` : "ไม่มีรายการในหมวดนี้"}</div>`;
     return;
   }
   const total = filtered.reduce((s,e)=>s+(Number(e.amount)||0),0);
@@ -2826,7 +3325,7 @@ function renderLedger(){
       </tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr>
-        <td colspan="4" style="text-align:right;position:sticky;left:0;background:#fff;z-index:2;">รวมทั้งหมด${ledgerVatFilter!=="all" ? " (เฉพาะหมวดที่กรอง)" : ""}</td>
+        <td colspan="4" style="text-align:right;position:sticky;left:0;background:#fff;z-index:2;">รวมทั้งหมด${(ledgerVatFilter!=="all"||ledgerMonthFilter!=="all") ? " (เฉพาะหมวดที่กรอง)" : ""}</td>
         <td class="col-billno"></td><td class="col-desc"></td><td class="col-date"></td><td class="col-acct"></td>
         <td class="mono num col-amount">${fmtMoney(total)}</td>
         <td class="col-vat"></td><td class="col-taxid"></td><td class="col-compliance"></td><td class="col-rdstatus"></td><td class="col-transfer"></td><td class="col-actions"></td>
@@ -2836,7 +3335,7 @@ function renderLedger(){
     <div class="ledger-card-view">
       <label class="ledger-select-all-row"><input type="checkbox" id="ledgerSelectAllChkMobile"> เลือกทั้งหมดที่แสดงอยู่</label>
       ${cards}
-      <div style="text-align:right;font-weight:700;color:var(--ledger);padding:10px 4px 0;">รวมทั้งหมด${ledgerVatFilter!=="all" ? " (เฉพาะหมวดที่กรอง)" : ""}: ${fmtMoney(total)} บาท</div>
+      <div style="text-align:right;font-weight:700;color:var(--ledger);padding:10px 4px 0;">รวมทั้งหมด${(ledgerVatFilter!=="all"||ledgerMonthFilter!=="all") ? " (เฉพาะหมวดที่กรอง)" : ""}: ${fmtMoney(total)} บาท</div>
     </div>
   `;
   ledgerWrap.querySelectorAll("[data-rd-recheck]").forEach(el=>{
@@ -3292,6 +3791,8 @@ function renderVendorAdmin(){
       <td><input type="checkbox" class="vendor-row-chk" data-code="${esc(v.code)}" ${selectedVendorCodes.has(v.code)?"checked":""}></td>
       <td class="mono">${esc(v.code)}</td>
       <td>${esc(v.name)}</td>
+      <td>${esc(v.nameEn||"")}</td>
+      <td class="mono">${esc(Array.isArray(v.acctLast4)?v.acctLast4.join(", "):"")}</td>
       <td>${esc(v.desc)}</td>
       <td class="mono">${esc(v.acct)}</td>
       <td><div class="row-actions">
@@ -3299,7 +3800,7 @@ function renderVendorAdmin(){
         <button data-vdel="${esc(v.code)}">🗑</button>
       </div></td>
     </tr>
-  `).join("") || `<tr><td colspan="6" style="opacity:.5;padding:10px 0;">ยังไม่มีผู้ขายในบริษัทนี้ — เพิ่มด้านล่าง หรือปล่อยให้ระบบเรียนรู้จากการถ่ายรูปบิลครั้งแรก</td></tr>`;
+  `).join("") || `<tr><td colspan="8" style="opacity:.5;padding:10px 0;">ยังไม่มีผู้ขายในบริษัทนี้ — เพิ่มด้านล่าง หรือปล่อยให้ระบบเรียนรู้จากการถ่ายรูปบิลครั้งแรก</td></tr>`;
 
   tbody.querySelectorAll("[data-vdel]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
@@ -3378,8 +3879,11 @@ function startEditVendorRow(code){
   const tr = document.querySelector(`#vendorTableBody tr[data-code="${code}"]`);
   if(!tr) return;
   tr.innerHTML = `
+    <td></td>
     <td><input class="edit-input ev-code" value="${esc(v.code)}"></td>
     <td><input class="edit-input ev-name" value="${esc(v.name)}"></td>
+    <td><input class="edit-input ev-nameen" value="${esc(v.nameEn||"")}"></td>
+    <td><input class="edit-input ev-acctlast4" value="${esc(Array.isArray(v.acctLast4)?v.acctLast4.join(", "):"")}" placeholder="คั่นด้วย ,"></td>
     <td><input class="edit-input ev-desc" value="${esc(v.desc)}"></td>
     <td><input class="edit-input ev-acct" list="acctDatalist" value="${esc(v.acct)}"></td>
     <td><div class="row-actions">
@@ -3392,6 +3896,8 @@ function startEditVendorRow(code){
     if(!newCode){ showToast("รหัสห้ามว่าง", "warn"); return; }
     v.code = newCode;
     v.name = tr.querySelector(".ev-name").value.trim();
+    v.nameEn = tr.querySelector(".ev-nameen").value.trim();
+    v.acctLast4 = tr.querySelector(".ev-acctlast4").value.split(",").map(s=>s.trim()).filter(s=>/^\d{4}$/.test(s));
     v.desc = tr.querySelector(".ev-desc").value.trim();
     v.acct = tr.querySelector(".ev-acct").value.trim();
     persistVendors();
@@ -3415,7 +3921,7 @@ ${reference}
 
 ช่วยเดาคำอธิบายรายการ (สั้น กระชับ แบบเดียวกับตัวอย่างข้างบน) และรหัสผังบัญชีที่น่าจะเหมาะสม โดยพยายามให้สอดคล้องกับรูปแบบผังบัญชีที่บริษัทนี้ใช้อยู่แล้วถ้ามีตัวอย่างใกล้เคียง ถ้าไม่มีข้อมูลอ้างอิงเพียงพอ ให้เดาตามหมวดธุรกิจทั่วไปแทน และระบุว่าเป็นการเดา
 ตอบเป็น JSON เท่านั้น ไม่มีข้อความอื่น: {"desc": string, "acct": string, "note": string}`;
-  const raw = await callVisionAIRaw({ base64:null, mediaType:null, promptText:prompt, apiKey:key, maxTokens:1024 });
+  const { text:raw } = await callVisionAIRaw({ base64:null, mediaType:null, promptText:prompt, apiKey:key, maxTokens:1024 });
   const cleaned = raw.replace(/```json|```/g,"").trim();
   try{
     return JSON.parse(cleaned);
@@ -3448,14 +3954,16 @@ document.getElementById("aiSuggestVendorBtn").addEventListener("click", suggestV
 document.getElementById("addVendorBtn").addEventListener("click", ()=>{
   const code = document.getElementById("newVendorCode").value.trim();
   const name = document.getElementById("newVendorName").value.trim();
+  const nameEn = document.getElementById("newVendorNameEn").value.trim();
+  const acctLast4 = document.getElementById("newVendorAcctLast4").value.split(",").map(s=>s.trim()).filter(s=>/^\d{4}$/.test(s));
   const desc = document.getElementById("newVendorDesc").value.trim();
   const acct = document.getElementById("newVendorAcct").value.trim();
   if(!code || !name){ showToast("กรุณากรอกรหัสและชื่อผู้ขายอย่างน้อย", "warn"); return; }
   if(vendors.find(v=>v.code===code)){ showToast("รหัสนี้มีอยู่แล้ว กรุณาใช้รหัสอื่น หรือแก้ไขรายการเดิม", "warn"); return; }
-  vendors.push({ code, name, desc, acct });
+  vendors.push({ code, name, nameEn, acctLast4, aliases:[], desc, acct });
   persistVendors();
   renderVendorAdmin();
-  ["newVendorCode","newVendorName","newVendorDesc","newVendorAcct"].forEach(id=>document.getElementById(id).value="");
+  ["newVendorCode","newVendorName","newVendorNameEn","newVendorAcctLast4","newVendorDesc","newVendorAcct"].forEach(id=>document.getElementById(id).value="");
   showToast("เพิ่มผู้ขายแล้ว: " + name);
 });
 
@@ -3670,15 +4178,22 @@ function buildExportSheet(list){
 
 document.getElementById("exportBtn").addEventListener("click", ()=>{
   if(entries.length===0){ showToast("ยังไม่มีรายการให้ export", "warn"); return; }
-  const vatEntries = entries.filter(hasVat);
-  const novatEntries = entries.filter(e=>!hasVat(e));
+  // Respects the month filter so exporting mid-way through a new month doesn't pull in bills
+  // already filed for earlier months — pick "ทุกเดือน" to export everything as before.
+  const monthScoped = ledgerMonthFilter==="all" ? entries : entries.filter(e=>(parseBillDate(e.date)||{}).key===ledgerMonthFilter);
+  if(monthScoped.length===0){ showToast("ไม่มีรายการในเดือนที่กรองอยู่ให้ export", "warn"); return; }
+  const vatEntries = monthScoped.filter(hasVat);
+  const novatEntries = monthScoped.filter(e=>!hasVat(e));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, buildExportSheet(vatEntries), "บิลซื้อ มี VAT");
   XLSX.utils.book_append_sheet(wb, buildExportSheet(novatEntries), "บิลซื้อ ไม่มี VAT");
   const stamp = new Date().toISOString().slice(0,10);
   const safeCompany = (companyName || "ทะเบียน").replace(/[\\/:*?"<>|]/g,"");
-  XLSX.writeFile(wb, `บันทึกบิล_${safeCompany}_${stamp}.xlsx`);
-  showToast("ดาวน์โหลดไฟล์ Excel แล้ว (แยก 2 ชีท: มี VAT / ไม่มี VAT)");
+  const monthTag = ledgerMonthFilter==="all" ? "" : `_${ledgerMonthFilter}`;
+  XLSX.writeFile(wb, `บันทึกบิล_${safeCompany}${monthTag}_${stamp}.xlsx`);
+  showToast(ledgerMonthFilter==="all"
+    ? "ดาวน์โหลดไฟล์ Excel แล้ว (แยก 2 ชีท: มี VAT / ไม่มี VAT)"
+    : `ดาวน์โหลดไฟล์ Excel เฉพาะ ${monthLabelFull(ledgerMonthFilter)} แล้ว (แยก 2 ชีท: มี VAT / ไม่มี VAT)`);
 });
 
 /* ---------------- PDF files wait for an explicit "Run" — each page is its own paid API call now,
@@ -3783,6 +4298,25 @@ function pct(part, whole){
   const w = num(whole);
   if(w <= 0) return 0;              // guards NaN and division by zero
   return num(part) / w * 100;
+}
+
+// Evenly-spaced INTEGER gridline values for a small whole-number axis (document/bill counts).
+// Naively slicing [0,.25,.5,.75,1] * max and rounding each — the previous approach — collides
+// on small maxes (max=2 rounds to 0,1,1,2,2: two duplicate labels stacked on the axis). This picks
+// a clean integer step (1, 2, 5, or a power-of-10 multiple) so every tick is distinct, using fewer
+// ticks than 5 when the range is too small to support that many without repeating.
+function niceIntTicks(maxVal, targetCount){
+  targetCount = targetCount || 4;
+  const top = Math.max(1, Math.ceil(maxVal));
+  if(top <= targetCount) return Array.from({length: top+1}, (_,i)=>i); // e.g. max=2 -> [0,1,2]
+  const roughStep = top / targetCount;
+  const mag = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const norm = roughStep / mag;
+  const step = Math.max(1, Math.round((norm<=1?1:norm<=2?2:norm<=5?5:10) * mag));
+  const ticks = [];
+  for(let v=0; v<=top; v+=step) ticks.push(v);
+  if(ticks[ticks.length-1] < top) ticks.push(ticks[ticks.length-1]+step);
+  return ticks;
 }
 
 /* dashboard state is declared with the other Firebase refs, above switchCompany */
@@ -3894,10 +4428,16 @@ function prepareDashboardData(){
   let rdFound = 0, rdMissing = 0, rdUnchecked = 0;
   let amtPass864 = 0, amtFail864 = 0, amtNonVat = 0;
   let amtRdFound = 0, amtRdMissing = 0, amtRdUnchecked = 0;
+  // AI cost is a per-entry side field written at save time (see saveAllBtn), only ever present on
+  // bills that were actually read by a priced provider (Anthropic) — a manually-typed row or one
+  // read with Gemini simply has no aiCostThb, so it's excluded from both sum and count here rather
+  // than counted as a "free" 0.00 bill (which would understate the real average per priced bill).
+  let aiCostTotal = 0, aiCostBillCount = 0;
 
   rows.forEach(e=>{
     const amt = num(e.amount);
     total += amt;
+    if(e.aiCostThb != null){ aiCostTotal += num(e.aiCostThb); aiCostBillCount++; }
 
     const d = parseBillDate(e.date);
     if(d){
@@ -3937,6 +4477,7 @@ function prepareDashboardData(){
     total, totalVat, vatBills, pass864, fail864, undated,
     rdFound, rdMissing, rdUnchecked,
     amtPass864, amtFail864, amtNonVat, amtRdFound, amtRdMissing, amtRdUnchecked,
+    aiCostTotal, aiCostBillCount,
     win, excluded,
     billCount: rows.length,
     nonVatBills: rows.length - vatBills,
@@ -4084,8 +4625,11 @@ function emptyState(msg, icon){
 function renderMonthlyChart(months, budget){
   if(months.length === 0) return emptyState("ยังไม่มีรายการที่ระบุวันที่ได้ — กราฟรายเดือนจะขึ้นเมื่อมีบิลที่อ่านวันที่ออก","🗓️");
 
-  const W = 760, padL = 54, padR = 16, padT = 26, padB = 38;
-  const rowH = 210;
+  // Wider/shorter viewBox than before (was 760×210 for the bar area) — that ratio made the chart
+  // render very tall on a wide dashboard column, exaggerating how empty it looks when only one
+  // or two months in the window actually have data.
+  const W = 1040, padL = 54, padR = 16, padT = 26, padB = 38;
+  const rowH = 130;
   const H = padT + rowH + padB;
   const plotW = W - padL - padR;
   const maxData = Math.max(...months.map(m=>m.value), 0);
@@ -4308,6 +4852,15 @@ function renderKpis(d){
       <div class="kpi-value">${nfInt.format(d.vendorCount)}<span class="kpi-unit">ราย</span></div>
       <div class="kpi-sub">${nfInt.format(d.acctCount)} หมวดบัญชีที่ใช้งาน</div>
       <div class="kpi-sub">${d.undated ? nfInt.format(d.undated)+" รายการยังอ่านวันที่ไม่ได้" : "ทุกรายการระบุวันที่ครบ"}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon blue">🤖</span><span class="kpi-label">ค่าใช้จ่าย AI สะสม</span></div>
+      <div class="kpi-value">${d.aiCostBillCount ? money(d.aiCostTotal) : "—"}<span class="kpi-unit">${d.aiCostBillCount ? "บาท" : ""}</span></div>
+      <div class="kpi-sub">${d.aiCostBillCount
+        ? `${nfInt.format(d.aiCostBillCount)} ใบที่อ่านด้วย AI · เฉลี่ย ${money(d.aiCostTotal/d.aiCostBillCount)} บาท/ใบ`
+        : "ยังไม่มีบิลที่มีข้อมูลค่าใช้จ่าย AI ในช่วงนี้"}</div>
+      <div class="kpi-sub" style="opacity:.55;">รวมทั้ง Anthropic และ Gemini ที่อ่านด้วยโมเดลที่มีตารางราคาในระบบ</div>
     </div>
 
   </div></div>`;
@@ -4598,9 +5151,17 @@ function renderOfficeMonthlyChart(monthKeys, byMonth){
   });
   if(rows.every(r=>r.total===0)) return emptyState("ยังไม่มีเอกสารที่ระบุวันที่ได้ในช่วงที่แสดง","🗓️");
 
-  const W=760, padL=44, padR=16, padT=20, padB=34, rowH=200;
+  // Wider/shorter viewBox than before (was 760×200 for the bar area) — the old ratio made the
+  // chart render very tall on a wide dashboard column, exaggerating how empty it looks when only
+  // one or two months actually have data.
+  const W=1040, padL=40, padR=16, padT=20, padB=34, rowH=130;
   const H = padT+rowH+padB, plotW = W-padL-padR;
-  const max = Math.max(...rows.map(r=>r.total), 1);
+  const rawMax = Math.max(...rows.map(r=>r.total), 1);
+  // Document counts are always whole numbers — real "nice" ticks instead of naively rounding
+  // [0,.25,.5,.75,1]×max, which collides into duplicate labels for any small max (e.g. max=2
+  // gives 0,1,1,2,2). See niceIntTicks().
+  const ticks = niceIntTicks(rawMax);
+  const max = ticks[ticks.length-1];
   const slot = plotW/rows.length, bw = Math.min(46, slot*0.55), y0 = padT+rowH;
 
   const defs = `<defs>
@@ -4608,10 +5169,10 @@ function renderOfficeMonthlyChart(monthKeys, byMonth){
     ${linGrad("gOfPend", DASH_COLORS.pendFrom, DASH_COLORS.pendTo, "v")}
     ${linGrad("gOfIssue", DASH_COLORS.redFrom, DASH_COLORS.redTo, "v")}
   </defs>`;
-  const grid = [0,.25,.5,.75,1].map(f=>{
-    const y = y0 - rowH*f;
-    return `<line class="chart-grid-line" x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}"${f===0?'':' stroke-dasharray="2 4"'} opacity="${f===0?1:.55}"/>`
-         + `<text class="chart-axis" x="${padL-8}" y="${(y+3.5).toFixed(1)}" text-anchor="end">${fmtCompact(max*f)}</text>`;
+  const grid = ticks.map(t=>{
+    const y = y0 - rowH*(t/max);
+    return `<line class="chart-grid-line" x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}"${t===0?'':' stroke-dasharray="2 4"'} opacity="${t===0?1:.55}"/>`
+         + `<text class="chart-axis" x="${padL-8}" y="${(y+3.5).toFixed(1)}" text-anchor="end">${nfInt.format(t)}</text>`;
   }).join("");
 
   const bars = rows.map((r,i)=>{
@@ -5423,7 +5984,7 @@ const CERT_EXTRACT_PROMPT = `คุณคือผู้ช่วยอ่าน
 {"date": string|null, "desc": string, "amount": number|null, "note": string|null}`;
 
 async function callClaudeCert(base64, mediaType, apiKey){
-  const raw = await callVisionAIRaw({ base64, mediaType, promptText:CERT_EXTRACT_PROMPT, apiKey, maxTokens:4096 });
+  const { text:raw } = await callVisionAIRaw({ base64, mediaType, promptText:CERT_EXTRACT_PROMPT, apiKey, maxTokens:4096 });
   const cleaned = raw.replace(/```json|```/g,"").trim();
   try{
     return JSON.parse(cleaned);
