@@ -846,7 +846,7 @@
     <div class="card">
       <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0 0 4px;">📒 ผังบัญชี / หมวดค่าใช้จ่าย</h2>
       <p style="font-size:12px;opacity:.6;margin:0 0 4px;">บริษัทปัจจุบัน: <strong id="coaCompanyName" style="color:var(--ledger);"></strong></p>
-      <p style="font-size:11.5px;opacity:.5;margin:0;">รายการนี้เป็นผังบัญชีหลักของบริษัทนี้ — เพิ่ม/แก้ไข/ลบได้เองด้านล่าง ไม่ต้องรอให้มีผู้ขายผูกไว้ก่อน ("ใช้งานโดยผู้ขาย" คือจำนวนผู้ขายที่เลือกรหัสนี้อยู่ในหน้า "ผู้ขาย")</p>
+      <p style="font-size:11.5px;opacity:.5;margin:0;">รายการนี้เป็นผังบัญชีหลักของบริษัทนี้ — แสดงรหัสทุกตัวที่มีผู้ขายใช้อยู่โดยอัตโนมัติ (ตั้งชื่อให้เองจากคำอธิบายของผู้ขาย ไม่ต้องกดเพิ่มทีละแถว) เพิ่ม/แก้ไข/ลบเองด้านล่างได้เสมอ ("ใช้งานโดยผู้ขาย" คือจำนวนผู้ขายที่เลือกรหัสนี้อยู่ในหน้า "ผู้ขาย")</p>
     </div>
     <div class="card">
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
@@ -5482,14 +5482,25 @@ function renderCoaView(){
     body.innerHTML = `<div class="card">${emptyState("เลือกบริษัทก่อนเพื่อดูผังบัญชี","🏢")}</div>`;
     return;
   }
+  // Every account code any vendor already uses must show up here automatically — the user
+  // shouldn't have to click "+ เพิ่มเข้าผังบัญชี" one row at a time to make the list complete.
+  // Auto-register anything still missing (seeded from a vendor already on that code) before
+  // rendering, same rule as every other entry point (see ensureCoaCode).
+  const usedCodes = [...new Set(vendors.map(v=>(v.acct||"").trim()).filter(Boolean))];
+  let anyAdded = false;
+  usedCodes.forEach(code=>{
+    const sampleVendor = vendors.find(v=>(v.acct||"").trim()===code && v.desc);
+    if(ensureCoaCode(code, sampleVendor ? sampleVendor.desc : "")) anyAdded = true;
+  });
+  if(anyAdded) persistChartOfAccounts();
+
   const counts = coaUsageCounts();
   const master = chartOfAccounts.slice().sort((a,b)=>(a.code||"").localeCompare(b.code||"", "th"));
-  const masterCodes = new Set(master.map(a=>a.code));
-  // Codes only ever typed straight into a vendor row, never added to the master list — keep
-  // showing these (renamed "legacy" here) so nothing that was visible before this feature
-  // silently disappears; each gets a one-click way to promote it into the master list.
-  const orphanCodes = [...new Set(vendors.map(v=>(v.acct||"").trim()).filter(Boolean))]
-    .filter(c=>!masterCodes.has(c)).sort((a,b)=>a.localeCompare(b,"th"));
+
+  if(!master.length){
+    body.innerHTML = `<div class="card">${emptyState('ยังไม่มีรหัสผังบัญชีของบริษัทนี้ — เพิ่มได้ที่ปุ่ม "+ เพิ่มรหัสผังบัญชีใหม่" ด้านบน',"📒")}</div>`;
+    return;
+  }
 
   const masterRowsHtml = master.map(a=>`
     <tr data-coa-code="${esc(a.code)}">
@@ -5503,29 +5514,15 @@ function renderCoaView(){
     </tr>
   `).join("");
 
-  const orphanRowsHtml = orphanCodes.map(code=>`
-    <tr>
-      <td class="mono">${esc(code)}</td>
-      <td style="opacity:.55;">(ยังไม่มีชื่อบัญชี — เคยพิมพ์ไว้ในหน้าผู้ขายเท่านั้น)</td>
-      <td>${counts[code]||0} ราย</td>
-      <td><button data-coapromote="${esc(code)}" class="btn btn-ghost" style="padding:2px 8px;font-size:12px;">+ เพิ่มเข้าผังบัญชี</button></td>
-    </tr>
-  `).join("");
-
-  if(!master.length && !orphanCodes.length){
-    body.innerHTML = `<div class="card">${emptyState('ยังไม่มีรหัสผังบัญชีของบริษัทนี้ — เพิ่มได้ที่ปุ่ม "+ เพิ่มรหัสผังบัญชีใหม่" ด้านบน',"📒")}</div>`;
-    return;
-  }
-
   body.innerHTML = `<div class="card"><div style="overflow-x:auto;"><table class="coa-table">
     <thead><tr><th>รหัสผังบัญชี</th><th>ชื่อบัญชี/หมวด</th><th>ใช้งานโดยผู้ขาย</th><th></th></tr></thead>
-    <tbody>${masterRowsHtml || `<tr><td colspan="4" style="opacity:.5;padding:10px 0;">ยังไม่มีรายการในผังบัญชีหลัก</td></tr>`}${orphanRowsHtml}</tbody>
+    <tbody>${masterRowsHtml}</tbody>
   </table></div></div>`;
 
   body.querySelectorAll("[data-coadel]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const code = btn.getAttribute("data-coadel");
-      if(!confirm(`ลบรหัสผังบัญชี ${code} ออกจากผังบัญชีหลัก? (ไม่กระทบผู้ขายที่เคยเลือกรหัสนี้ไว้)`)) return;
+      if(!confirm(`ลบรหัสผังบัญชี ${code} ออกจากผังบัญชีหลัก? (ไม่กระทบผู้ขายที่เคยเลือกรหัสนี้ไว้ — จะถูกเติมกลับเข้ามาอัตโนมัติถ้ายังมีผู้ขายใช้รหัสนี้อยู่)`)) return;
       chartOfAccounts = chartOfAccounts.filter(a=>a.code!==code);
       persistChartOfAccounts();
       renderCoaView();
@@ -5533,19 +5530,6 @@ function renderCoaView(){
   });
   body.querySelectorAll("[data-coaedit]").forEach(btn=>{
     btn.addEventListener("click", ()=> startEditCoaRow(btn.getAttribute("data-coaedit")));
-  });
-  body.querySelectorAll("[data-coapromote]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const code = btn.getAttribute("data-coapromote");
-      // Same fallback-naming rule as everywhere else a code gets auto-registered: seed it
-      // from a vendor that already uses this code, instead of leaving it blank.
-      const sampleVendor = vendors.find(v=>(v.acct||"").trim()===code && v.desc);
-      if(ensureCoaCode(code, sampleVendor ? sampleVendor.desc : "")){
-        persistChartOfAccounts();
-        renderCoaView();
-        renderAcctDatalist();
-      }
-    });
   });
 }
 
