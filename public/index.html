@@ -5537,11 +5537,14 @@ function renderCoaView(){
   body.querySelectorAll("[data-coapromote]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const code = btn.getAttribute("data-coapromote");
-      if(chartOfAccounts.find(a=>a.code===code)) return;
-      chartOfAccounts.push({ code, name:"" });
-      persistChartOfAccounts();
-      renderCoaView();
-      renderAcctDatalist();
+      // Same fallback-naming rule as everywhere else a code gets auto-registered: seed it
+      // from a vendor that already uses this code, instead of leaving it blank.
+      const sampleVendor = vendors.find(v=>(v.acct||"").trim()===code && v.desc);
+      if(ensureCoaCode(code, sampleVendor ? sampleVendor.desc : "")){
+        persistChartOfAccounts();
+        renderCoaView();
+        renderAcctDatalist();
+      }
     });
   });
 }
