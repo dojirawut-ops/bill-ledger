@@ -849,6 +849,11 @@
       <p style="font-size:11.5px;opacity:.5;margin:0;">รายการนี้เป็นผังบัญชีหลักของบริษัทนี้ — เพิ่ม/แก้ไข/ลบได้เองด้านล่าง ไม่ต้องรอให้มีผู้ขายผูกไว้ก่อน ("ใช้งานโดยผู้ขาย" คือจำนวนผู้ขายที่เลือกรหัสนี้อยู่ในหน้า "ผู้ขาย")</p>
     </div>
     <div class="card">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="downloadCoaTemplateBtn" type="button" title="ดาวน์โหลดไฟล์ Excel เปล่าที่มีหัวตารางถูกต้อง กรอกแล้วนำเข้ากลับได้เลย">📄 แม่แบบนำเข้า</button>
+        <label class="btn btn-ghost filebtn" for="importCoaFile">📥 นำเข้าผังบัญชีจาก Excel/CSV</label>
+        <input type="file" id="importCoaFile" accept=".xlsx,.xls,.csv" class="hidden">
+      </div>
       <div style="font-size:12px;font-weight:600;color:var(--ledger);margin-bottom:6px;">+ เพิ่มรหัสผังบัญชีใหม่</div>
       <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:8px;" class="field-grid">
         <input type="text" id="newCoaCode" placeholder="รหัส เช่น 1220-01">
@@ -2526,20 +2531,23 @@ function persistChartOfAccounts(){
 }
 // Auto-registers a ผังบัญชี code into this company's master list the moment it's used anywhere
 // (staging save, vendor add/edit, ledger edit, bulk import) — so a brand-new code someone types
-// shows up on the "ผังบัญชี" page right away (name left blank, ready to be labeled there) instead
-// of silently staying an "orphan" only visible as a vendor's free-text acct value. Returns true
-// if a new entry was actually added (caller decides whether/when to persist + re-render).
-function ensureCoaCode(code){
+// shows up on the "ผังบัญชี" page right away instead of silently staying an "orphan" only visible
+// as a vendor's free-text acct value. `fallbackName` seeds the account's name from whatever
+// vendor/entry desc was on hand at the moment the code was first used (better than leaving it
+// blank — still just a starting guess, editable any time on the ผังบัญชี page). Only ever fills
+// the name on FIRST creation — never overwrites a name someone already set on an existing code.
+// Returns true if a new entry was actually added (caller decides whether/when to persist + re-render).
+function ensureCoaCode(code, fallbackName){
   const trimmed = (code||"").trim();
   if(!trimmed) return false;
   if(chartOfAccounts.find(a=>a.code===trimmed)) return false;
-  chartOfAccounts.push({ code:trimmed, name:"" });
+  chartOfAccounts.push({ code:trimmed, name:(fallbackName||"").trim() });
   return true;
 }
 // Convenience wrapper for the common single-code case: registers + persists + refreshes the
 // datalist immediately (doesn't wait for the Firebase round-trip) if it was actually new.
-function ensureCoaCodeAndSave(code){
-  if(ensureCoaCode(code)){
+function ensureCoaCodeAndSave(code, fallbackName){
+  if(ensureCoaCode(code, fallbackName)){
     persistChartOfAccounts();
     renderAcctDatalist();
     if(typeof coaPanelVisible === "function" && coaPanelVisible() && typeof renderCoaView === "function") renderCoaView();
@@ -3200,7 +3208,7 @@ document.getElementById("saveAllBtn").addEventListener("click", async ()=>{
   persistEntries();
   // Any ผังบัญชี code typed into a staged row that isn't in the master list yet gets registered
   // now — one batched write instead of one per row.
-  if(toCommit.map(r=>ensureCoaCode(r.acct)).some(Boolean)){
+  if(toCommit.map(r=>ensureCoaCode(r.acct, r.desc)).some(Boolean)){
     persistChartOfAccounts();
     renderAcctDatalist();
   }
@@ -3731,7 +3739,7 @@ function renderLedgerSheetEditView(no){
     entry.taxId = card.querySelector(".es-taxid").value.trim().replace(/\D/g,"");
     entry.transfer = parseFloat(card.querySelector(".es-transfer").value) || 0;
     persistEntries();
-    ensureCoaCodeAndSave(entry.acct);
+    ensureCoaCodeAndSave(entry.acct, entry.desc);
     closeLedgerSheet();
     renderLedger();
   });
@@ -3775,7 +3783,7 @@ function startEditRow(no){
     entry.taxId = tr.querySelector(".ec-taxid").value.trim().replace(/\D/g,"");
     entry.transfer = parseFloat(tr.querySelector(".ec-transfer").value) || 0;
     persistEntries();
-    ensureCoaCodeAndSave(entry.acct);
+    ensureCoaCodeAndSave(entry.acct, entry.desc);
     renderLedger();
   });
   tr.querySelector("[data-cancel]").addEventListener("click", renderLedger);
@@ -3965,7 +3973,7 @@ function startEditVendorRow(code){
     v.desc = tr.querySelector(".ev-desc").value.trim();
     v.acct = tr.querySelector(".ev-acct").value.trim();
     persistVendors();
-    ensureCoaCodeAndSave(v.acct);
+    ensureCoaCodeAndSave(v.acct, v.desc);
     renderVendorAdmin();
   });
   tr.querySelector("[data-vcancel]").addEventListener("click", renderVendorAdmin);
@@ -4038,7 +4046,7 @@ document.getElementById("addVendorBtn").addEventListener("click", ()=>{
   if(vendors.find(v=>v.code===code)){ showToast("รหัสนี้มีอยู่แล้ว กรุณาใช้รหัสอื่น หรือแก้ไขรายการเดิม", "warn"); return; }
   vendors.push({ code, name, nameEn, acctLast4, aliases:[], desc, acct });
   persistVendors();
-  ensureCoaCodeAndSave(acct);
+  ensureCoaCodeAndSave(acct, desc);
   renderVendorAdmin();
   ["newVendorCode","newVendorName","newVendorNameEn","newVendorAcctLast4","newVendorDesc","newVendorAcct"].forEach(id=>document.getElementById(id).value="");
   showToast("เพิ่มผู้ขายแล้ว: " + name);
@@ -4132,7 +4140,7 @@ document.getElementById("importVendorFile").addEventListener("change", async (e)
 
     persistVendors();
     // Register every distinct acct code the imported file brought in, one batched write.
-    if(vendors.map(v=>ensureCoaCode(v.acct)).some(Boolean)){
+    if(vendors.map(v=>ensureCoaCode(v.acct, v.desc)).some(Boolean)){
       persistChartOfAccounts();
       renderAcctDatalist();
     }
@@ -5580,6 +5588,78 @@ document.getElementById("addCoaBtn").addEventListener("click", ()=>{
   document.getElementById("newCoaCode").value = "";
   document.getElementById("newCoaName").value = "";
   showToast("เพิ่มรหัสผังบัญชีแล้ว");
+});
+
+document.getElementById("downloadCoaTemplateBtn").addEventListener("click", ()=>{
+  const rows = [
+    ["รหัส","ชื่อบัญชี/หมวด"],
+    ["1220-01","สินทรัพย์ถาวร - ยานพาหนะ"],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{wch:12},{wch:32}];
+  // Force the code column to text so codes like "5110-01" never get re-read as a date
+  // when the filled-in template comes back through import.
+  if(ws["A2"]) ws["A2"].t = "s";
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "ผังบัญชี");
+  XLSX.writeFile(wb, "แม่แบบนำเข้าผังบัญชี.xlsx");
+});
+
+document.getElementById("importCoaFile").addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  e.target.value = "";
+  if(!file) return;
+  if(!companyName){ showToast("กรุณาเลือกบริษัทก่อนนำเข้าข้อมูล", "warn"); return; }
+  try{
+    const buf = await file.arrayBuffer();
+    let wb;
+    if(/\.csv$/i.test(file.name)){
+      const text = decodeCsvBytes(new Uint8Array(buf));
+      wb = XLSX.read(text, { type: "string", raw: true });
+    } else {
+      wb = XLSX.read(buf, { type: "array", raw: true });
+    }
+    let added=0, updated=0, skipped=0, sheetsWithData=0;
+    wb.SheetNames.forEach(sheetName=>{
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+      if(rows.length < 2) return;
+
+      const header = rows[0];
+      let codeCol = findCol(header, ["รหัส","code"]);
+      let nameCol = findCol(header, ["ชื่อ","name","หมวด"]);
+
+      let dataRows = rows.slice(1);
+      if(codeCol===-1 && nameCol===-1){
+        codeCol=0; nameCol=1;
+        dataRows = rows; // no real header, treat every row as data
+      }
+
+      sheetsWithData++;
+      dataRows.forEach(r=>{
+        const code = String(r[codeCol]||"").trim();
+        const name = String(nameCol>=0 ? r[nameCol]||"" : "").trim();
+        if(!code){ skipped++; return; }
+        const existing = chartOfAccounts.find(a=>a.code===code);
+        if(existing){
+          if(name) existing.name = name; // blank cell never clobbers a name already set
+          updated++;
+        } else {
+          chartOfAccounts.push({ code, name });
+          added++;
+        }
+      });
+    });
+
+    if(sheetsWithData===0){ showToast("ไม่พบข้อมูลในไฟล์นี้", "warn"); return; }
+
+    persistChartOfAccounts();
+    renderAcctDatalist();
+    renderCoaView();
+    showToast(`นำเข้าผังบัญชีสำเร็จ: เพิ่มใหม่ ${added} รายการ, อัปเดต ${updated} รายการ${skipped?`, ข้าม ${skipped} แถวที่ไม่มีรหัส`:""}`);
+  }catch(err){
+    showToast("นำเข้าไฟล์ไม่สำเร็จ: " + err.message, "warn");
+  }
 });
 
 /* ================= ผู้ใช้งาน / สิทธิ์ (userAccess/{uid}) =================
