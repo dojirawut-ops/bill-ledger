@@ -2524,6 +2524,27 @@ function persistChartOfAccounts(){
     });
   }catch(err){}
 }
+// Auto-registers a ผังบัญชี code into this company's master list the moment it's used anywhere
+// (staging save, vendor add/edit, ledger edit, bulk import) — so a brand-new code someone types
+// shows up on the "ผังบัญชี" page right away (name left blank, ready to be labeled there) instead
+// of silently staying an "orphan" only visible as a vendor's free-text acct value. Returns true
+// if a new entry was actually added (caller decides whether/when to persist + re-render).
+function ensureCoaCode(code){
+  const trimmed = (code||"").trim();
+  if(!trimmed) return false;
+  if(chartOfAccounts.find(a=>a.code===trimmed)) return false;
+  chartOfAccounts.push({ code:trimmed, name:"" });
+  return true;
+}
+// Convenience wrapper for the common single-code case: registers + persists + refreshes the
+// datalist immediately (doesn't wait for the Firebase round-trip) if it was actually new.
+function ensureCoaCodeAndSave(code){
+  if(ensureCoaCode(code)){
+    persistChartOfAccounts();
+    renderAcctDatalist();
+    if(typeof coaPanelVisible === "function" && coaPanelVisible() && typeof renderCoaView === "function") renderCoaView();
+  }
+}
 
 function showToast(msg, kind){
   const host = document.getElementById("toastHost");
@@ -3177,6 +3198,12 @@ document.getElementById("saveAllBtn").addEventListener("click", async ()=>{
     entries.push({ no:startNo+i+1, code:r.code, name:r.name, billNo:r.billNo, desc:r.desc, date:r.date, acct:r.acct, amount:r.amount, vat:r.vat, taxId:r.taxId, transfer:r.transfer, photoUrl, createdAt:Date.now(), aiCostThb:r.aiCostThb });
   }
   persistEntries();
+  // Any ผังบัญชี code typed into a staged row that isn't in the master list yet gets registered
+  // now — one batched write instead of one per row.
+  if(toCommit.map(r=>ensureCoaCode(r.acct)).some(Boolean)){
+    persistChartOfAccounts();
+    renderAcctDatalist();
+  }
   const committedIds = new Set(toCommit.map(r=>r._id));
   stagingRows = stagingRows.filter(r=>!committedIds.has(r.id));
   committedIds.forEach(id=>{ const el=document.getElementById("stg-"+id); if(el) el.remove(); });
@@ -3704,6 +3731,7 @@ function renderLedgerSheetEditView(no){
     entry.taxId = card.querySelector(".es-taxid").value.trim().replace(/\D/g,"");
     entry.transfer = parseFloat(card.querySelector(".es-transfer").value) || 0;
     persistEntries();
+    ensureCoaCodeAndSave(entry.acct);
     closeLedgerSheet();
     renderLedger();
   });
@@ -3747,6 +3775,7 @@ function startEditRow(no){
     entry.taxId = tr.querySelector(".ec-taxid").value.trim().replace(/\D/g,"");
     entry.transfer = parseFloat(tr.querySelector(".ec-transfer").value) || 0;
     persistEntries();
+    ensureCoaCodeAndSave(entry.acct);
     renderLedger();
   });
   tr.querySelector("[data-cancel]").addEventListener("click", renderLedger);
@@ -3936,6 +3965,7 @@ function startEditVendorRow(code){
     v.desc = tr.querySelector(".ev-desc").value.trim();
     v.acct = tr.querySelector(".ev-acct").value.trim();
     persistVendors();
+    ensureCoaCodeAndSave(v.acct);
     renderVendorAdmin();
   });
   tr.querySelector("[data-vcancel]").addEventListener("click", renderVendorAdmin);
@@ -4008,6 +4038,7 @@ document.getElementById("addVendorBtn").addEventListener("click", ()=>{
   if(vendors.find(v=>v.code===code)){ showToast("รหัสนี้มีอยู่แล้ว กรุณาใช้รหัสอื่น หรือแก้ไขรายการเดิม", "warn"); return; }
   vendors.push({ code, name, nameEn, acctLast4, aliases:[], desc, acct });
   persistVendors();
+  ensureCoaCodeAndSave(acct);
   renderVendorAdmin();
   ["newVendorCode","newVendorName","newVendorNameEn","newVendorAcctLast4","newVendorDesc","newVendorAcct"].forEach(id=>document.getElementById(id).value="");
   showToast("เพิ่มผู้ขายแล้ว: " + name);
@@ -4100,6 +4131,11 @@ document.getElementById("importVendorFile").addEventListener("change", async (e)
     if(sheetsWithData===0){ showToast("ไม่พบข้อมูลในไฟล์นี้", "warn"); return; }
 
     persistVendors();
+    // Register every distinct acct code the imported file brought in, one batched write.
+    if(vendors.map(v=>ensureCoaCode(v.acct)).some(Boolean)){
+      persistChartOfAccounts();
+      renderAcctDatalist();
+    }
     renderVendorAdmin();
     showToast(`นำเข้าสำเร็จ: เพิ่มใหม่ ${added} รายการ, อัปเดต ${updated} รายการ${skipped?`, ข้าม ${skipped} แถวที่ข้อมูลไม่ครบ`:""}`);
   }catch(err){
