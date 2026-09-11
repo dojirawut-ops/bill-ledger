@@ -238,13 +238,37 @@
   .dropzone{border:2px dashed var(--ledger-line);border-radius:10px;padding:18px 14px;text-align:center;}
   .dz-title{font-weight:600;font-size:16px;color:var(--ink);margin:2px 0;}
   .dz-sub{font-size:12px;opacity:.6;margin-bottom:10px;}
-  /* Compact 3-column setup row (company / AI key / upload) so none of the three cards ends up
-     an oversized full-width block — collapses to fewer columns as the viewport narrows. */
-  .setup-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch;margin-bottom:20px;}
+  /* Compact 2-column settings row (company / AI key) — folded by default, one click away, so
+     neither eats screen space before the user has picked a company. Upload now lives near the
+     ledger table as its own toggle button+panel (see .ledger-toolbar-primary / #uploadPanelCard). */
+  .setup-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;align-items:stretch;margin-bottom:20px;}
   .setup-grid > .card{margin-bottom:0;display:flex;flex-direction:column;}
-  .setup-grid .dropzone{flex:1;display:flex;flex-direction:column;justify-content:center;}
-  @media(max-width:1080px){ .setup-grid{grid-template-columns:1fr 1fr;} }
   @media(max-width:700px){ .setup-grid{grid-template-columns:1fr;} }
+
+  /* ---------------- Ledger toolbar: primary row (title+upload+export), moved-in upload
+     panel, secondary tools row (with ล้างทั้งหมด set apart, since it deletes ALL saved
+     entries — see the clearBtn handler) ---------------- */
+  .ledger-toolbar-primary{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;}
+  .ledger-toolbar-primary-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  #uploadPanelCard{margin:0 0 14px;box-shadow:none;border-color:var(--ledger);}
+  .ledger-toolbar-secondary{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+  .ledger-toolbar-spacer{flex:1 1 auto;min-width:12px;}
+  .ledger-danger-action{color:var(--rust-dark);border-color:var(--orange-bg);margin-left:8px;}
+  .ledger-danger-action:hover{background:var(--orange-bg);border-color:var(--rust);}
+  @media(max-width:768px){
+    .ledger-toolbar-primary-actions{width:100%;}
+    .ledger-toolbar-primary-actions .btn{flex:1;justify-content:center;}
+    .ledger-toolbar-secondary{flex-direction:column;align-items:stretch;}
+    .ledger-toolbar-secondary .btn{width:100%;justify-content:center;}
+    .ledger-toolbar-spacer{display:none;}
+    .ledger-danger-action{margin-left:0;margin-top:6px;}
+  }
+  /* Scoped to #ledgerPanel only — softer corners and a tighter KPI strip for this page's
+     redesign, without touching the shared .card/.kpi look other views (dashboard, cert, coa…)
+     still use. */
+  #ledgerPanel .card{border-radius:12px;}
+  #ledgerPanel .kpi-grid{gap:10px;}
+  #ledgerPanel .kpi{padding:12px 16px;}
   /* Colored status pills for the saved-ledger table (ม.86/4 compliance, กรมสรรพากร check) */
   .status-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;}
   .status-pill.ok{background:var(--success-bg);color:var(--success);}
@@ -313,16 +337,47 @@
      unbroken Thai label (e.g. "เลขที่บิล") can force its column past its declared fixed width
      instead of just wrapping onto a second line. */
   #ledgerWrap.ledger-table-fixed thead th{white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;vertical-align:bottom;}
-  #ledgerWrap.ledger-table-fixed th,#ledgerWrap.ledger-table-fixed td{padding:6px 8px;font-size:12.5px;}
+  /* Readable row height (~44-48px) and 14px text, per the ledger-registry page redesign —
+     was a denser 12.5px/6px pass tuned only for fitting many columns; still grows taller than
+     this floor if a cell ever needs to wrap. */
+  #ledgerWrap.ledger-table-fixed th,#ledgerWrap.ledger-table-fixed td{padding:13px 10px;font-size:14px;line-height:1.3;}
   /* Truncation lives on an inner <div>, not the <td> itself: Chromium's table-layout:fixed still
      lets an unbroken long string (e.g. a 20-character bill number) grow a column past its declared
      width even with overflow:hidden;text-overflow:ellipsis set directly on the cell — wrapping the
      text in a block-level child sidesteps that table-specific sizing quirk entirely. */
   #ledgerWrap.ledger-table-fixed .clip-inner{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
+  /* Row stays clickable (via [data-open-sheet]/tabindex added in renderLedger) to open the same
+     full-detail sheet the mobile card list already uses — mouse click, Enter/Space on a focused
+     row, and touch tap all reach the same untruncated view of every field. */
+  #ledgerWrap.ledger-table-fixed tbody tr[data-open-sheet]{cursor:pointer;}
+  #ledgerWrap.ledger-table-fixed tbody tr[data-open-sheet]:focus-visible{outline:2px solid var(--ledger);outline-offset:-2px;}
+
+  /* Sticky table header. position:sticky only tracks scrolling of its OWN nearest scrolling
+     ancestor — and .ledger-table-view (overflow-x:auto, which per spec forces overflow-y to
+     compute as auto too) never actually scrolls on its own when its content is shorter than the
+     page, since then it's the page/html that scrolls instead while this div's internal scrollTop
+     stays 0 forever. So top:0 alone silently does nothing once there are enough rows to need it.
+     Giving the div a real max-height turns it into an actually-scrolling box (both toolbar/filters
+     above and the rest of the page stay in normal flow; only the row list scrolls, with its own
+     header staying pinned to the top of that box) — verified in-browser with 40 fake rows. */
+  #ledgerWrap.ledger-table-fixed .ledger-table-view{max-height:min(620px,65vh);overflow-y:auto;}
+  body.ledger-fullscreen #ledgerWrap.ledger-table-fixed .ledger-table-view{max-height:calc(100vh - 210px);}
+  #ledgerWrap.ledger-table-fixed thead th{position:sticky;top:0;z-index:3;}
+
+  /* Hover highlight on the whole row, including the sticky columns riding on top of it. */
+  #ledgerWrap.ledger-table-fixed tbody tr:hover td{background:var(--blue-bg);}
+  #ledgerWrap.ledger-table-fixed tbody tr:hover td.stick{background:var(--blue-bg);}
+
+  /* Total row: kept bold+blue already (generic "tfoot td" rule) — this adds a clear divider and
+     a tinted band so it reads as the summary line at a glance, without touching the total's
+     formula/value (still whatever fmtMoney(total) computes above in renderLedger). */
+  #ledgerWrap.ledger-table-fixed tfoot td{background:var(--blue-bg);border-top:2px solid var(--ledger);}
+  #ledgerWrap.ledger-table-fixed tfoot .col-amount{font-size:15px;}
+
   /* sticky left columns: checkbox / ลำดับ / รหัส / ชื่อ, so they stay visible while scrolling right */
   #ledgerWrap.ledger-table-fixed .stick{position:sticky;z-index:2;background:#fff;}
-  #ledgerWrap.ledger-table-fixed thead th.stick{z-index:3;background:var(--blue-bg);}
+  #ledgerWrap.ledger-table-fixed thead th.stick{z-index:4;background:var(--blue-bg);}
   #ledgerWrap.ledger-table-fixed tbody tr:nth-child(even) td.stick{background:#F5F8FD;}
   #ledgerWrap.ledger-table-fixed .stick-0{left:0;width:36px;}
   #ledgerWrap.ledger-table-fixed .stick-1{left:36px;width:45px;}
@@ -651,6 +706,8 @@
   .status-dot.ok{background:var(--success);} .status-dot.warn{background:var(--gold);} .status-dot.bad{background:var(--rust);}
 
   /* ---------------- Company-scoped safety banner ---------------- */
+  .ledger-page-head{margin-bottom:14px;}
+  .ledger-page-title{font-size:20px;color:var(--ledger);margin:0;}
   .company-scope-banner{display:flex;align-items:center;gap:10px;background:var(--blue-bg);border:1px solid var(--ledger-line);
     border-radius:12px;padding:10px 14px;margin-bottom:16px;font-size:13px;}
   .company-scope-banner b{color:var(--ledger);}
@@ -920,6 +977,11 @@
 
   <div id="ledgerPanel" class="hidden">
 
+  <div class="ledger-page-head">
+    <h1 class="display ledger-page-title">📋 ทะเบียนเอกสาร</h1>
+    <p class="sub" style="margin:2px 0 0;">บันทึก ตรวจสอบ และส่งออกทะเบียนบิลซื้อของบริษัทที่กำลังทำงานอยู่</p>
+  </div>
+
   <div class="company-scope-banner" id="ledgerScopeBanner"></div>
 
   <!-- KPI summary row -->
@@ -1017,34 +1079,6 @@
         <div style="font-size:11px;opacity:.55;margin-top:6px;">ใช้ร่วมกันทั้งแท็บสมุดบันทึกบิลซื้อและใบรับรองแทนใบเสร็จ — Haiku ประหยัดกว่ามาก แต่แม่นยำน้อยกว่าเล็กน้อยสำหรับบิลลายมือ/พิมพ์เลอะเลือน</div>
       </div>
     </div>
-
-    <!-- Upload zone -->
-    <div class="card">
-      <div class="card-head"><span class="icon-badge orange">⬆</span><span class="card-head-title">อัปโหลดเอกสาร</span></div>
-      <div class="dropzone" id="dropzone">
-        <div class="dz-title">ถ่ายรูปหรือเลือกไฟล์บิล</div>
-        <div class="dz-sub">รองรับสลิป/ใบเสร็จ/ใบกำกับภาษี รูปภาพและ PDF</div>
-        <div class="dropzone-actions" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-          <label class="btn btn-primary filebtn" for="cameraInput">📷 ถ่ายรูปบิล</label>
-          <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
-          <label class="btn btn-ghost filebtn" for="galleryInput">⬆ เลือกไฟล์ (หลายไฟล์ได้)</label>
-          <input type="file" id="galleryInput" accept="image/*,application/pdf" multiple class="hidden">
-        </div>
-        <div class="dz-hint">ลากไฟล์มาวางในกรอบนี้ได้เช่นกัน</div>
-        <div class="dz-hint" id="dzPhotoStorageNote"></div>
-      </div>
-      <div class="hidden" id="pendingPdfPanel" style="margin-top:14px;background:var(--orange-bg);border-radius:10px;padding:14px 16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-          <div style="font-size:13px;color:var(--rust-dark);">📄 ไฟล์ PDF รอเริ่มอ่าน: <b id="pendingPdfSummary">-</b></div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-ghost" id="pendingPdfClearBtn" type="button">ล้างรายการ</button>
-            <button class="btn btn-primary" id="pendingPdfRunBtn" type="button">▶ เริ่มอ่านทั้งหมด</button>
-          </div>
-        </div>
-        <div id="pendingPdfList" style="margin-top:10px;font-size:12px;"></div>
-      </div>
-      <div class="processing-note hidden" id="processingNote"><span class="spin">⏳</span> <span id="processingText"></span></div>
-    </div>
   </div>
 
   <div class="warn-box hidden" id="storageWarn">⚠️ เบราว์เซอร์นี้ไม่รองรับการเก็บข้อมูลถาวร รายการอาจหายเมื่อปิดหน้าต่าง — export Excel เก็บไว้บ่อย ๆ</div>
@@ -1107,21 +1141,44 @@
 
   <!-- Ledger -->
   <div class="card ledger-table-card" id="ledgerTableCard">
-    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;">
+    <div class="ledger-toolbar-primary">
       <h2 class="display" style="font-size:19px;color:var(--ledger);margin:0;">ทะเบียนที่บันทึกแล้ว — <span id="ledgerCompanyName">ยังไม่ได้เลือกบริษัท</span> (<span id="entryCount">0</span> รายการ)</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost" id="genCertFromSelectionBtn" type="button" title="ติ๊กเลือกรายการในตาราง (เช่น บิลที่ไม่มี VAT) แล้วกดปุ่มนี้เพื่อไปออกใบรับรองแทนใบเสร็จจากรายการที่เลือก">🧾 ออกใบรับรองแทนใบเสร็จ (<span id="certSelCount">0</span>)</button>
-        <button class="btn btn-ghost" id="rdCheckBtn" type="button" title="ส่งเลขผู้เสียภาษี 13 หลักของทุกบิลที่มี VAT ไปตรวจสอบกับเว็บกรมสรรพากรจริง">🔎 ตรวจสอบกับกรมสรรพากร</button>
+      <div class="ledger-toolbar-primary-actions">
+        <button class="btn btn-primary" id="uploadDocToggleBtn" type="button" aria-expanded="false" aria-controls="uploadPanelCard">⬆ อัปโหลดเอกสาร</button>
         <button class="btn btn-primary" id="exportBtn">⬇ Export Excel</button>
-        <button class="btn btn-ghost" id="clearBtn">↻ ล้างทั้งหมด</button>
-        <span style="position:relative;display:inline-block;">
-          <button class="btn btn-ghost" id="columnChooserBtn" type="button">☰ เลือกคอลัมน์</button>
-          <div class="col-chooser-panel hidden" id="columnChooserPanel"></div>
-        </span>
-        <button class="btn btn-ghost" id="ledgerExpandBtn" type="button">⛶ ขยายตาราง</button>
-        <button class="btn btn-ghost hidden" id="ledgerExitFullscreenBtn" type="button">✕ ออกจากโหมดเต็มจอ</button>
       </div>
     </div>
+
+    <!-- Upload zone — collapsed by default; #uploadDocToggleBtn above opens it in place instead
+         of the old always-visible dropzone. Every field/handler/id below is unchanged, only its
+         position in the page moved (out of the old 3-column setup row). -->
+    <div class="card hidden" id="uploadPanelCard">
+      <div class="card-head"><span class="icon-badge orange">⬆</span><span class="card-head-title">อัปโหลดเอกสาร</span></div>
+      <div class="dropzone" id="dropzone">
+        <div class="dz-title">ถ่ายรูปหรือเลือกไฟล์บิล</div>
+        <div class="dz-sub">รองรับสลิป/ใบเสร็จ/ใบกำกับภาษี รูปภาพและ PDF</div>
+        <div class="dropzone-actions" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+          <label class="btn btn-primary filebtn" for="cameraInput">📷 ถ่ายรูปบิล</label>
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+          <label class="btn btn-ghost filebtn" for="galleryInput">⬆ เลือกไฟล์ (หลายไฟล์ได้)</label>
+          <input type="file" id="galleryInput" accept="image/*,application/pdf" multiple class="hidden">
+        </div>
+        <div class="dz-hint">ลากไฟล์มาวางในกรอบนี้ได้เช่นกัน</div>
+        <div class="dz-hint" id="dzPhotoStorageNote"></div>
+      </div>
+      <div class="hidden" id="pendingPdfPanel" style="margin-top:14px;background:var(--orange-bg);border-radius:10px;padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:13px;color:var(--rust-dark);">📄 ไฟล์ PDF รอเริ่มอ่าน: <b id="pendingPdfSummary">-</b></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" id="pendingPdfClearBtn" type="button">ล้างรายการ</button>
+            <button class="btn btn-primary" id="pendingPdfRunBtn" type="button">▶ เริ่มอ่านทั้งหมด</button>
+          </div>
+        </div>
+        <div id="pendingPdfList" style="margin-top:10px;font-size:12px;"></div>
+      </div>
+      <div class="processing-note hidden" id="processingNote"><span class="spin">⏳</span> <span id="processingText"></span></div>
+    </div>
+
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
       <div id="ledgerVatFilterRow" style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-ghost" data-vat-filter="all" type="button">ทั้งหมด</button>
@@ -1131,6 +1188,19 @@
       <select id="ledgerMonthFilter" title="กรองตารางและ Export Excel ให้เหลือเฉพาะเดือนที่เลือก — ไม่กระทบข้อมูลเดือนอื่นที่บันทึกไว้"></select>
       <input type="text" id="ledgerSearchInput" placeholder="🔍 ค้นหา ชื่อผู้ขาย / เลขที่บิล / รหัส / จำนวนเงิน / วันที่" style="flex:1;min-width:220px;">
       <button class="btn btn-ghost hidden" id="ledgerSearchClearBtn" type="button" title="ล้างคำค้นหา">✕</button>
+    </div>
+
+    <div class="ledger-toolbar-secondary">
+      <button class="btn btn-ghost" id="genCertFromSelectionBtn" type="button" title="ติ๊กเลือกรายการในตาราง (เช่น บิลที่ไม่มี VAT) แล้วกดปุ่มนี้เพื่อไปออกใบรับรองแทนใบเสร็จจากรายการที่เลือก">🧾 ออกใบรับรองแทนใบเสร็จ (<span id="certSelCount">0</span>)</button>
+      <button class="btn btn-ghost" id="rdCheckBtn" type="button" title="ส่งเลขผู้เสียภาษี 13 หลักของทุกบิลที่มี VAT ไปตรวจสอบกับเว็บกรมสรรพากรจริง">🔎 ตรวจสอบกับกรมสรรพากร</button>
+      <span style="position:relative;display:inline-block;">
+        <button class="btn btn-ghost" id="columnChooserBtn" type="button">☰ เลือกคอลัมน์</button>
+        <div class="col-chooser-panel hidden" id="columnChooserPanel"></div>
+      </span>
+      <button class="btn btn-ghost" id="ledgerExpandBtn" type="button">⛶ ขยายตาราง</button>
+      <button class="btn btn-ghost hidden" id="ledgerExitFullscreenBtn" type="button">✕ ออกจากโหมดเต็มจอ</button>
+      <span class="ledger-toolbar-spacer"></span>
+      <button class="btn btn-ghost ledger-danger-action" id="clearBtn">↻ ล้างทั้งหมด</button>
     </div>
     <div class="table-scroll-mirror" id="ledgerScrollTop"><div id="ledgerScrollTopInner"></div></div>
     <div id="ledgerWrap" class="ledger-table-fixed"></div>
@@ -3236,6 +3306,7 @@ let ledgerVatFilter = "all"; // all | vat | novat
 let ledgerMonthFilter = "all"; // "all" or a parseBillDate key like "2026-03" — keeps next month's entries from reading as mixed in with old ones
 let ledgerSearchQuery = ""; // free-text filter — helps spot a missing/duplicate bill in a long ledger
 let selectedLedgerNos = new Set(); // entries ticked for "สร้างใบรับรองแทนใบเสร็จจากรายการที่เลือก"
+let selectedCoaCodes = new Set(); // ผังบัญชี codes ticked for bulk delete
 
 document.querySelectorAll("#ledgerVatFilterRow [data-vat-filter]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
@@ -3331,7 +3402,7 @@ function renderLedger(){
     }
     const checked = selectedLedgerNos.has(e.no) ? "checked" : "";
     rows += `
-    <tr data-no="${e.no}">
+    <tr data-no="${e.no}" data-open-sheet="${e.no}" tabindex="0" aria-label="ดูรายละเอียดเต็มของรายการนี้">
       <td class="stick stick-0"><input type="checkbox" class="ledger-row-chk" data-no="${e.no}" ${checked}></td>
       <td class="mono stick stick-1">${e.no}</td>
       <td class="mono stick stick-2"><div class="clip-inner" title="${esc(e.code)}">${esc(e.code)}</div></td>
@@ -3390,7 +3461,7 @@ function renderLedger(){
       </tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr>
-        <td colspan="4" style="text-align:right;position:sticky;left:0;background:#fff;z-index:2;">รวมทั้งหมด${(ledgerVatFilter!=="all"||ledgerMonthFilter!=="all") ? " (เฉพาะหมวดที่กรอง)" : ""}</td>
+        <td colspan="4" style="text-align:right;position:sticky;left:0;background:var(--blue-bg);z-index:2;">รวมทั้งหมด${(ledgerVatFilter!=="all"||ledgerMonthFilter!=="all") ? " (เฉพาะหมวดที่กรอง)" : ""}</td>
         <td class="col-billno"></td><td class="col-desc"></td><td class="col-date"></td><td class="col-acct"></td>
         <td class="mono num col-amount">${fmtMoney(total)}</td>
         <td class="col-vat"></td><td class="col-taxid"></td><td class="col-compliance"></td><td class="col-rdstatus"></td><td class="col-transfer"></td><td class="col-actions"></td>
@@ -3466,9 +3537,19 @@ function renderLedger(){
       showPhotoLightbox(btn.getAttribute("data-photo"));
     });
   });
+  // Also covers desktop table rows now (data-open-sheet/tabindex added on <tr> above) — mouse
+  // click, Enter/Space on a focused row, and touch tap all open the same full-detail sheet the
+  // mobile card list already used, so a truncated cell (see .clip-inner) always has a way to
+  // read its full value regardless of input method.
   ledgerWrap.querySelectorAll("[data-open-sheet]").forEach(card=>{
     card.addEventListener("click", (ev)=>{
-      if(ev.target.closest("input[type=checkbox]")) return; // let the checkbox toggle on its own
+      if(ev.target.closest("input,button,a,select,textarea,label")) return; // let real controls handle their own click
+      openLedgerSheet(Number(card.getAttribute("data-open-sheet")));
+    });
+    card.addEventListener("keydown", (ev)=>{
+      if(ev.key!=="Enter" && ev.key!==" ") return;
+      if(ev.target.closest("input,button,a,select,textarea,label")) return;
+      ev.preventDefault();
       openLedgerSheet(Number(card.getAttribute("data-open-sheet")));
     });
   });
@@ -3815,9 +3896,9 @@ function wireCardDetailsToggle(toggleId, bodyId){
 }
 wireCardDetailsToggle("companyDetailsToggle", "companyDetailsBody");
 
-// #keyCard is a full accordion: collapsed by default only on mobile (≤768px) so the whole
-// "ตั้งค่า API" section doesn't eat the screen before the user has even picked a company —
-// stays open by default on desktop, same as before. The click listener lives on the whole
+// #keyCard is a full accordion, collapsed by default on every screen size so the "ตั้งค่า API"
+// section doesn't eat the screen before the user has even picked a company — one click away
+// via the card head. The click listener lives on the whole
 // card-head row (not the chevron button alone) so the tap target is the full-width header,
 // not just the small ⋮ icon — the button is a descendant of the head so this single listener
 // (not a second one on the button) is what fires when either is tapped.
@@ -3835,7 +3916,26 @@ if(keyCardHead){
     if(body) setKeyCardCollapsed(!body.classList.contains("hidden"));
   });
 }
-setKeyCardCollapsed(window.matchMedia("(max-width:768px)").matches);
+setKeyCardCollapsed(true);
+
+// Upload panel: collapsed by default, opened in place by the "⬆ อัปโหลดเอกสาร" button in the
+// ledger toolbar (moved out of the old always-visible 3-column dropzone — same #dropzone element,
+// same file inputs/handlers, just shown/hidden now instead of permanently on screen).
+function setUploadPanelOpen(open){
+  const panel = document.getElementById("uploadPanelCard");
+  const btn = document.getElementById("uploadDocToggleBtn");
+  if(!panel) return;
+  panel.classList.toggle("hidden", !open);
+  if(btn){
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.textContent = open ? "✕ ปิดหน้าต่างอัปโหลด" : "⬆ อัปโหลดเอกสาร";
+  }
+  if(open) panel.scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+document.getElementById("uploadDocToggleBtn")?.addEventListener("click", ()=>{
+  const panel = document.getElementById("uploadPanelCard");
+  setUploadPanelOpen(panel ? panel.classList.contains("hidden") : true);
+});
 
 function renderAcctDatalist(){
   // Master list first (so a code someone just added shows up even with zero vendors on it yet),
@@ -5497,6 +5597,11 @@ function renderCoaView(){
   const counts = coaUsageCounts();
   const master = chartOfAccounts.slice().sort((a,b)=>(a.code||"").localeCompare(b.code||"", "th"));
 
+  // Drop selections for codes that no longer exist (deleted/renamed elsewhere) so the bulk-delete
+  // count never quietly includes a code that isn't in the table anymore.
+  const masterCodes = new Set(master.map(a=>a.code));
+  for(const code of [...selectedCoaCodes]) if(!masterCodes.has(code)) selectedCoaCodes.delete(code);
+
   if(!master.length){
     body.innerHTML = `<div class="card">${emptyState('ยังไม่มีรหัสผังบัญชีของบริษัทนี้ — เพิ่มได้ที่ปุ่ม "+ เพิ่มรหัสผังบัญชีใหม่" ด้านบน',"📒")}</div>`;
     return;
@@ -5504,6 +5609,7 @@ function renderCoaView(){
 
   const masterRowsHtml = master.map(a=>`
     <tr data-coa-code="${esc(a.code)}">
+      <td><input type="checkbox" class="coa-row-chk" data-coa-chk="${esc(a.code)}" ${selectedCoaCodes.has(a.code)?"checked":""}></td>
       <td class="mono">${esc(a.code)}</td>
       <td>${esc(a.name||"")}</td>
       <td>${counts[a.code]||0} ราย</td>
@@ -5514,16 +5620,55 @@ function renderCoaView(){
     </tr>
   `).join("");
 
-  body.innerHTML = `<div class="card"><div style="overflow-x:auto;"><table class="coa-table">
-    <thead><tr><th>รหัสผังบัญชี</th><th>ชื่อบัญชี/หมวด</th><th>ใช้งานโดยผู้ขาย</th><th></th></tr></thead>
+  const allSelected = master.length>0 && master.every(a=>selectedCoaCodes.has(a.code));
+  body.innerHTML = `<div class="card">
+    <div class="ledger-toolbar-secondary" style="margin-bottom:12px;">
+      <button class="btn btn-ghost ledger-danger-action hidden" id="coaBulkDeleteBtn" type="button">🗑 ลบที่เลือก (<span id="coaBulkDeleteCount">0</span>)</button>
+    </div>
+    <div style="overflow-x:auto;"><table class="coa-table">
+    <thead><tr><th><input type="checkbox" id="coaSelectAllChk" title="เลือกทั้งหมด" ${allSelected?"checked":""}></th><th>รหัสผังบัญชี</th><th>ชื่อบัญชี/หมวด</th><th>ใช้งานโดยผู้ขาย</th><th></th></tr></thead>
     <tbody>${masterRowsHtml}</tbody>
   </table></div></div>`;
+
+  function updateCoaBulkBar(){
+    const bar = document.getElementById("coaBulkDeleteBtn");
+    const countEl = document.getElementById("coaBulkDeleteCount");
+    if(countEl) countEl.textContent = selectedCoaCodes.size;
+    if(bar) bar.classList.toggle("hidden", selectedCoaCodes.size===0);
+  }
+  updateCoaBulkBar();
+
+  body.querySelectorAll("[data-coa-chk]").forEach(chk=>{
+    chk.addEventListener("change", ()=>{
+      const code = chk.getAttribute("data-coa-chk");
+      if(chk.checked) selectedCoaCodes.add(code); else selectedCoaCodes.delete(code);
+      const selAll = document.getElementById("coaSelectAllChk");
+      if(selAll) selAll.checked = master.every(a=>selectedCoaCodes.has(a.code));
+      updateCoaBulkBar();
+    });
+  });
+  const selectAllChk = document.getElementById("coaSelectAllChk");
+  if(selectAllChk) selectAllChk.addEventListener("change", ()=>{
+    if(selectAllChk.checked) master.forEach(a=>selectedCoaCodes.add(a.code));
+    else master.forEach(a=>selectedCoaCodes.delete(a.code));
+    renderCoaView();
+  });
+  document.getElementById("coaBulkDeleteBtn").addEventListener("click", ()=>{
+    const codes = [...selectedCoaCodes];
+    if(!codes.length) return;
+    if(!confirm(`ลบรหัสผังบัญชีที่เลือกทั้งหมด ${codes.length} รายการ ออกจากผังบัญชีหลัก? (ไม่กระทบผู้ขายที่เคยเลือกรหัสเหล่านี้ไว้ — จะถูกเติมกลับเข้ามาอัตโนมัติถ้ายังมีผู้ขายใช้รหัสนี้อยู่)`)) return;
+    chartOfAccounts = chartOfAccounts.filter(a=>!selectedCoaCodes.has(a.code));
+    selectedCoaCodes.clear();
+    persistChartOfAccounts();
+    renderCoaView();
+  });
 
   body.querySelectorAll("[data-coadel]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const code = btn.getAttribute("data-coadel");
       if(!confirm(`ลบรหัสผังบัญชี ${code} ออกจากผังบัญชีหลัก? (ไม่กระทบผู้ขายที่เคยเลือกรหัสนี้ไว้ — จะถูกเติมกลับเข้ามาอัตโนมัติถ้ายังมีผู้ขายใช้รหัสนี้อยู่)`)) return;
       chartOfAccounts = chartOfAccounts.filter(a=>a.code!==code);
+      selectedCoaCodes.delete(code);
       persistChartOfAccounts();
       renderCoaView();
     });
@@ -5539,6 +5684,7 @@ function startEditCoaRow(code){
   const tr = document.querySelector(`#coaBody tr[data-coa-code="${code}"]`);
   if(!tr) return;
   tr.innerHTML = `
+    <td></td>
     <td><input class="edit-input eco-code" value="${esc(a.code)}"></td>
     <td><input class="edit-input eco-name" value="${esc(a.name||"")}"></td>
     <td>${coaUsageCounts()[a.code]||0} ราย</td>
@@ -6132,6 +6278,8 @@ function revealNavSection(anchorId){
     document.getElementById("vendorAdminBody")?.classList.remove("hidden");
     const chev = document.getElementById("vendorAdminChevron");
     if(chev) chev.textContent = "▴ ซ่อน";
+  } else if(anchorId === "dropzone"){
+    if(typeof setUploadPanelOpen === "function") setUploadPanelOpen(true);
   }
   const el = document.getElementById(anchorId);
   if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
